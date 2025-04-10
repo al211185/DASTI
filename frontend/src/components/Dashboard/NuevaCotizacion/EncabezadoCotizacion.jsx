@@ -1,8 +1,68 @@
-// src/components/Dashboard/NuevaCotizacion/EncabezadoCotizacion.jsx
-import React from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Field, ErrorMessage } from 'formik';
+import axiosInstance from '../../../api/axiosInstance';
+import { UserContext } from '../../../context/UserContext';
 
-const EncabezadoCotizacion = ({ header, onChange, clientes, requisitores, vendedores, plantas }) => {
+const EncabezadoCotizacion = ({ header, onChange, vendedores, plantas }) => {
+  const [clientes, setClientes] = useState([]);
+  const [requisitores, setRequisitores] = useState([]);
+  const { user } = useContext(UserContext); // Usuario actual
+
+  // Cargar la lista de clientes de la API al montar el componente
+  useEffect(() => {
+    axiosInstance
+      .get('/clientes')
+      .then((response) => {
+        setClientes(response.data);
+      })
+      .catch((error) => {
+        console.error('Error al obtener clientes:', error);
+      });
+  }, []);
+
+  // Actualizar los requisitores basados en el cliente seleccionado
+  useEffect(() => {
+    if (header.cliente) {
+      // Buscamos el cliente cuyo _id coincide con el valor seleccionado
+      const selectedCliente = clientes.find((c) => c._id === header.cliente);
+      if (
+        selectedCliente &&
+        selectedCliente.contactoPrincipal &&
+        selectedCliente.contactoPrincipal.nombre
+      ) {
+        const nombreRequisitor = selectedCliente.contactoPrincipal.nombre;
+        setRequisitores([nombreRequisitor]);
+        // Si aún no se ha asignado, se asigna automáticamente al header
+        if (!header.requisitor) {
+          onChange('requisitor', nombreRequisitor);
+        }
+      } else {
+        setRequisitores([]);
+      }
+    } else {
+      setRequisitores([]);
+    }
+  }, [header.cliente, clientes, onChange]);
+
+  // Efecto para asignar automáticamente el vendedor si el usuario actual tiene permisos de ventas.
+  useEffect(() => {
+    // Determinar si el usuario actual es del rol "Ventas" o pertenece al departamento "ventas"
+    const esVendedor =
+      user &&
+      (user.rol?.nombre === 'Ventas' || user.departamento === 'ventas');
+
+    if (esVendedor && user && !header.vendedor) {
+      onChange('vendedor', user._id);
+    }
+  }, [user, header.vendedor, onChange]);
+
+  // Filtrar la lista de vendedores para mostrar sólo aquellos que cumplan con la condición.
+  // Puedes filtrar por rol, departamento, o ambos.
+  const vendedoresFiltrados = vendedores.filter((v) => {
+    // Si cada vendedor viene con un campo 'rol' (populated) y 'departamento', puedes hacer:
+    return (v.rol && v.rol.nombre === 'Ventas') || v.departamento === 'ventas';
+  });
+
   return (
     <div className="bg-white p-4 rounded shadow space-y-4 mb-6">
       <h2 className="text-xl font-semibold">Datos de la Cotización</h2>
@@ -17,8 +77,8 @@ const EncabezadoCotizacion = ({ header, onChange, clientes, requisitores, vended
           >
             <option value="">Seleccione un cliente</option>
             {clientes.map((c) => (
-              <option key={c} value={c}>
-                {c}
+              <option key={c._id} value={c._id}>
+                {c.nombre}
               </option>
             ))}
           </select>
@@ -32,8 +92,8 @@ const EncabezadoCotizacion = ({ header, onChange, clientes, requisitores, vended
             onChange={(e) => onChange('requisitor', e.target.value)}
           >
             <option value="">Seleccione un requisitor</option>
-            {requisitores.map((r) => (
-              <option key={r} value={r}>
+            {requisitores.map((r, index) => (
+              <option key={index} value={r}>
                 {r}
               </option>
             ))}
@@ -49,11 +109,12 @@ const EncabezadoCotizacion = ({ header, onChange, clientes, requisitores, vended
           >
             <option value="">Seleccione un vendedor</option>
             {vendedores.map((v) => (
-              <option key={v} value={v}>
-                {v}
+              <option key={v._id} value={v._id}>
+                {v.nombre}
               </option>
             ))}
           </select>
+
         </div>
         {/* Fecha de inicio */}
         <div className="flex-1 min-w-[200px]">

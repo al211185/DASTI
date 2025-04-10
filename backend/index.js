@@ -36,6 +36,13 @@ app.use(express.json());
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/cotizaciones', require('./routes/cotizaciones'));
 app.use('/api/user', require('./routes/user'));
+app.use('/api/clientes', require('./routes/clienteRoutes'));  // <-- Nueva ruta
+app.use('/api/roles', require('./routes/roleRoutes'));  // Agrega esta línea para que la ruta /api/roles funcione
+app.use('/api/plantas', require('./routes/plantasRoutes'));
+app.use('/api/vendedores', require('./routes/vendedoresRoutes'));
+app.use('/api/requisitores', require('./routes/requisitoresRoutes'));
+
+
 
 app.get('/', (req, res) => {
   res.send('Bienvenido a la API de DASTY');

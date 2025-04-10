@@ -64,3 +64,13 @@ exports.login = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+exports.logout = (req, res) => {
+  // Limpia la cookie 'token'
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'Lax'
+  });
+  res.json({ msg: 'Cierre de sesión exitoso' });
+};

@@ -1,33 +1,34 @@
-// src/App.jsx
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import LoginPage from './components/Auth/LoginPage';
-// Aquí protegemos la ruta de registro para que solo administradores y directores la vean.
+// Mantienes la ruta de registro de usuario si la quieres, pero en este ejemplo usaremos la ruta
+// /dashboard/registro/usuario para registrar un usuario a través del flujo de registros.
 import RegisterPage from './components/Auth/RegisterPage';
 import DashboardLayout from './components/Dashboard/DashboardLayout';
 import DashboardHome from './components/Dashboard/DashboardHome';
 import ProtectedRoute from './components/ProtectedRoute';
 import HistorialCambios from './components/Dashboard/HistorialCambios';
 import EditCotizacion from './components/Dashboard/EditCotizacion';
-// Importa el nuevo componente
 import NuevaCotizacion from './components/Dashboard/NuevaCotizacion/NuevaCotizacion';
+
+// Importa los nuevos componentes de registros
+import RegistroSeleccion from './components/Dashboard/Registros/RegistroSeleccion';
+import RegistroPlanta from './components/Dashboard/Registros/RegistroPlanta';
+import RegistroCliente from './components/Dashboard/Registros/RegistroCliente';
+// Para el registro de usuario puedes reutilizar o importar un componente específico si se desea
+// Diferente al RegisterPage, que puede funcionar para el registro público.
+import RegistroUsuario from './components/Dashboard/Registros/RegistroUsuario';
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Ruta de Login pública */}
+        {/* Ruta pública de Login */}
         <Route path="/" element={<LoginPage />} />
 
-        {/* Ruta de Registro: restringida a "administrador" y "director" */}
-        <Route 
-          path="/register" 
-          element={
-            <ProtectedRoute allowedRoles={['administrador', 'director']}>
-              <RegisterPage />
-            </ProtectedRoute>
-          } 
-        />
+        {/* Ruta pública o restringida para el registro de usuario, 
+            dependiendo de tu política. Por ejemplo, si el registro público de usuario es permitido: */}
+        <Route path="/register" element={<RegisterPage />} />
 
         {/* Rutas del Dashboard (Protegidas) */}
         <Route
@@ -71,6 +72,51 @@ function App() {
             <ProtectedRoute>
               <DashboardLayout>
                 <EditCotizacion />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Rutas para el proceso de registro (solo accesible para "administrador" y "director") */}
+        <Route
+          path="/dashboard/registro-seleccion"
+          element={
+            <ProtectedRoute allowedRoles={['administrador', 'director']}>
+              <DashboardLayout>
+                <RegistroSeleccion />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/dashboard/registro/planta"
+          element={
+            <ProtectedRoute allowedRoles={['administrador', 'director']}>
+              <DashboardLayout>
+                <RegistroPlanta />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/dashboard/registro/cliente"
+          element={
+            <ProtectedRoute allowedRoles={['administrador', 'director']}>
+              <DashboardLayout>
+                <RegistroCliente />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/dashboard/registro/usuario"
+          element={
+            <ProtectedRoute allowedRoles={['administrador', 'director']}>
+              <DashboardLayout>
+                <RegistroUsuario />
               </DashboardLayout>
             </ProtectedRoute>
           }

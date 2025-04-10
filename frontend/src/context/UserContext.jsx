@@ -17,13 +17,18 @@ export const UserProvider = ({ children }) => {
     }
   };
 
-  // Puedes llamar a fetchUserProfile, por ejemplo, cuando el componente se monta
+  // Llamar a fetchUserProfile cuando se monta el componente
   useEffect(() => {
     fetchUserProfile();
   }, []);
 
+  // Puedes derivar los permisos directamente del objeto usuario.
+  // Si el usuario tiene la propiedad "rol" y ésta contiene el array "permisos",
+  // en caso contrario, devuelve un array vacío.
+  const permissions = user && user.rol && user.rol.permisos ? user.rol.permisos : [];
+
   return (
-    <UserContext.Provider value={{ user, setUser }}>
+    <UserContext.Provider value={{ user, setUser, permissions }}>
       {children}
     </UserContext.Provider>
   );

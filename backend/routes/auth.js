@@ -11,6 +11,8 @@ router.get('/profile', verifyToken, userController.getProfile);
 router.post('/register', authController.register);
 router.post('/login', authController.login);
 
+router.post('/logout', authController.logout);
+
 router.get('/check', verifyToken, (req, res) => {
   res.json({ msg: 'Autenticado' });
 });

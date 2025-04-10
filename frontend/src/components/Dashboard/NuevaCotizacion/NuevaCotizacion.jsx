@@ -1,5 +1,5 @@
 // src/components/Dashboard/NuevaCotizacion/NuevaCotizacion.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Formik, Form, Field, FieldArray, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import EncabezadoCotizacion from './EncabezadoCotizacion';
@@ -11,11 +11,13 @@ import ModalComentarios from './modals/ModalComentarios';
 import ModalDocumentos from './modals/ModalDocumentos';
 import axiosInstance from '../../../api/axiosInstance';
 
-// Datos de ejemplo para selects (estos normalmente vendrían de la API)
-const CLIENTES = ['Cordis', 'Cardinal', 'Cooper'];
-const REQUISITORES = ['Cordis SA', 'Cardinal Inc', 'Cooper Corp'];
-const VENDEDORES = ['Juan', 'María', 'Pedro'];
-const PLANTAS = ['Planta A', 'Planta B'];
+
+// Mapeo de prefijos para serial por planta (ajusta según tu necesidad)
+const plantaPrefixMapping = {
+    'Planta A': 'PA',
+    'Planta B': 'PB',
+    // Agrega más si es necesario
+};
 
 const validationSchema = Yup.object({
     header: Yup.object({
@@ -45,6 +47,33 @@ const validationSchema = Yup.object({
 });
 
 const NuevaCotizacion = () => {
+    const [clientes, setClientes] = useState([]);
+    const [requisitores, setRequisitores] = useState([]);
+    const [vendedores, setVendedores] = useState([]);
+    const [plantas, setPlantas] = useState([]);
+
+    // Obtención de datos desde la API para cada select
+    useEffect(() => {
+        const fetchSelectData = async () => {
+            try {
+                // Ajusta las rutas a tus endpoints
+                const [clientesRes, requisitoresRes, vendedoresRes, plantasRes] = await Promise.all([
+                    axiosInstance.get('/clientes'),
+                    axiosInstance.get('/requisitores'),
+                    axiosInstance.get('/vendedores'),
+                    axiosInstance.get('/plantas')
+                ]);
+                setClientes(clientesRes.data);
+                setRequisitores(requisitoresRes.data);
+                setVendedores(vendedoresRes.data);
+                setPlantas(plantasRes.data);
+            } catch (error) {
+                console.error('Error al obtener datos para selects:', error);
+            }
+        };
+        fetchSelectData();
+    }, []);
+
     const initialValues = {
         header: {
             cliente: '',
@@ -52,7 +81,8 @@ const NuevaCotizacion = () => {
             vendedor: '',
             fechaInicio: '',
             planta: '',
-            serial: 'CE-000-0001',
+            // Serial inicial: podrías definir uno fijo, o vacío
+            serial: '',
             tiempoEntregaMin: '',
             tiempoEntregaMax: '',
         },
@@ -68,6 +98,17 @@ const NuevaCotizacion = () => {
                 comentarios: [],
             },
         ],
+    };
+
+    // Actualiza el serial basado en la planta seleccionada.
+    // Este efecto se usará dentro de Formik mediante un efecto adicional.
+    const handlePlantaChange = (plant, setFieldValue) => {
+        // Si la planta tiene un prefijo definido, usamos ese, de lo contrario dejamos un valor genérico.
+        const prefix = plantaPrefixMapping[plant] || 'XX';
+        // Lógica para generar el serial. Por ejemplo: PREFIX-000-0001
+        // Aquí podrías implementar lógica para contar, consultarlo en la base de datos, etc.
+        const newSerial = `${prefix}-000-0001`;
+        setFieldValue('header.serial', newSerial);
     };
 
     // Estados para controlar qué modal se abre (por índice o flags)
@@ -147,11 +188,12 @@ const NuevaCotizacion = () => {
                         <EncabezadoCotizacion
                             header={values.header}
                             onChange={(field, value) => setFieldValue(`header.${field}`, value)}
-                            clientes={CLIENTES}
-                            requisitores={REQUISITORES}
-                            vendedores={VENDEDORES}
-                            plantas={PLANTAS}
+                            clientes={clientes}
+                            requisitores={requisitores}
+                            vendedores={vendedores}
+                            plantas={plantas}
                         />
+
 
                         {/* Tabla de Renglones */}
                         <TablaRenglones
