@@ -1,35 +1,48 @@
-// src/components/Dashboard/NuevaCotizacion/modals/ModalProveedores.jsx
-import React from 'react';
-
-const MOCK_PROVEEDORES = [
-  { 
-    id: 1, 
-    elemento: 'Hierro puro', 
-    fechaActualizacion: new Date('2023-03-15T10:00:00'),
-    proveedor: 'Mapresa', 
-    precioUnitario: 50 
-  },
-  { 
-    id: 2, 
-    elemento: 'Hierro puro', 
-    fechaActualizacion: new Date('2023-03-16T12:00:00'),
-    proveedor: 'AcerosMX', 
-    precioUnitario: 45 
-  },
-  { 
-    id: 3, 
-    elemento: 'Hierro puro', 
-    fechaActualizacion: new Date('2023-03-17T14:00:00'),
-    proveedor: 'Industrias Steel', 
-    precioUnitario: 55 
-  },
-];
+import React, { useState, useEffect } from 'react';
+import axiosInstance from '../../../../api/axiosInstance';
 
 const ModalProveedores = ({ material, onClose, onProveedorSelect }) => {
-  // Filtra proveedores según el elemento (si se seleccionó un material, compara con material.nombre)
-  const proveedoresFiltrados = material
-    ? MOCK_PROVEEDORES.filter((prov) => prov.elemento === material.nombre)
-    : MOCK_PROVEEDORES;
+  const [proveedores, setProveedores] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchProveedores = async () => {
+      if (!material || !material._id) {
+        // Si no se ha definido un material, no se realiza la consulta.
+        setProveedores([]);
+        return;
+      }
+      setLoading(true);
+      setError(null);
+      try {
+        const query = `?material=${encodeURIComponent(material._id)}`;
+        const response = await axiosInstance.get('/proveedores' + query);
+        setProveedores(response.data);
+      } catch (err) {
+        console.error('Error al obtener proveedores:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    fetchProveedores();
+  }, [material]);
+  
+
+  if (loading) {
+    return <div className="text-center p-4">Cargando proveedores...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="p-4">
+        <p className="text-red-500">Error: {error}</p>
+        <button onClick={onClose} className="bg-gray-300 px-4 py-2 rounded">Cerrar</button>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 p-4 z-50">
@@ -46,30 +59,36 @@ const ModalProveedores = ({ material, onClose, onProveedorSelect }) => {
         <table className="w-full border mt-4">
           <thead className="bg-gray-100">
             <tr>
-              <th className="p-2 border text-left">Elemento</th>
-              <th className="p-2 border text-left">Fecha Actualización</th>
+              <th className="p-2 border text-left">Material</th>
               <th className="p-2 border text-left">Proveedor</th>
-              <th className="p-2 border text-left">Precio</th>
+              <th className="p-2 border text-left">Precio Unitario</th>
             </tr>
           </thead>
           <tbody>
-            {proveedoresFiltrados.map((prov) => (
-              <tr
-                key={prov.id}
-                className="cursor-pointer hover:bg-gray-100"
-                onClick={() => onProveedorSelect(prov)}
-              >
-                <td className="p-2 border">{prov.elemento}</td>
-                <td className="p-2 border">
-                  {prov.fechaActualizacion.toLocaleDateString()}
-                </td>
-                <td className="p-2 border">{prov.proveedor}</td>
-                <td className="p-2 border">${prov.precioUnitario}</td>
-              </tr>
-            ))}
-            {proveedoresFiltrados.length === 0 && (
+            {proveedores.map((prov) => {
+              // Encuentra la oferta para el material seleccionado
+              const oferta = prov.materiales.find((m) => 
+                m.material && m.material._id && m.material._id.toString() === material._id.toString()
+              );
+              return (
+                <tr
+                  key={prov._id}
+                  className="cursor-pointer hover:bg-gray-100"
+                  onClick={() =>
+                    onProveedorSelect({ proveedor: prov, oferta })
+                  }
+                >
+                  <td className="p-2 border">{material.nombre}</td>
+                  <td className="p-2 border">{prov.nombre}</td>
+                  <td className="p-2 border">
+                    {oferta ? `$${oferta.precioUnitario}` : 'N/A'}
+                  </td>
+                </tr>
+              );
+            })}
+            {proveedores.length === 0 && (
               <tr>
-                <td colSpan="4" className="p-2 border text-center">
+                <td colSpan="3" className="p-2 border text-center">
                   No se encontraron proveedores.
                 </td>
               </tr>

@@ -44,6 +44,12 @@ app.use('/api/plantas', require('./routes/plantasRoutes'));
 app.use('/api/vendedores', require('./routes/vendedoresRoutes'));
 app.use('/api/requisitores', require('./routes/requisitoresRoutes'));
 app.use('/api/upload', require('./routes/uploadRoutes'));
+app.use('/api/materiales', require('./routes/materialesRoutes'));
+
+app.use('/api/proveedores', require('./routes/proveedorRoutes'));
+app.use('/api/categorias', require('./routes/categoriasRoutes'));
+
+
 
 // Sirve la carpeta de archivos subidos (uploads) de forma estática
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

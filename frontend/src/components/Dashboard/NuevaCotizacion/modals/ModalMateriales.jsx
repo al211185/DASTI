@@ -1,38 +1,45 @@
-// src/components/Dashboard/NuevaCotizacion/modals/ModalMateriales.jsx
-import React, { useState } from 'react';
-
-const CATEGORIAS_MATERIALES = [
-  { 
-    categoria: 'Metales ferrosos', 
-    materiales: ['Hierro puro', 'Acero al carbono', 'Acero galvanizado'] 
-  },
-  { 
-    categoria: 'Metales no ferrosos', 
-    materiales: ['Aluminio', 'Cobre'] 
-  },
-  { 
-    categoria: 'Plásticos de ingeniería', 
-    materiales: ['PVC', 'Policarbonato'] 
-  },
-];
+import React, { useState, useEffect } from 'react';
+import axiosInstance from '../../../../api/axiosInstance';
 
 const ModalMateriales = ({ onClose, onMaterialSelect }) => {
+  const [materialesDB, setMaterialesDB] = useState([]);
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState('');
   const [busqueda, setBusqueda] = useState('');
 
-  // Si hay busqueda global, se ignora la categoría seleccionada y se buscan en todas las categorías
-  const allMaterials = CATEGORIAS_MATERIALES.flatMap(catObj =>
-    catObj.materiales.map(mat => ({ nombre: mat, categoria: catObj.categoria }))
+  // Obtén los materiales desde la API al montar el componente
+  useEffect(() => {
+    const fetchMateriales = async () => {
+      try {
+        const response = await axiosInstance.get('/materiales');
+        setMaterialesDB(response.data);
+      } catch (error) {
+        console.error('Error al obtener materiales desde la base de datos:', error);
+      }
+    };
+    fetchMateriales();
+  }, []);
+
+  // Construir un arreglo único de categorías usando reduce
+  const categoriasUnicas = Object.values(
+    materialesDB.reduce((acc, mat) => {
+      if (mat.categoria && typeof mat.categoria === 'object' && mat.categoria._id) {
+        acc[mat.categoria._id] = mat.categoria;
+      }
+      return acc;
+    }, {})
   );
 
+  // Filtrar materiales según búsqueda o categoría seleccionada
   const materialesFiltrados =
     busqueda.trim() !== ''
-      ? allMaterials.filter(item =>
-          item.nombre.toLowerCase().includes(busqueda.toLowerCase())
+      ? materialesDB.filter(mat =>
+          mat.nombre.toLowerCase().includes(busqueda.toLowerCase())
         )
       : categoriaSeleccionada
-      ? CATEGORIAS_MATERIALES.find(catObj => catObj.categoria === categoriaSeleccionada)?.materiales.map(mat => ({ nombre: mat, categoria: categoriaSeleccionada })) || []
-      : [];
+      ? materialesDB.filter(mat =>
+          mat.categoria && mat.categoria._id === categoriaSeleccionada
+        )
+      : materialesDB;
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 p-4 z-50">
@@ -53,7 +60,7 @@ const ModalMateriales = ({ onClose, onMaterialSelect }) => {
             onChange={(e) => setBusqueda(e.target.value)}
           />
         </div>
-        {/* Si no se está buscando de forma global, permite seleccionar la categoría */}
+        {/* Si no se está buscando, mostrar el select de categorías */}
         {busqueda.trim() === '' && (
           <div className="mb-4">
             <label className="block text-sm font-medium mb-1">
@@ -64,32 +71,26 @@ const ModalMateriales = ({ onClose, onMaterialSelect }) => {
               value={categoriaSeleccionada}
               onChange={(e) => setCategoriaSeleccionada(e.target.value)}
             >
-              <option value="">-- Elige una categoría --</option>
-              {CATEGORIAS_MATERIALES.map((catObj, idx) => (
-                <option key={idx} value={catObj.categoria}>
-                  {catObj.categoria}
+              <option value="">-- Todas las categorías --</option>
+              {categoriasUnicas.map((categoria) => (
+                <option key={categoria._id} value={categoria._id}>
+                  {categoria.nombre}
                 </option>
               ))}
             </select>
           </div>
         )}
-
-        <ul className="max-h-48 overflow-auto border">
+        <ul className="max-h-48 overflow-auto border p-2">
           {materialesFiltrados.map((item, i) => (
             <li
               key={i}
               className="p-2 cursor-pointer hover:bg-gray-100 flex justify-between"
-              onClick={() =>
-                onMaterialSelect({
-                  nombre: item.nombre,
-                  cantidadSeleccionada: 1,
-                  proveedorSeleccionado: null,
-                  categoria: item.categoria,
-                })
-              }
+              onClick={() => onMaterialSelect(item)}           
             >
               <span>{item.nombre}</span>
-              <span className="text-xs text-gray-500">{item.categoria}</span>
+              <span className="text-xs text-gray-500">
+                {item.categoria && item.categoria.nombre ? item.categoria.nombre : ''}
+              </span>
             </li>
           ))}
           {materialesFiltrados.length === 0 && (

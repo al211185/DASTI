@@ -15,6 +15,10 @@ import NuevaCotizacion from './components/Dashboard/NuevaCotizacion/NuevaCotizac
 import RegistroSeleccion from './components/Dashboard/Registros/RegistroSeleccion';
 import RegistroPlanta from './components/Dashboard/Registros/RegistroPlanta';
 import RegistroCliente from './components/Dashboard/Registros/RegistroCliente';
+import RegistroMaterial from './components/Dashboard/Registros/RegistroMaterial'; // Ajusta la ruta si es necesario
+import RegistroCategoria from './components/Dashboard/Registros/RegistroCategoria';
+import RegistroProveedor from './components/Dashboard/Registros/RegistroProveedor';
+
 // Para el registro de usuario puedes reutilizar o importar un componente específico si se desea
 // Diferente al RegisterPage, que puede funcionar para el registro público.
 import RegistroUsuario from './components/Dashboard/Registros/RegistroUsuario';
@@ -117,6 +121,39 @@ function App() {
             <ProtectedRoute allowedRoles={['administrador', 'director']}>
               <DashboardLayout>
                 <RegistroUsuario />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/dashboard/registro/material"
+          element={
+            <ProtectedRoute allowedRoles={['administrador', 'director']}>
+              <DashboardLayout>
+                <RegistroMaterial />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/dashboard/registro/categoria"
+          element={
+            <ProtectedRoute allowedRoles={['administrador', 'director']}>
+              <DashboardLayout>
+                <RegistroCategoria />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/dashboard/registro/proveedor"
+          element={
+            <ProtectedRoute allowedRoles={['administrador', 'director']}>
+              <DashboardLayout>
+                <RegistroProveedor />
               </DashboardLayout>
             </ProtectedRoute>
           }

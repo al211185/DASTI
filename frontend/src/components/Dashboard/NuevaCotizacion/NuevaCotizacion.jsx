@@ -264,24 +264,32 @@ const NuevaCotizacion = () => {
                         )}
 
 
+// Dentro del componente que utiliza ModalProveedores (en NuevaCotizacion.jsx)
                         {modalProveedores.open && (
                             <ModalProveedores
                                 material={modalProveedores.material}
                                 onClose={() =>
                                     setModalProveedores({ open: false, material: null, renglonIndex: null })
                                 }
-                                onProveedorSelect={(proveedor) => {
+                                onProveedorSelect={(selected) => {
+                                    const { proveedor, oferta } = selected;
                                     const nuevosRenglones = [...values.renglones];
                                     const materialesActuales = Array.isArray(nuevosRenglones[modalProveedores.renglonIndex].material)
                                         ? nuevosRenglones[modalProveedores.renglonIndex].material
                                         : [];
+
+                                    // Agregar el precio unitario de la oferta al proveedorSeleccionado
                                     const nuevoMaterial = {
                                         ...modalProveedores.material,
-                                        proveedorSeleccionado: proveedor,
+                                        proveedorSeleccionado: {
+                                            ...proveedor,
+                                            precioUnitario: oferta ? oferta.precioUnitario : 0
+                                        }
                                     };
+
                                     nuevosRenglones[modalProveedores.renglonIndex].material = [
                                         ...materialesActuales,
-                                        nuevoMaterial,
+                                        nuevoMaterial
                                     ];
                                     setFieldValue('renglones', nuevosRenglones);
                                     setModalProveedores({ open: false, material: null, renglonIndex: null });
