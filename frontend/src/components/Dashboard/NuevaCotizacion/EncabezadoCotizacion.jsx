@@ -62,7 +62,7 @@ const EncabezadoCotizacion = ({ header, onChange, vendedores, plantas }) => {
     // Si cada vendedor viene con un campo 'rol' (populated) y 'departamento', puedes hacer:
     return (v.rol && v.rol.nombre === 'Ventas') || v.departamento === 'ventas';
   });
-
+  
   return (
     <div className="bg-white p-4 rounded shadow space-y-4 mb-6">
       <h2 className="text-xl font-semibold">Datos de la Cotización</h2>
@@ -136,12 +136,13 @@ const EncabezadoCotizacion = ({ header, onChange, vendedores, plantas }) => {
           >
             <option value="">Seleccione una planta</option>
             {plantas.map((p) => (
-              <option key={p} value={p}>
-                {p}
+              <option key={p._id} value={p._id}>
+                {p.serial} - {p.nombre}
               </option>
             ))}
           </select>
         </div>
+
         {/* Tiempo de entrega */}
         <div className="flex-1 min-w-[200px]">
           <label className="block text-sm font-medium mb-1">
@@ -171,10 +172,11 @@ const EncabezadoCotizacion = ({ header, onChange, vendedores, plantas }) => {
           <input
             type="text"
             className="w-full border rounded p-2"
-            value={header.serial}
-            onChange={(e) => onChange('serial', e.target.value)}
+            value={header.serial || ''}
+            readOnly
           />
         </div>
+
       </div>
     </div>
   );

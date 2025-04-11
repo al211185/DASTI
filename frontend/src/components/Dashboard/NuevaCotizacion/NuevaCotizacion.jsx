@@ -26,7 +26,7 @@ const validationSchema = Yup.object({
         vendedor: Yup.string().required('Requerido'),
         fechaInicio: Yup.date().required('Requerido'),
         planta: Yup.string().required('Requerido'),
-        serial: Yup.string().required('Requerido'),
+        serial: Yup.string(),  // Ya no es obligatorio
         tiempoEntregaMin: Yup.number()
             .required('Requerido')
             .min(1, 'Debe ser mayor o igual a 1'),
@@ -310,15 +310,17 @@ const NuevaCotizacion = () => {
 
                         {modalDocumentosIndex !== null && (
                             <ModalDocumentos
+                                existingDocuments={values.renglones[modalDocumentosIndex].documentos}
                                 onClose={() => setModalDocumentosIndex(null)}
-                                onDocumentSelect={(selectedFiles) => {
+                                onDocumentSelect={(selectedDocuments) => {
                                     const nuevosRenglones = [...values.renglones];
-                                    nuevosRenglones[modalDocumentosIndex].documentos = selectedFiles;
+                                    nuevosRenglones[modalDocumentosIndex].documentos = selectedDocuments;
                                     setFieldValue('renglones', nuevosRenglones);
                                     setModalDocumentosIndex(null);
                                 }}
                             />
                         )}
+
                     </Form>
                 )}
             </Formik>

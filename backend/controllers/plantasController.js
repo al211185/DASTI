@@ -9,3 +9,16 @@ exports.getPlantas = async (req, res) => {
     res.status(500).json({ msg: 'Error al obtener plantas', error: error.message });
   }
 };
+
+exports.createPlanta = async (req, res) => {
+  try {
+    // Se crea una nueva instancia con los datos enviados,
+    // el modelo asignará automáticamente el serial al guardarla.
+    const nuevaPlanta = new Planta(req.body);
+    const plantaGuardada = await nuevaPlanta.save();
+    res.status(201).json(plantaGuardada);
+  } catch (error) {
+    console.error('Error al registrar planta:', error);
+    res.status(400).json({ msg: 'Error al registrar planta', error: error.message });
+  }
+};

@@ -4,6 +4,8 @@ const dotenv = require('dotenv');
 const connectDB = require('./config/db');
 const cookieParser = require('cookie-parser');
 
+const path = require('path');
+
 require('./models/Role');
 
 dotenv.config();
@@ -41,7 +43,10 @@ app.use('/api/roles', require('./routes/roleRoutes'));  // Agrega esta línea pa
 app.use('/api/plantas', require('./routes/plantasRoutes'));
 app.use('/api/vendedores', require('./routes/vendedoresRoutes'));
 app.use('/api/requisitores', require('./routes/requisitoresRoutes'));
+app.use('/api/upload', require('./routes/uploadRoutes'));
 
+// Sirve la carpeta de archivos subidos (uploads) de forma estática
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 
 app.get('/', (req, res) => {
