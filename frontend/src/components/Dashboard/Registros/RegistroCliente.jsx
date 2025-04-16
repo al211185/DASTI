@@ -17,39 +17,64 @@ const RegistroCliente = () => {
     telefono: '',
     email: '',
     sitioWeb: '',
-    contactoPrincipal: {
-      nombre: '',
-      cargo: '',
-      telefono: '',
-      email: ''
-    },
+    // Array de contactos
+    contactos: [
+      { nombre: '', cargo: '', telefono: '', email: '' }
+    ],
     sector: '',
     comentarios: ''
   });
 
   const navigate = useNavigate();
 
-  // Manejo dinámico de campos: si el name contiene un punto, actualiza la propiedad anidada.
+  // Manejo dinámico de campos de nivel 1 y de objetos anidados en "direccion"
   const handleChange = (e) => {
     const { name, value } = e.target;
-
+    // Si viene algo como "direccion.calle", dividimos
     if (name.includes('.')) {
       const [parent, child] = name.split('.');
-      setCliente((prevState) => ({
-        ...prevState,
+      setCliente((prev) => ({
+        ...prev,
         [parent]: {
-          ...prevState[parent],
+          ...prev[parent],
           [child]: value
         }
       }));
     } else {
-      setCliente((prevState) => ({
-        ...prevState,
-        [name]: value
-      }));
+      setCliente((prev) => ({ ...prev, [name]: value }));
     }
   };
 
+  // Manejo específico para los campos de cada contacto en el array "contactos"
+  const handleContactoChange = (index, e) => {
+    const { name, value } = e.target; // name podría ser "nombre", "cargo", etc.
+    setCliente((prev) => {
+      const nuevosContactos = [...prev.contactos];
+      nuevosContactos[index][name] = value;
+      return { ...prev, contactos: nuevosContactos };
+    });
+  };
+
+  // Agregar un contacto vacío al array
+  const agregarContacto = () => {
+    setCliente((prev) => ({
+      ...prev,
+      contactos: [
+        ...prev.contactos,
+        { nombre: '', cargo: '', telefono: '', email: '' }
+      ]
+    }));
+  };
+
+  // Eliminar un contacto por su índice
+  const eliminarContacto = (index) => {
+    setCliente((prev) => ({
+      ...prev,
+      contactos: prev.contactos.filter((_, i) => i !== index)
+    }));
+  };
+
+  // Enviar todo el objeto "cliente" al backend
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -77,7 +102,7 @@ const RegistroCliente = () => {
             className="w-full border rounded p-2"
           />
         </div>
-
+        
         <div>
           <label className="block mb-1">Razón Social</label>
           <input
@@ -161,7 +186,7 @@ const RegistroCliente = () => {
           </div>
         </fieldset>
 
-        {/* Datos de contacto */}
+        {/* Datos de contacto general */}
         <div>
           <label className="block mb-1">Teléfono</label>
           <input
@@ -198,53 +223,74 @@ const RegistroCliente = () => {
           />
         </div>
 
-        {/* Datos de contacto principal */}
+        {/* Contactos (array) */}
         <fieldset className="border p-4">
-          <legend className="px-2">Contacto Principal</legend>
-          <div>
-            <label className="block mb-1">Nombre</label>
-            <input
-              type="text"
-              name="contactoPrincipal.nombre"
-              placeholder="Nombre"
-              value={cliente.contactoPrincipal.nombre}
-              onChange={handleChange}
-              className="w-full border rounded p-2"
-            />
-          </div>
-          <div>
-            <label className="block mb-1">Cargo</label>
-            <input
-              type="text"
-              name="contactoPrincipal.cargo"
-              placeholder="Cargo"
-              value={cliente.contactoPrincipal.cargo}
-              onChange={handleChange}
-              className="w-full border rounded p-2"
-            />
-          </div>
-          <div>
-            <label className="block mb-1">Teléfono</label>
-            <input
-              type="text"
-              name="contactoPrincipal.telefono"
-              placeholder="Teléfono"
-              value={cliente.contactoPrincipal.telefono}
-              onChange={handleChange}
-              className="w-full border rounded p-2"
-            />
-          </div>
-          <div>
-            <label className="block mb-1">Email</label>
-            <input
-              type="email"
-              name="contactoPrincipal.email"
-              placeholder="Email"
-              value={cliente.contactoPrincipal.email}
-              onChange={handleChange}
-              className="w-full border rounded p-2"
-            />
-          </div>
+          <legend className="px-2">Contactos</legend>
+          {cliente.contactos.map((contact, index) => (
+            <div key={index} className="mb-4 border-b pb-2">
+              <div>
+                <label className="block mb-1">Nombre</label>
+                <input
+                  type="text"
+                  name="nombre"
+                  placeholder="Nombre del contacto"
+                  value={contact.nombre}
+                  onChange={(e) => handleContactoChange(index, e)}
+                  className="w-full border rounded p-2 mb-2"
+                />
+              </div>
+              <div>
+                <label className="block mb-1">Cargo</label>
+                <input
+                  type="text"
+                  name="cargo"
+                  placeholder="Cargo"
+                  value={contact.cargo}
+                  onChange={(e) => handleContactoChange(index, e)}
+                  className="w-full border rounded p-2 mb-2"
+                />
+              </div>
+              <div>
+                <label className="block mb-1">Teléfono</label>
+                <input
+                  type="text"
+                  name="telefono"
+                  placeholder="Teléfono"
+                  value={contact.telefono}
+                  onChange={(e) => handleContactoChange(index, e)}
+                  className="w-full border rounded p-2 mb-2"
+                />
+              </div>
+              <div>
+                <label className="block mb-1">Email</label>
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="Email"
+                  value={contact.email}
+                  onChange={(e) => handleContactoChange(index, e)}
+                  className="w-full border rounded p-2 mb-2"
+                />
+              </div>
+
+              {cliente.contactos.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => eliminarContacto(index)}
+                  className="text-red-500 underline"
+                >
+                  Eliminar este contacto
+                </button>
+              )}
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={agregarContacto}
+            className="bg-blue-500 text-white px-2 py-1 rounded"
+          >
+            Agregar otro contacto
+          </button>
         </fieldset>
 
         {/* Otros datos */}
@@ -259,7 +305,6 @@ const RegistroCliente = () => {
             className="w-full border rounded p-2"
           />
         </div>
-
         <div>
           <label className="block mb-1">Comentarios</label>
           <textarea

@@ -11,4 +11,8 @@ router.get('/profile', auth, userController.getProfile);
 // Este endpoint es público o bien restringido según la lógica de tu aplicación
 router.post('/', userController.registerUser);
 
+// Ruta para obtener todos los usuarios (por ejemplo, para sugerencias en menciones)
+router.get('/usuarios', userController.getAllUsers);
+
+
 module.exports = router;

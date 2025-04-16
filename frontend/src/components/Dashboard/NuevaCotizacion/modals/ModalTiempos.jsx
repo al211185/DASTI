@@ -1,19 +1,35 @@
-// src/components/Dashboard/NuevaCotizacion/modals/ModalTiempos.jsx
-import React, { useState } from 'react';
-
-const MOCK_MAQUINAS = [
-  { id: 1, nombre: 'CNC', costoHora: 100 },
-  { id: 2, nombre: 'Centro de maquinado', costoHora: 150 },
-];
+import React, { useState, useEffect } from 'react';
+import axiosInstance from '../../../../api/axiosInstance';
 
 const ModalTiempos = ({ onClose, onTiemposSelect }) => {
-  const [maquina, setMaquina] = useState('');
+  const [maquinas, setMaquinas] = useState([]);
+  const [selectedMaquina, setSelectedMaquina] = useState('');
   const [horas, setHoras] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Obtén las máquinas desde la API
+  useEffect(() => {
+    const fetchMaquinas = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await axiosInstance.get('/maquinas');
+        setMaquinas(res.data);
+      } catch (err) {
+        console.error('Error al obtener máquinas:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMaquinas();
+  }, []);
 
   const handleGuardar = (closeAfter = true) => {
-    const seleccion = MOCK_MAQUINAS.find((m) => m.nombre === maquina);
+    // Encuentra la máquina seleccionada en el array
+    const seleccion = maquinas.find(m => m.nombre === selectedMaquina);
     if (seleccion) {
-      // Crea el objeto de tiempos para la máquina seleccionada
       const nuevoTiempo = {
         maquina: seleccion.nombre,
         horas,
@@ -25,32 +41,34 @@ const ModalTiempos = ({ onClose, onTiemposSelect }) => {
     if (closeAfter) {
       onClose();
     } else {
-      // Reinicia los campos para agregar otra máquina
-      setMaquina('');
+      setSelectedMaquina('');
       setHoras(1);
     }
   };
+
+  if (loading) return <div className="text-center p-4">Cargando máquinas...</div>;
+  if (error) return (
+    <div className="p-4">
+      <p className="text-red-500">Error: {error}</p>
+      <button onClick={onClose} className="bg-gray-300 px-4 py-2 rounded">Cerrar</button>
+    </div>
+  );
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 p-4 z-50">
       <div className="bg-white p-4 w-full max-w-md rounded shadow relative">
         <h2 className="text-xl font-semibold mb-2">Agregar Máquina y Horas</h2>
-        <button
-          onClick={onClose}
-          className="absolute top-2 right-2 text-gray-500 hover:text-black"
-        >
-          X
-        </button>
+        <button onClick={onClose} className="absolute top-2 right-2 text-gray-500 hover:text-black">X</button>
         <div className="mb-4">
           <label className="block text-sm mb-1">Máquina</label>
           <select
             className="border rounded p-2 w-full"
-            value={maquina}
-            onChange={(e) => setMaquina(e.target.value)}
+            value={selectedMaquina}
+            onChange={(e) => setSelectedMaquina(e.target.value)}
           >
             <option value="">Seleccione</option>
-            {MOCK_MAQUINAS.map((m) => (
-              <option key={m.id} value={m.nombre}>
+            {maquinas.map(m => (
+              <option key={m._id} value={m.nombre}>
                 {m.nombre} - ${m.costoHora}/hr
               </option>
             ))}

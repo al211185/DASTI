@@ -1,3 +1,4 @@
+// models/Material.js
 const mongoose = require('mongoose');
 
 const materialSchema = new mongoose.Schema({
@@ -9,10 +10,13 @@ const materialSchema = new mongoose.Schema({
   },
   unidadMedida: { 
     type: String,
-    enum: ["PIES", "PULGADAS", "LIBRAS", "MILIMETROS", "CENTIMETROS", "GRAMOS", "KILOS"],
+    enum: ["PIES","PULGADAS","LIBRAS","MILIMETROS","CENTIMETROS","GRAMOS","KILOS"],
     required: true 
   },
-  // Otros campos que sean intrínsecos al material pueden ir aquí
-});
+  imagen: { 
+    type: String,   // guardaremos la URL o ruta en el servidor
+    trim: true 
+  },
+}, { timestamps: true });
 
 module.exports = mongoose.model('Material', materialSchema);

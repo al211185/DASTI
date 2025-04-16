@@ -81,3 +81,15 @@ exports.registerUser = async (req, res) => {
     res.status(500).json({ msg: 'Error al registrar usuario', error: error.message });
   }
 };
+
+// Obtener todos los usuarios (excluyendo el password) – para alimentar, por ejemplo, react-mentions
+exports.getAllUsers = async (req, res) => {
+  try {
+    const usuarios = await User.find().select('-password');
+    res.json(usuarios);
+  } catch (error) {
+    console.error('Error al obtener usuarios:', error);
+    res.status(500).json({ msg: 'Error al obtener usuarios', error: error.message });
+  }
+};
+

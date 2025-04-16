@@ -1,10 +1,11 @@
+// controllers/materialController.js
 const Material = require('../models/Material');
 
 // Obtener todos los materiales (con populate de categoría para obtener el nombre)
 exports.getMateriales = async (req, res) => {
   try {
     const materiales = await Material.find()
-      .populate('categoria')  // Esto rellenará el campo "categoria" con los datos de la categoría
+      .populate('categoria')  // traemos datos de la categoría
       .sort({ 'categoria.nombre': 1, nombre: 1 });
     res.json(materiales);
   } catch (error) {
@@ -27,33 +28,49 @@ exports.getMaterialById = async (req, res) => {
   }
 };
 
-// Crear un nuevo material
+// Crear un nuevo material (con manejo de imagen)
 exports.createMaterial = async (req, res) => {
   try {
-    const newMaterial = new Material(req.body);
+    // Desestructuramos el body
+    const { nombre, categoria, unidadMedida } = req.body;
+    // Si multer procesó un archivo, añadimos su ruta
+    const imagen = req.file ? `/uploads/materiales/${req.file.filename}` : undefined;
+
+    // Creamos y guardamos
+    const newMaterial = new Material({ nombre, categoria, unidadMedida, imagen });
     const savedMaterial = await newMaterial.save();
+
+    // Populamos antes de responder
+    await savedMaterial.populate('categoria');
     res.status(201).json(savedMaterial);
   } catch (error) {
     console.error('Error al crear material:', error);
-    res.status(500).json({ msg: 'Error al crear material', error: error.message });
+    res.status(400).json({ msg: 'Error al crear material', error: error.message });
   }
 };
 
-// Actualizar un material existente
+// Actualizar un material existente (puede venir o no nueva imagen)
 exports.updateMaterial = async (req, res) => {
   try {
+    const update = { ...req.body };
+    if (req.file) {
+      // Si subieron una nueva imagen, actualizamos la ruta
+      update.imagen = `/uploads/materiales/${req.file.filename}`;
+    }
+
     const updatedMaterial = await Material.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      update,
       { new: true, runValidators: true }
     ).populate('categoria');
+
     if (!updatedMaterial) {
       return res.status(404).json({ msg: 'Material no encontrado' });
     }
     res.json(updatedMaterial);
   } catch (error) {
     console.error('Error al actualizar material:', error);
-    res.status(500).json({ msg: 'Error al actualizar material', error: error.message });
+    res.status(400).json({ msg: 'Error al actualizar material', error: error.message });
   }
 };
 

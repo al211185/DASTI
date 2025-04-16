@@ -14,4 +14,7 @@ router.put('/:id', clienteController.updateCliente);
 // Eliminar un cliente
 router.delete('/:id', clienteController.deleteCliente);
 
+// Aquí la nueva ruta para agregar un contacto
+router.put('/:id/contactos', clienteController.addContacto);
+
 module.exports = router;

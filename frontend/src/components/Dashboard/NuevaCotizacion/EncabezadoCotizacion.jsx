@@ -25,18 +25,21 @@ const EncabezadoCotizacion = ({ header, onChange, vendedores, plantas }) => {
     if (header.cliente) {
       // Buscamos el cliente cuyo _id coincide con el valor seleccionado
       const selectedCliente = clientes.find((c) => c._id === header.cliente);
-      if (
-        selectedCliente &&
-        selectedCliente.contactoPrincipal &&
-        selectedCliente.contactoPrincipal.nombre
-      ) {
-        const nombreRequisitor = selectedCliente.contactoPrincipal.nombre;
-        setRequisitores([nombreRequisitor]);
-        // Si aún no se ha asignado, se asigna automáticamente al header
-        if (!header.requisitor) {
-          onChange('requisitor', nombreRequisitor);
+
+      if (selectedCliente && selectedCliente.contactos && selectedCliente.contactos.length > 0) {
+        // Extraer solo los nombres de cada contacto
+        const nombresContactos = selectedCliente.contactos
+          .map((contact) => contact.nombre)
+          .filter(Boolean); // filtrar vacíos
+
+        setRequisitores(nombresContactos);
+
+        // Si aún no se ha asignado requisitor en "header", podríamos asignar uno por default
+        if (!header.requisitor && nombresContactos.length > 0) {
+          onChange('requisitor', nombresContactos[0]);
         }
       } else {
+        // Si no hay contactos, vaciamos la lista
         setRequisitores([]);
       }
     } else {

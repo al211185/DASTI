@@ -1,7 +1,8 @@
-// src/components/Dashboard/NuevaCotizacion/NuevaCotizacion.jsx
-import React, { useState, useEffect } from 'react';
-import { Formik, Form, Field, FieldArray, ErrorMessage } from 'formik';
+import React, { useState, useEffect, useContext } from 'react';
+import { UserContext } from '../../../context/UserContext'; // <-- Importa tu UserContext
+import { Formik, Form } from 'formik';
 import * as Yup from 'yup';
+import { useLocation } from 'react-router-dom';
 import EncabezadoCotizacion from './EncabezadoCotizacion';
 import TablaRenglones from './TablaRenglones';
 import ModalMateriales from './modals/ModalMateriales';
@@ -9,15 +10,16 @@ import ModalTiempos from './modals/ModalTiempos';
 import ModalProveedores from './modals/ModalProveedores';
 import ModalComentarios from './modals/ModalComentarios';
 import ModalDocumentos from './modals/ModalDocumentos';
+import HistorialCotizacion from './modals/HistorialCotizacion';
 import axiosInstance from '../../../api/axiosInstance';
 
-
-// Mapeo de prefijos para serial por planta (ajusta según tu necesidad)
+// Mapeo de prefijos para serial por planta
 const plantaPrefixMapping = {
     'Planta A': 'PA',
     'Planta B': 'PB',
     // Agrega más si es necesario
 };
+
 
 const validationSchema = Yup.object({
     header: Yup.object({
@@ -26,16 +28,13 @@ const validationSchema = Yup.object({
         vendedor: Yup.string().required('Requerido'),
         fechaInicio: Yup.date().required('Requerido'),
         planta: Yup.string().required('Requerido'),
-        serial: Yup.string(),  // Ya no es obligatorio
+        serial: Yup.string(),
         tiempoEntregaMin: Yup.number()
             .required('Requerido')
             .min(1, 'Debe ser mayor o igual a 1'),
         tiempoEntregaMax: Yup.number()
             .required('Requerido')
-            .min(
-                Yup.ref('tiempoEntregaMin'),
-                'Debe ser mayor o igual al mínimo'
-            ),
+            .min(Yup.ref('tiempoEntregaMin'), 'Debe ser mayor o igual al mínimo'),
     }),
     renglones: Yup.array().of(
         Yup.object({
@@ -46,22 +45,56 @@ const validationSchema = Yup.object({
     ),
 });
 
+// Valores por defecto para una nueva cotización
+const defaultInitialValues = {
+    header: {
+        cliente: '',
+        requisitor: '',
+        vendedor: '',
+        fechaInicio: '',
+        planta: '',
+        serial: '',
+        tiempoEntregaMin: '',
+        tiempoEntregaMax: '',
+    },
+    renglones: [
+        {
+            cantidad: 1,
+            descripcion: '',
+            documentos: [],
+            material: [],
+            tiempos: [],
+            porcentaje: 0,
+            costo: 0,
+            comentarios: [],
+        },
+    ],
+};
+
 const NuevaCotizacion = () => {
+    const location = useLocation();
+    const duplicatedCotizacion = location.state;
+    const initialValues = duplicatedCotizacion || defaultInitialValues;
+
+    const { user } = useContext(UserContext);
+
+    // Estados para selects, modales y mensaje de éxito
     const [clientes, setClientes] = useState([]);
     const [requisitores, setRequisitores] = useState([]);
     const [vendedores, setVendedores] = useState([]);
     const [plantas, setPlantas] = useState([]);
+    const [modalHistorialId, setModalHistorialId] = useState(null);
+    const [successMessage, setSuccessMessage] = useState('');
 
-    // Obtención de datos desde la API para cada select
+    // Obtención de datos para selects
     useEffect(() => {
         const fetchSelectData = async () => {
             try {
-                // Ajusta las rutas a tus endpoints
                 const [clientesRes, requisitoresRes, vendedoresRes, plantasRes] = await Promise.all([
                     axiosInstance.get('/clientes'),
                     axiosInstance.get('/requisitores'),
                     axiosInstance.get('/vendedores'),
-                    axiosInstance.get('/plantas')
+                    axiosInstance.get('/plantas'),
                 ]);
                 setClientes(clientesRes.data);
                 setRequisitores(requisitoresRes.data);
@@ -74,44 +107,13 @@ const NuevaCotizacion = () => {
         fetchSelectData();
     }, []);
 
-    const initialValues = {
-        header: {
-            cliente: '',
-            requisitor: '',
-            vendedor: '',
-            fechaInicio: '',
-            planta: '',
-            // Serial inicial: podrías definir uno fijo, o vacío
-            serial: '',
-            tiempoEntregaMin: '',
-            tiempoEntregaMax: '',
-        },
-        renglones: [
-            {
-                cantidad: 1,
-                descripcion: '',
-                documentos: [],
-                material: [],
-                tiempos: [],
-                porcentaje: 0,
-                costo: 0,
-                comentarios: [],
-            },
-        ],
-    };
-
-    // Actualiza el serial basado en la planta seleccionada.
-    // Este efecto se usará dentro de Formik mediante un efecto adicional.
     const handlePlantaChange = (plant, setFieldValue) => {
-        // Si la planta tiene un prefijo definido, usamos ese, de lo contrario dejamos un valor genérico.
         const prefix = plantaPrefixMapping[plant] || 'XX';
-        // Lógica para generar el serial. Por ejemplo: PREFIX-000-0001
-        // Aquí podrías implementar lógica para contar, consultarlo en la base de datos, etc.
         const newSerial = `${prefix}-000-0001`;
         setFieldValue('header.serial', newSerial);
     };
 
-    // Estados para controlar qué modal se abre (por índice o flags)
+    // Estados para modales
     const [modalMaterialesIndex, setModalMaterialesIndex] = useState(null);
     const [modalTiemposIndex, setModalTiemposIndex] = useState(null);
     const [modalProveedores, setModalProveedores] = useState({
@@ -122,26 +124,18 @@ const NuevaCotizacion = () => {
     const [modalComentariosIndex, setModalComentariosIndex] = useState(null);
     const [modalDocumentosIndex, setModalDocumentosIndex] = useState(null);
 
-    // Función para calcular el costo de un renglón
     const calcularCostoRenglon = (renglon) => {
         let costoMaterial = 0;
         if (renglon.material && renglon.material.length > 0) {
-            // Supongamos que sumamos el costo de todos los materiales seleccionados
             costoMaterial = renglon.material.reduce(
                 (acc, mat) =>
-                    acc +
-                    (mat.proveedorSeleccionado
-                        ? mat.proveedorSeleccionado.precioUnitario * (mat.cantidadSeleccionada || 1)
-                        : 0),
+                    acc + (mat.proveedorSeleccionado ? mat.proveedorSeleccionado.precioUnitario * (mat.cantidadSeleccionada || 1) : 0),
                 0
             );
         }
         let costoTiempos = 0;
         if (renglon.tiempos && renglon.tiempos.length > 0) {
-            costoTiempos = renglon.tiempos.reduce(
-                (acc, tiempo) => acc + tiempo.horas * tiempo.costoHora,
-                0
-            );
+            costoTiempos = renglon.tiempos.reduce((acc, tiempo) => acc + tiempo.horas * tiempo.costoHora, 0);
         }
         const subtotal = (costoMaterial + costoTiempos) * renglon.cantidad;
         return subtotal + subtotal * (renglon.porcentaje / 100);
@@ -150,7 +144,6 @@ const NuevaCotizacion = () => {
     const calcularTotalCotizacion = (renglones) =>
         renglones.reduce((sum, r) => sum + calcularCostoRenglon(r), 0);
 
-    // Función onSubmit: enviar datos al backend (integrar API aquí)
     const onSubmit = async (values, { setSubmitting, resetForm }) => {
         const renglonesActualizados = values.renglones.map((renglon) => ({
             ...renglon,
@@ -164,12 +157,13 @@ const NuevaCotizacion = () => {
         };
 
         try {
-            // Envía la cotización al backend
             const response = await axiosInstance.post('/cotizaciones', cotizacionFinal);
             console.log('Cotización guardada:', response.data);
-            // Reinicia el formulario o muestra una notificación de éxito
+            // Mostrar mensaje de éxito
+            setSuccessMessage('¡Cotización guardada exitosamente!');
             resetForm();
-            // Opcional: Redirige a una vista de listado de cotizaciones o muestra el dashboard actualizado
+            // Limpiar el mensaje tras unos segundos (por ejemplo, 3 segundos)
+            setTimeout(() => setSuccessMessage(''), 3000);
         } catch (error) {
             console.error('Error al guardar la cotización:', error.response?.data || error.message);
         } finally {
@@ -177,14 +171,23 @@ const NuevaCotizacion = () => {
         }
     };
 
-
     return (
         <div className="p-4 space-y-6">
             <h1 className="text-2xl font-bold">Nueva Cotización</h1>
-            <Formik initialValues={initialValues} validationSchema={validationSchema} onSubmit={onSubmit}>
+            {/* Muestra el mensaje de éxito si existe */}
+            {successMessage && (
+                <div className="bg-green-100 text-green-800 px-4 py-2 rounded">
+                    {successMessage}
+                </div>
+            )}
+            <Formik
+                initialValues={initialValues}
+                validationSchema={validationSchema}
+                onSubmit={onSubmit}
+                enableReinitialize
+            >
                 {({ values, isSubmitting, setFieldValue }) => (
                     <Form>
-                        {/* Encabezado */}
                         <EncabezadoCotizacion
                             header={values.header}
                             onChange={(field, value) => setFieldValue(`header.${field}`, value)}
@@ -193,9 +196,6 @@ const NuevaCotizacion = () => {
                             vendedores={vendedores}
                             plantas={plantas}
                         />
-
-
-                        {/* Tabla de Renglones */}
                         <TablaRenglones
                             renglones={values.renglones}
                             values={values}
@@ -207,44 +207,33 @@ const NuevaCotizacion = () => {
                             setModalDocumentosIndex={setModalDocumentosIndex}
                             calcularCostoRenglon={calcularCostoRenglon}
                         />
-
-
-
-                        {/* Total */}
+                        {values._id && (
+                            <button
+                                type="button"
+                                className="bg-blue-500 text-white px-4 py-2 rounded mb-4"
+                                onClick={() => setModalHistorialId(values._id)}
+                            >
+                                Ver Historial
+                            </button>
+                        )}
                         <div className="bg-white p-4 rounded shadow flex justify-end items-center mb-6">
                             <span className="mr-4 font-semibold">Total Cotización:</span>
-                            <span className="text-xl font-bold">
-                                ${calcularTotalCotizacion(values.renglones).toFixed(2)}
-                            </span>
+                            <span className="text-xl font-bold">${calcularTotalCotizacion(values.renglones).toFixed(2)}</span>
                         </div>
-
-                        {/* Botón para guardar */}
                         <div className="flex justify-end">
-                            <button
-                                type="submit"
-                                disabled={isSubmitting}
-                                className="bg-green-500 text-white px-4 py-2 rounded"
-                            >
+                            <button type="submit" disabled={isSubmitting} className="bg-green-500 text-white px-4 py-2 rounded">
                                 Guardar Cotización
                             </button>
                         </div>
-
-                        {/* Modales */}
                         {modalMaterialesIndex !== null && (
                             <ModalMateriales
                                 onClose={() => setModalMaterialesIndex(null)}
                                 onMaterialSelect={(material) => {
-                                    // Abre el modal de proveedores con el material seleccionado
-                                    setModalProveedores({
-                                        open: true,
-                                        material, // Material seleccionado
-                                        renglonIndex: modalMaterialesIndex,
-                                    });
+                                    setModalProveedores({ open: true, material, renglonIndex: modalMaterialesIndex });
                                     setModalMaterialesIndex(null);
                                 }}
                             />
                         )}
-
                         {modalTiemposIndex !== null && (
                             <ModalTiempos
                                 onClose={() => setModalTiemposIndex(null)}
@@ -253,51 +242,34 @@ const NuevaCotizacion = () => {
                                     const tiemposActuales = Array.isArray(nuevosRenglones[modalTiemposIndex].tiempos)
                                         ? nuevosRenglones[modalTiemposIndex].tiempos
                                         : [];
-                                    nuevosRenglones[modalTiemposIndex].tiempos = [
-                                        ...tiemposActuales,
-                                        tiempo,
-                                    ];
+                                    nuevosRenglones[modalTiemposIndex].tiempos = [...tiemposActuales, tiempo];
                                     setFieldValue('renglones', nuevosRenglones);
-                                    // Si "Terminar" cierra el modal, modalTiemposIndex se restablece a null en onClose
                                 }}
                             />
                         )}
-
-
-// Dentro del componente que utiliza ModalProveedores (en NuevaCotizacion.jsx)
                         {modalProveedores.open && (
                             <ModalProveedores
                                 material={modalProveedores.material}
-                                onClose={() =>
-                                    setModalProveedores({ open: false, material: null, renglonIndex: null })
-                                }
+                                onClose={() => setModalProveedores({ open: false, material: null, renglonIndex: null })}
                                 onProveedorSelect={(selected) => {
                                     const { proveedor, oferta } = selected;
                                     const nuevosRenglones = [...values.renglones];
                                     const materialesActuales = Array.isArray(nuevosRenglones[modalProveedores.renglonIndex].material)
                                         ? nuevosRenglones[modalProveedores.renglonIndex].material
                                         : [];
-
-                                    // Agregar el precio unitario de la oferta al proveedorSeleccionado
                                     const nuevoMaterial = {
                                         ...modalProveedores.material,
                                         proveedorSeleccionado: {
                                             ...proveedor,
-                                            precioUnitario: oferta ? oferta.precioUnitario : 0
-                                        }
+                                            precioUnitario: oferta ? oferta.precioUnitario : 0,
+                                        },
                                     };
-
-                                    nuevosRenglones[modalProveedores.renglonIndex].material = [
-                                        ...materialesActuales,
-                                        nuevoMaterial
-                                    ];
+                                    nuevosRenglones[modalProveedores.renglonIndex].material = [...materialesActuales, nuevoMaterial];
                                     setFieldValue('renglones', nuevosRenglones);
                                     setModalProveedores({ open: false, material: null, renglonIndex: null });
                                 }}
                             />
                         )}
-
-
                         {modalComentariosIndex !== null && (
                             <ModalComentarios
                                 comentarios={values.renglones[modalComentariosIndex].comentarios}
@@ -307,15 +279,14 @@ const NuevaCotizacion = () => {
                                     nuevosRenglones[modalComentariosIndex].comentarios.push({
                                         texto: comentario,
                                         fecha: new Date(),
-                                        usuario, // se guarda el nombre real del usuario
+                                        usuario,
                                     });
                                     setFieldValue('renglones', nuevosRenglones);
                                     setModalComentariosIndex(null);
                                 }}
-                                usuario={/* Aquí pasa el nombre real del usuario, por ejemplo: */ 'Daniel'}
+                                usuario={user?.nombre || user?.email || 'Desconocido'} // <-- en vez de "Daniel"
                             />
                         )}
-
                         {modalDocumentosIndex !== null && (
                             <ModalDocumentos
                                 existingDocuments={values.renglones[modalDocumentosIndex].documentos}
@@ -328,7 +299,12 @@ const NuevaCotizacion = () => {
                                 }}
                             />
                         )}
-
+                        {modalHistorialId && (
+                            <HistorialCotizacion
+                                cotizacionId={modalHistorialId}
+                                onClose={() => setModalHistorialId(null)}
+                            />
+                        )}
                     </Form>
                 )}
             </Formik>

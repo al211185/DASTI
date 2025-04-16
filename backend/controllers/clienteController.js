@@ -67,3 +67,32 @@ exports.deleteCliente = async (req, res) => {
     res.status(500).json({ msg: 'Error al eliminar el cliente', error: error.message });
   }
 };
+
+// -------------------------
+// Nuevo método: Agregar un contacto al array "contactos" de un cliente
+// -------------------------
+exports.addContacto = async (req, res) => {
+  try {
+    const { id } = req.params;
+    // El body contendrá un objeto con { nombre, cargo, telefono, email }
+    const nuevoContacto = req.body;
+
+    const clienteActualizado = await Cliente.findByIdAndUpdate(
+      id,
+      { $push: { contactos: nuevoContacto } },
+      { new: true, runValidators: true }
+    );
+
+    if (!clienteActualizado) {
+      return res.status(404).json({ msg: 'Cliente no encontrado' });
+    }
+
+    res.json({
+      msg: 'Contacto agregado correctamente',
+      cliente: clienteActualizado
+    });
+  } catch (error) {
+    console.error('Error al agregar contacto:', error);
+    res.status(500).json({ msg: 'Error al agregar contacto', error: error.message });
+  }
+};

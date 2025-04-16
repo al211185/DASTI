@@ -1,6 +1,12 @@
 import React, { useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { HomeIcon, DocumentPlusIcon, ArrowLeftOnRectangleIcon, PlusCircleIcon } from '@heroicons/react/24/outline';
+import { 
+  HomeIcon, 
+  DocumentPlusIcon, 
+  ArrowLeftOnRectangleIcon, 
+  PlusCircleIcon,
+  MagnifyingGlassIcon  // Importa el ícono de búsqueda
+} from '@heroicons/react/24/outline';
 import { UserContext } from '../../context/UserContext';
 import axiosInstance from '../../api/axiosInstance';
 
@@ -18,7 +24,6 @@ const Sidebar = () => {
     }
   };
 
-  // Comprobación del rol: se revisa user.rol.nombre, ya que así se estructura el objeto usuario en tu context.
   const mostrarRegistro =
     user && user.rol && (user.rol.nombre === 'Director' || user.rol.nombre === 'Administrador');
 
@@ -31,8 +36,12 @@ const Sidebar = () => {
         <Link to="/dashboard" className="text-gray-500 hover:text-blue-500" title="Inicio">
           <HomeIcon className="h-6 w-6" />
         </Link>
-        <Link to="/dashboard/nueva-cotizacion" className="text-gray-500 hover:text-blue-500" title="Nueva cotización">
+        <Link to="/dashboard/nueva-cotizacion" className="text-gray-500 hover:text-blue-500" title="Nueva Cotización">
           <DocumentPlusIcon className="h-6 w-6" />
+        </Link>
+        {/* Agregar enlace de búsqueda global */}
+        <Link to="/dashboard/buscar-proyectos" className="text-gray-500 hover:text-blue-500" title="Buscar Proyectos">
+          <MagnifyingGlassIcon className="h-6 w-6" />
         </Link>
         {mostrarRegistro && (
           <Link to="/dashboard/registro-seleccion" className="text-gray-500 hover:text-blue-500" title="Registro">

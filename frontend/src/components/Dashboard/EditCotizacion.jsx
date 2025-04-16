@@ -12,8 +12,11 @@ import ModalComentarios from './NuevaCotizacion/modals/ModalComentarios';
 import ModalDocumentos from './NuevaCotizacion/modals/ModalDocumentos';
 import * as Yup from 'yup';
 
+// Ejemplo de esquema de validación con References
+// (Asegúrate de modificarlo según tu caso real)
 const validationSchema = Yup.object({
   header: Yup.object({
+    // Si 'cliente' es un ObjectId, normalmente es un string al final (e.g. "6452f...")
     cliente: Yup.string().required('Requerido'),
     requisitor: Yup.string().required('Requerido'),
     vendedor: Yup.string().required('Requerido'),
@@ -27,7 +30,7 @@ const validationSchema = Yup.object({
       .required('Requerido')
       .min(Yup.ref('tiempoEntregaMin'), 'Debe ser mayor o igual al mínimo'),
   }),
-  // Puedes agregar validaciones adicionales para renglones según tus necesidades
+  // Renglones, etc., si necesitas validación a detalle
 });
 
 const EditCotizacion = ({ fullName }) => {
@@ -36,7 +39,13 @@ const EditCotizacion = ({ fullName }) => {
   const [initialValues, setInitialValues] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Estados para controlar los modales
+  // *** Agregamos estados para las listas de clientes, vendedores, plantas
+  const [clientes, setClientes] = useState([]);
+  const [vendedores, setVendedores] = useState([]);
+  const [plantas, setPlantas] = useState([]);
+  // (Si tienes un array de “requisitores” o lo generas dinámicamente en EncabezadoCotizacion, igual.)
+
+  // ---- Estados para modales ----
   const [modalMaterialesIndex, setModalMaterialesIndex] = useState(null);
   const [modalTiemposIndex, setModalTiemposIndex] = useState(null);
   const [modalProveedores, setModalProveedores] = useState({
@@ -47,25 +56,34 @@ const EditCotizacion = ({ fullName }) => {
   const [modalComentariosIndex, setModalComentariosIndex] = useState(null);
   const [modalDocumentosIndex, setModalDocumentosIndex] = useState(null);
 
+  // Al montar, cargar la cotización actual para editar
   useEffect(() => {
     const fetchCotizacion = async () => {
       try {
         const res = await axiosInstance.get(`/cotizaciones/${id}`);
         const cot = res.data.cotizacion;
+
+        // Ajustar lo que venga de 'cot' a tu shape. Por ejemplo,
+        // si 'cliente', 'planta', 'vendedor' son refs, vendrán como { _id, nombre, ... },
+        // y tu form normalmente espera un string (por ejemplo, el _id).
+        // Si sigues la lógica anterior, harás algo como:
+        const clienteId = typeof cot.cliente === 'object' ? cot.cliente._id : cot.cliente;
+        const vendedorId = typeof cot.vendedor === 'object' ? cot.vendedor._id : cot.vendedor;
+        const plantaId = typeof cot.planta === 'object' ? cot.planta._id : cot.planta;
+
         setInitialValues({
           header: {
-            cliente: cot.cliente,
-            requisitor: cot.requisitor,
-            vendedor: cot.vendedor,
-            fechaInicio: new Date(cot.fechaInicio)
-              .toISOString()
-              .split('T')[0],
-            planta: cot.planta,
-            serial: cot.serial,
+            cliente: clienteId || '',
+            requisitor: cot.requisitor || '',
+            vendedor: vendedorId || '',
+            fechaInicio: new Date(cot.fechaInicio).toISOString().split('T')[0],
+            planta: plantaId || '',
+            serial: cot.serial || '',
             tiempoEntregaMin: cot.tiempoEntregaMin || '',
             tiempoEntregaMax: cot.tiempoEntregaMax || '',
           },
-          renglones: cot.renglones,
+          // Asigna renglones tal cual vengan. Si necesitas limpiar o mapear algo, hazlo aquí.
+          renglones: cot.renglones || [],
         });
       } catch (error) {
         console.error('Error al cargar cotización:', error);
@@ -76,16 +94,40 @@ const EditCotizacion = ({ fullName }) => {
     fetchCotizacion();
   }, [id]);
 
+
+   // *** 2) Cargar las listas de clientes, vendedores y plantas (igual que en NuevaCotizacion)
+   useEffect(() => {
+    const fetchDataSelects = async () => {
+      try {
+        // Ajusta las rutas si en tu back-end se llaman diferente
+        const [clientesRes, vendedoresRes, plantasRes] = await Promise.all([
+          axiosInstance.get('/clientes'),
+          axiosInstance.get('/vendedores'),
+          axiosInstance.get('/plantas'),
+        ]);
+        setClientes(clientesRes.data);
+        setVendedores(vendedoresRes.data);
+        setPlantas(plantasRes.data);
+      } catch (error) {
+        console.error('Error al obtener datos de select:', error);
+      }
+    };
+    fetchDataSelects();
+  }, []);
+
   if (loading || !initialValues) return <div>Cargando cotización...</div>;
 
-  // Función para calcular el costo de un renglón
+  // -------------- Funciones de cálculo de costos --------------
   const calcularCostoRenglon = (renglon) => {
     let costoMaterial = 0;
     if (Array.isArray(renglon.material) && renglon.material.length > 0) {
       costoMaterial = renglon.material.reduce((acc, mat) => {
-        return acc + (mat.proveedorSeleccionado
-          ? mat.proveedorSeleccionado.precioUnitario * (mat.cantidadSeleccionada || 1)
-          : 0);
+        return (
+          acc +
+          (mat.proveedorSeleccionado
+            ? mat.proveedorSeleccionado.precioUnitario * (mat.cantidadSeleccionada || 1)
+            : 0)
+        );
       }, 0);
     }
     let costoTiempos = 0;
@@ -95,29 +137,34 @@ const EditCotizacion = ({ fullName }) => {
         0
       );
     }
-    const subtotal = (costoMaterial + costoTiempos) * renglon.cantidad;
-    return subtotal + subtotal * (renglon.porcentaje / 100);
+    const subtotal = (costoMaterial + costoTiempos) * (renglon.cantidad || 1);
+    return subtotal + subtotal * ((renglon.porcentaje || 0) / 100);
   };
 
-  // Función para calcular el total de la cotización
   const calcularTotalCotizacion = (renglones) =>
     renglones.reduce((sum, r) => sum + calcularCostoRenglon(r), 0);
 
+  // -------------- onSubmit: PUT a /cotizaciones/:id --------------
   const onSubmit = async (values, { setSubmitting }) => {
-    // Recalcular el costo de cada renglón
-    const renglonesActualizados = values.renglones.map((renglon) => ({
-      ...renglon,
-      costo: calcularCostoRenglon(renglon),
+    const renglonesActualizados = values.renglones.map((r) => ({
+      ...r,
+      costo: calcularCostoRenglon(r),
     }));
+
     const total = calcularTotalCotizacion(renglonesActualizados);
+    // Mandas un objeto que coincida con tu controlador
+    // Asumiendo que 'cliente', 'planta', 'vendedor' esperan el _id (string)
+    // y que tu back ya se encarga de .populate() cuando hace GET
     const cotizacionFinal = {
       ...values.header,
       renglones: renglonesActualizados,
       total,
     };
+
     try {
       const res = await axiosInstance.put(`/cotizaciones/${id}`, cotizacionFinal);
       console.log('Cotización actualizada:', res.data);
+      // Redirigir a dashboard o donde gustes
       navigate('/dashboard');
     } catch (error) {
       console.error('Error al actualizar cotización:', error.response?.data || error.message);
@@ -126,6 +173,7 @@ const EditCotizacion = ({ fullName }) => {
     }
   };
 
+  // -------------- Renderizado principal --------------
   return (
     <div className="p-4 space-y-6">
       <h1 className="text-2xl font-bold">Editar Cotización</h1>
@@ -133,17 +181,23 @@ const EditCotizacion = ({ fullName }) => {
         initialValues={initialValues}
         validationSchema={validationSchema}
         onSubmit={onSubmit}
+        enableReinitialize
       >
         {({ values, isSubmitting, setFieldValue }) => (
           <Form>
+            {/* ---- EncabezadoCotizacion (aquí asumes que tiene selects para cliente/vendedor/planta) ---- */}
             <EncabezadoCotizacion
               header={values.header}
               onChange={(field, value) => setFieldValue(`header.${field}`, value)}
-              clientes={['Cordis', 'Cardinal', 'Cooper']}
-              requisitores={['Cordis SA', 'Cardinal Inc', 'Cooper Corp']}
-              vendedores={['Juan', 'María', 'Pedro']}
-              plantas={['Planta A', 'Planta B']}
+              // Estos array podrían venir de un fetch a /clientes, /vendedores, /plantas, etc.
+              // *** Pasamos las listas reales al Encabezado para que cargue <select> con datos correctos
+              clientes={clientes}
+              // "Requisitores" ya se manejan en EncabezadoCotizacion al seleccionar un cliente y extraer contactos
+              vendedores={vendedores}
+              plantas={plantas}
             />
+
+            {/* ---- TablaRenglones ---- */}
             <TablaRenglones
               renglones={values.renglones}
               values={values}
@@ -153,14 +207,19 @@ const EditCotizacion = ({ fullName }) => {
               setModalProveedores={setModalProveedores}
               setModalComentariosIndex={setModalComentariosIndex}
               setModalDocumentosIndex={setModalDocumentosIndex}
+              // Si necesitas usar calcularCostoRenglon dentro:
+              calcularCostoRenglon={calcularCostoRenglon}
             />
 
+            {/* ---- Total ---- */}
             <div className="bg-white p-4 rounded shadow flex justify-end items-center mb-6">
               <span className="mr-4 font-semibold">Total Cotización:</span>
               <span className="text-xl font-bold">
                 ${calcularTotalCotizacion(values.renglones).toFixed(2)}
               </span>
             </div>
+
+            {/* ---- Botón de guardar ---- */}
             <div className="flex justify-end">
               <button
                 type="submit"
@@ -171,7 +230,7 @@ const EditCotizacion = ({ fullName }) => {
               </button>
             </div>
 
-            {/* Modales */}
+            {/* ---- Modales (materiales, tiempos, proveedores, comentarios, documentos) ---- */}
             {modalMaterialesIndex !== null && (
               <ModalMateriales
                 onClose={() => setModalMaterialesIndex(null)}
@@ -185,23 +244,24 @@ const EditCotizacion = ({ fullName }) => {
                 }}
               />
             )}
+
             {modalTiemposIndex !== null && (
               <ModalTiempos
                 onClose={() => setModalTiemposIndex(null)}
                 onTiemposSelect={(tiempo) => {
                   const nuevosRenglones = [...values.renglones];
-                  const tiemposActuales = Array.isArray(nuevosRenglones[modalTiemposIndex].tiempos)
+                  const tiemposActuales = Array.isArray(
+                    nuevosRenglones[modalTiemposIndex].tiempos
+                  )
                     ? nuevosRenglones[modalTiemposIndex].tiempos
                     : [];
-                  nuevosRenglones[modalTiemposIndex].tiempos = [
-                    ...tiemposActuales,
-                    tiempo,
-                  ];
+                  nuevosRenglones[modalTiemposIndex].tiempos = [...tiemposActuales, tiempo];
                   setFieldValue('renglones', nuevosRenglones);
                   setModalTiemposIndex(null);
                 }}
               />
             )}
+
             {modalProveedores.open && (
               <ModalProveedores
                 material={modalProveedores.material}
@@ -210,7 +270,9 @@ const EditCotizacion = ({ fullName }) => {
                 }
                 onProveedorSelect={(proveedor) => {
                   const nuevosRenglones = [...values.renglones];
-                  const materialesActuales = Array.isArray(nuevosRenglones[modalProveedores.renglonIndex].material)
+                  const materialesActuales = Array.isArray(
+                    nuevosRenglones[modalProveedores.renglonIndex].material
+                  )
                     ? nuevosRenglones[modalProveedores.renglonIndex].material
                     : [];
                   const nuevoMaterial = {
@@ -226,6 +288,7 @@ const EditCotizacion = ({ fullName }) => {
                 }}
               />
             )}
+
             {modalComentariosIndex !== null && (
               <ModalComentarios
                 comentarios={values.renglones[modalComentariosIndex].comentarios}
@@ -243,6 +306,7 @@ const EditCotizacion = ({ fullName }) => {
                 usuario={fullName}
               />
             )}
+
             {modalDocumentosIndex !== null && (
               <ModalDocumentos
                 onClose={() => setModalDocumentosIndex(null)}

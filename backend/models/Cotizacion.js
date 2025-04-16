@@ -30,15 +30,15 @@ const renglonSchema = new Schema({
 });
 
 const cotizacionSchema = new Schema({
-  cliente: { type: String, required: true },
+  cliente: { type: Schema.Types.ObjectId, ref: 'Cliente', required: true },
   requisitor: { type: String, required: true },
-  vendedor: { type: String, required: true },
+  vendedor: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   fechaInicio: { type: Date, required: true },
-  // Aquí "planta" se almacena como el _id de la planta (String)
-  planta: { type: String, required: true },
-  // El serial se genera automáticamente en el pre-hook
+  planta: { type: Schema.Types.ObjectId, ref: 'Planta', required: true },
   serial: { type: String, required: true },
-  renglones: [renglonSchema],
+  tiempoEntregaMin: { type: Number, default: 1 },
+  tiempoEntregaMax: { type: Number, default: 1 },
+  renglones: [renglonSchema],  // Esto queda igual
   total: { type: Number, required: true },
   estado: {
     type: String,
@@ -48,6 +48,8 @@ const cotizacionSchema = new Schema({
   fechaCreacion: { type: Date, default: Date.now },
   historialCambios: [historialCambioSchema],
 });
+
+
 
 // Pre-save hook para generar el serial autoincremental por planta
 cotizacionSchema.pre('validate', async function (next) {
@@ -88,5 +90,6 @@ cotizacionSchema.pre('validate', async function (next) {
   }
 });
 
+cotizacionSchema.index({ 'renglones.descripcion': 'text' });
 
 module.exports = mongoose.model('Cotizacion', cotizacionSchema);

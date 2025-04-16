@@ -1,79 +1,57 @@
-//src\components\Dashboard\Registros\RegistroSeleccion.jsx
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
+// Define aquí las entidades que quieres crear y gestionar
+const ENTIDADES = [
+  { key: 'planta', label: 'Planta', plural: 'plantas' },
+  { key: 'cliente', label: 'Cliente', plural: 'clientes' },
+  { key: 'usuario', label: 'Usuario', plural: 'usuarios' },
+  { key: 'material', label: 'Material', plural: 'materiales' },
+  { key: 'categoria', label: 'Categoría', plural: 'categorias' },
+  { key: 'proveedor', label: 'Proveedor', plural: 'proveedores' },
+  { key: 'maquina', label: 'Máquina', plural: 'maquinas' },
+];
+
 const RegistroSeleccion = () => {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
 
-    const handleSeleccion = (tipo) => {
-        switch (tipo) {
-            case 'planta':
-                navigate('/dashboard/registro/planta');
-                break;
-            case 'cliente':
-                navigate('/dashboard/registro/cliente');
-                break;
-            case 'usuario':
-                navigate('/dashboard/registro/usuario');
-                break;
-            case 'material':
-                navigate('/dashboard/registro/material');
-                break;
-            case 'categoria':
-                navigate('/dashboard/registro/categoria');
-                break;
-            case 'proveedor':
-                navigate('/dashboard/registro/proveedor');
-                break;
-            default:
-                break;
-        }
-    };
+  const handleCreate = (key) => {
+    navigate(`/dashboard/registro/${key}`);
+  };
 
+  const handleManage = (plural) => {
+    navigate(`/dashboard/registro/${plural}`);
+  };
 
-    return (
-        <div className="min-h-screen flex flex-col justify-center items-center bg-gray-100 p-4">
-            <h1 className="text-2xl font-bold mb-6">Selecciona el tipo de registro</h1>
-            <div className="flex flex-col space-y-4 w-full max-w-sm">
-                <button
-                    onClick={() => handleSeleccion('planta')}
-                    className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-                >
-                    Registrar Planta
-                </button>
-                <button
-                    onClick={() => handleSeleccion('cliente')}
-                    className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
-                >
-                    Registrar Cliente
-                </button>
-                <button
-                    onClick={() => handleSeleccion('usuario')}
-                    className="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 transition-colors"
-                >
-                    Registrar Usuario
-                </button>
-                <button
-                    onClick={() => handleSeleccion('material')}
-                    className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
-                >
-                    Registrar Material
-                </button>
-                <button
-                    onClick={() => handleSeleccion('categoria')}
-                    className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
-                >
-                    Registrar Categoría
-                </button>
-                <button
-                    onClick={() => handleSeleccion('proveedor')}
-                    className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
-                >
-                    Registrar Proveedor
-                </button>
+  return (
+    <div className="min-h-screen flex flex-col justify-center items-center bg-gray-100 p-4">
+      <h1 className="text-3xl font-bold mb-8">Administrar Registros</h1>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-2xl">
+        {ENTIDADES.map(({ key, label, plural }) => (
+          <div
+            key={key}
+            className="bg-white rounded-lg shadow p-4 flex flex-col justify-between"
+          >
+            <h2 className="text-xl font-semibold mb-4">{label}</h2>
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleCreate(key)}
+                className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded transition-colors"
+              >
+                Registrar {label}
+              </button>
+              <button
+                onClick={() => handleManage(plural)}
+                className="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 rounded transition-colors"
+              >
+                Gestionar {plural.charAt(0).toUpperCase() + plural.slice(1)}
+              </button>
             </div>
-        </div>
-    );
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 };
 
 export default RegistroSeleccion;
