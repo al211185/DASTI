@@ -1,71 +1,29 @@
 // controllers/proveedorController.js
-const mongoose = require('mongoose');
-
 const Proveedor = require('../models/Proveedor');
 
-// Crear un proveedor
+/* ------------------------- CREAR PROVEEDOR -------------------------- */
+// POST /proveedores
 exports.createProveedor = async (req, res) => {
   try {
-    const {
-      nombre,
-      comentarios,
-      catalogo,
-      ciudad,
-      formaPago,
-      sitioWeb,
-      direccion,
-      telefonoOficina,
-      telefonoWhatsapp,
-      contactoNombre,
-      razonSocial,
-      clabeInterbancaria,
-      materiales,      // Arreglo de ofertas de materiales, p.ej. [{ material, precioUnitario }]
-      datosFiscales    // Objeto, por ejemplo { rfc, domicilioFiscal }
-    } = req.body;
-
-    // Crea el proveedor con su información completa, incluyendo el arreglo de materiales
-    const nuevoProveedor = new Proveedor({
-      nombre,
-      comentarios,
-      catalogo,
-      ciudad,
-      formaPago,
-      sitioWeb,
-      direccion,
-      telefonoOficina,
-      telefonoWhatsapp,
-      contactoNombre,
-      razonSocial,
-      clabeInterbancaria,
-      materiales,   // Aquí se espera que sea un arreglo, por ejemplo:
-                    // [
-                    //   { material: "606d9c...", precioUnitario: 50 },
-                    //   { material: "606d9c...", precioUnitario: 45 }
-                    // ]
-      datosFiscales
-    });
-
+    const nuevoProveedor = new Proveedor({ ...req.body });
     const proveedorGuardado = await nuevoProveedor.save();
-    res.status(201).json({ msg: 'Proveedor creado correctamente', proveedor: proveedorGuardado });
+    res.status(201).json({
+      msg: 'Proveedor creado correctamente',
+      proveedor: proveedorGuardado
+    });
   } catch (error) {
     console.error('Error al crear proveedor:', error);
     res.status(500).json({ msg: 'Error al crear proveedor', error: error.message });
   }
 };
 
-// Obtener proveedores (opcional: filtrar por un material ofrecido)
+/* ------------------------- LISTAR PROVEEDORES ------------------------ */
+// GET /proveedores
 exports.getProveedores = async (req, res) => {
   try {
-    // Opcional: si se pasa el query "material", se pueden filtrar proveedores que tengan ese material en su arreglo.
-    // Esto se puede lograr con la sintaxis de query en arreglos.
-    let filtro = {};
-    if (req.query.material) {
-      filtro = { 
-        "materiales.material": req.query.material 
-      };
-    }
-
-    // Puedes usar populate para obtener la información completa del material.
+    const filtro = req.query.material
+      ? { 'materiales.material': req.query.material }
+      : {};
     const proveedores = await Proveedor.find(filtro)
       .populate('materiales.material')
       .sort({ fechaActualizacion: -1 });
@@ -73,5 +31,62 @@ exports.getProveedores = async (req, res) => {
   } catch (error) {
     console.error('Error al obtener proveedores:', error);
     res.status(500).json({ msg: 'Error al obtener proveedores', error: error.message });
+  }
+};
+
+/* ----------------------- OBTENER POR ID ------------------------------ */
+// GET /proveedores/:id
+exports.getProveedorById = async (req, res) => {
+  try {
+    const proveedor = await Proveedor.findById(req.params.id)
+      .populate('materiales.material');
+    if (!proveedor) {
+      return res.status(404).json({ msg: 'Proveedor no encontrado' });
+    }
+    res.json(proveedor);
+  } catch (error) {
+    console.error('Error al obtener proveedor:', error);
+    res.status(500).json({ msg: 'Error al obtener proveedor', error: error.message });
+  }
+};
+
+/* ------------------------ ACTUALIZAR PROVEEDOR ----------------------- */
+// PUT /proveedores/:id
+exports.updateProveedor = async (req, res) => {
+  try {
+    const actualizado = await Proveedor.findByIdAndUpdate(
+      req.params.id,
+      { 
+        ...req.body,
+        fechaActualizacion: new Date() 
+      },
+      { new: true, runValidators: true }
+    ).populate('materiales.material');
+
+    if (!actualizado) {
+      return res.status(404).json({ msg: 'Proveedor no encontrado' });
+    }
+    res.json({
+      msg: 'Proveedor actualizado correctamente',
+      proveedor: actualizado
+    });
+  } catch (error) {
+    console.error('Error al actualizar proveedor:', error);
+    res.status(400).json({ msg: 'Error al actualizar proveedor', error: error.message });
+  }
+};
+
+/* ------------------------ ELIMINAR PROVEEDOR ------------------------- */
+// DELETE /proveedores/:id
+exports.deleteProveedor = async (req, res) => {
+  try {
+    const eliminado = await Proveedor.findByIdAndDelete(req.params.id);
+    if (!eliminado) {
+      return res.status(404).json({ msg: 'Proveedor no encontrado' });
+    }
+    res.json({ msg: 'Proveedor eliminado correctamente' });
+  } catch (error) {
+    console.error('Error al eliminar proveedor:', error);
+    res.status(500).json({ msg: 'Error al eliminar proveedor', error: error.message });
   }
 };

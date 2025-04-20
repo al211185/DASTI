@@ -1,95 +1,113 @@
+// controllers/usuariosController.js
 const bcrypt = require('bcryptjs');
-const User = require('../models/User');
+const User   = require('../models/User');
 
-// Obtener el perfil del usuario (ya existente)
-exports.getProfile = async (req, res) => {
+/* ------------------------------------------------------------------------- */
+/* LISTAR TODOS                                                              */
+/* GET /user                                                                 */
+/* ------------------------------------------------------------------------- */
+exports.getAllUsers = async (_req, res) => {
   try {
-    console.log('req.user en getProfile:', req.user);
-    // Busca el usuario, excluyendo el campo password, y hace populate en el campo "rol"
-    const user = await User.findById(req.user.id)
-                           .populate('rol')
-                           .select('-password');
-    if (!user) {
-      console.error('Usuario no encontrado para el id:', req.user.id);
-      return res.status(404).json({ msg: 'Usuario no encontrado' });
-    }
-    res.json(user);
-  } catch (error) {
-    console.error('Error en getProfile:', error);
-    res.status(500).json({ error: error.message });
+    const usuarios = await User
+      .find()
+      .select('-password')              // quita el campo password
+      .populate('rol', 'nombre');       // trae sólo nombre del rol
+    res.json(usuarios);
+  } catch (err) {
+    console.error('Error al obtener usuarios:', err);
+    res.status(500).json({ msg: 'Error al obtener usuarios', error: err.message });
   }
 };
 
-// Registrar un nuevo usuario
+/* ------------------------------------------------------------------------- */
+/* OBTENER UNO                                                               */
+/* GET /user/:id                                                              */
+/* ------------------------------------------------------------------------- */
+exports.getUserById = async (req, res) => {
+  try {
+    const usuario = await User
+      .findById(req.params.id)
+      .select('-password')
+      .populate('rol', 'nombre');
+    if (!usuario) return res.status(404).json({ msg: 'Usuario no encontrado' });
+    res.json(usuario);
+  } catch (err) {
+    console.error('Error al obtener usuario:', err);
+    res.status(500).json({ msg: 'Error al obtener el usuario', error: err.message });
+  }
+};
+
+/* ------------------------------------------------------------------------- */
+/* CREAR                                                                     */
+/* POST /user                                                                 */
+/* ------------------------------------------------------------------------- */
 exports.registerUser = async (req, res) => {
   try {
-    // Extraemos los campos del body
-    const {
-      nombre,
-      email,
-      password,
-      telefono,
-      empleadoID,
-      departamento,
-      rol
-    } = req.body;
-
-    // Validamos campos obligatorios
+    const { nombre, email, password, telefono, empleadoID, departamento, rol } = req.body;
+    // validar
     if (!nombre || !email || !password || !rol) {
-      return res.status(400).json({ msg: 'Por favor, ingresa todos los campos obligatorios (nombre, email, password y rol).' });
+      return res.status(400).json({ msg: 'Faltan campos obligatorios' });
     }
-
-    // Verifica si ya existe un usuario con ese email
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ msg: 'El email ya está registrado.' });
+    // duplicados
+    if (await User.findOne({ email })) {
+      return res.status(400).json({ msg: 'Email ya registrado' });
     }
-
-    // Opcional: Puedes verificar si el empleadoID ya existe, si se envía
-    if (empleadoID) {
-      const existingEmpleado = await User.findOne({ empleadoID });
-      if (existingEmpleado) {
-        return res.status(400).json({ msg: 'El empleadoID ya está registrado.' });
-      }
+    if (empleadoID && await User.findOne({ empleadoID })) {
+      return res.status(400).json({ msg: 'empleadoID ya registrado' });
     }
-
-    // Generar un salt y hashear la contraseña
+    // hash
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const pwd  = await bcrypt.hash(password, salt);
 
-    // Crear una nueva instancia del usuario
-    const newUser = new User({
-      nombre,
-      email,
-      password: hashedPassword,
-      telefono,
-      empleadoID,
-      departamento, // Este campo opcional según tus necesidades
-      rol
-    });
-
-    // Guardar el usuario en la base de datos
-    const savedUser = await newUser.save();
-
-    // Convertir el usuario a objeto y eliminar la contraseña antes de enviar la respuesta
-    const userResponse = savedUser.toObject();
-    delete userResponse.password;
-
-    res.status(201).json(userResponse);
-  } catch (error) {
-    console.error('Error al registrar usuario:', error);
-    res.status(500).json({ msg: 'Error al registrar usuario', error: error.message });
+    const nuevo = new User({ nombre, email, password: pwd, telefono, empleadoID, departamento, rol });
+    const guardado = await nuevo.save();
+    const resp = guardado.toObject();
+    delete resp.password;
+    res.status(201).json(resp);
+  } catch (err) {
+    console.error('Error al crear usuario:', err);
+    res.status(500).json({ msg: 'Error al crear usuario', error: err.message });
   }
 };
 
-// Obtener todos los usuarios (excluyendo el password) – para alimentar, por ejemplo, react-mentions
-exports.getAllUsers = async (req, res) => {
+/* ------------------------------------------------------------------------- */
+/* ACTUALIZAR                                                                 */
+/* PUT /user/:id                                                              */
+/* ------------------------------------------------------------------------- */
+exports.updateUser = async (req, res) => {
   try {
-    const usuarios = await User.find().select('-password');
-    res.json(usuarios);
-  } catch (error) {
-    console.error('Error al obtener usuarios:', error);
-    res.status(500).json({ msg: 'Error al obtener usuarios', error: error.message });
+    const updates = { ...req.body };
+    // si se actualiza contraseña, hashearla
+    if (updates.password) {
+      const salt = await bcrypt.genSalt(10);
+      updates.password = await bcrypt.hash(updates.password, salt);
+    }
+    const usuario = await User.findByIdAndUpdate(
+      req.params.id,
+      updates,
+      { new: true, runValidators: true }
+    )
+      .select('-password')
+      .populate('rol', 'nombre');
+    if (!usuario) return res.status(404).json({ msg: 'Usuario no encontrado' });
+    res.json(usuario);
+  } catch (err) {
+    console.error('Error al actualizar usuario:', err);
+    res.status(400).json({ msg: 'Error al actualizar usuario', error: err.message });
   }
 };
 
+/* ------------------------------------------------------------------------- */
+/* ELIMINAR                                                                  */
+/* DELETE /user/:id                                                           */
+/* ------------------------------------------------------------------------- */
+exports.deleteUser = async (req, res) => {
+  try {
+    const eliminado = await User.findByIdAndDelete(req.params.id);
+    if (!eliminado) return res.status(404).json({ msg: 'Usuario no encontrado' });
+    res.json({ msg: 'Usuario eliminado correctamente' });
+  } catch (err) {
+    console.error('Error al eliminar usuario:', err);
+    res.status(500).json({ msg: 'Error al eliminar usuario', error: err.message });
+  }
+};

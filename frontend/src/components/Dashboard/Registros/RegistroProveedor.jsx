@@ -1,175 +1,188 @@
+// src/components/Dashboard/Proveedores/RegistroProveedor.jsx
 import React, { useState, useEffect } from 'react';
 import { Formik, Form, Field, FieldArray, ErrorMessage } from 'formik';
 import axiosInstance from '../../../api/axiosInstance';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import * as Yup from 'yup';
 
-const RegistroProveedor = () => {
+export default function RegistroProveedor() {
+  const { id } = useParams();           // si existe → modo edición
   const navigate = useNavigate();
 
   const [materialesDB, setMaterialesDB] = useState([]);
+  const [initialValues, setInitialValues] = useState(null);
+  const [guardando, setGuardando] = useState(false);
+  const [mensaje, setMensaje]   = useState(null);
+  const [error, setError]       = useState(null);
 
-  // Obtén la lista de materiales desde el backend
-  useEffect(() => {
-    const fetchMateriales = async () => {
-      try {
-        const res = await axiosInstance.get('/materiales');
-        setMaterialesDB(res.data);
-      } catch (error) {
-        console.error('Error al obtener materiales:', error);
-      }
-    };
-    fetchMateriales();
-  }, []);
-
-  const initialValues = {
-    nombre: '',
-    comentarios: '',
-    catalogo: [],
-    ciudad: '',
-    formaPago: '',
-    sitioWeb: '',
-    direccion: '',
-    telefonoOficina: '',
-    telefonoWhatsapp: '',
-    contactoNombre: '',
-    razonSocial: '',
-    clabeInterbancaria: '',
-    // Sección de materiales ofrecidos, ahora usando oferta de material con referencia y precio
-    materiales: [
-      {
-        material: '',
-        precioUnitario: ''
-      }
-    ],
-    datosFiscales: {
-      rfc: '',
-      domicilioFiscal: ''
-    }
-  };
-
-  // Esquema de validación básico (ajústalo según tus necesidades)
+  // Esquema validación
   const validationSchema = Yup.object({
     nombre: Yup.string().required('Requerido'),
     ciudad: Yup.string().required('Requerido'),
     materiales: Yup.array().of(
       Yup.object({
         material: Yup.string().required('Requerido'),
-        precioUnitario: Yup.number()
-          .required('Requerido')
-          .min(0, 'Debe ser mayor o igual a 0')
+        precioUnitario: Yup.number().required('Requerido').min(0, '>= 0')
       })
     )
-    // Agrega más validaciones para otros campos si se requiere
   });
 
-  const handleSubmit = async (values, { setSubmitting, resetForm }) => {
+  // Carga materiales para el select
+  useEffect(() => {
+    axiosInstance.get('/materiales')
+      .then(res => setMaterialesDB(res.data))
+      .catch(err => console.error(err));
+  }, []);
+
+  // Define valores iniciales y carga en edición
+  useEffect(() => {
+    const defaults = {
+      nombre: '',
+      comentarios: '',
+      catalogo: [],
+      ciudad: '',
+      formaPago: '',
+      sitioWeb: '',
+      direccion: '',
+      telefonoOficina: '',
+      telefonoWhatsapp: '',
+      contactoNombre: '',
+      razonSocial: '',
+      clabeInterbancaria: '',
+      materiales: [{ material: '', precioUnitario: '' }],
+      datosFiscales: { rfc: '', domicilioFiscal: '' }
+    };
+
+    if (!id) {
+      setInitialValues(defaults);
+      return;
+    }
+
+    // modo edición: fetch y mapear a la forma del form
+    axiosInstance.get(`/proveedores/${id}`)
+      .then(res => {
+        const data = res.data;
+        setInitialValues({
+          nombre: data.nombre || '',
+          comentarios: data.comentarios || '',
+          catalogo: data.catalogo || [],
+          ciudad: data.ciudad || '',
+          formaPago: data.formaPago || '',
+          sitioWeb: data.sitioWeb || '',
+          direccion: data.direccion || '',
+          telefonoOficina: data.telefonoOficina || '',
+          telefonoWhatsapp: data.telefonoWhatsapp || '',
+          contactoNombre: data.contactoNombre || '',
+          razonSocial: data.razonSocial || '',
+          clabeInterbancaria: data.clabeInterbancaria || '',
+          materiales: (data.materiales && data.materiales.length)
+            ? data.materiales.map(m => ({
+                material: m.material._id || m.material,
+                precioUnitario: m.precioUnitario
+              }))
+            : [{ material: '', precioUnitario: '' }],
+          datosFiscales: {
+            rfc: data.datosFiscales?.rfc || '',
+            domicilioFiscal: data.datosFiscales?.domicilioFiscal || ''
+          }
+        });
+      })
+      .catch(err => {
+        console.error('Error al cargar proveedor:', err);
+        alert('No se pudo cargar el proveedor');
+        navigate(-1);
+      });
+  }, [id, navigate]);
+
+  if (!initialValues) {
+    return <p className="p-6 text-center">Cargando datos...</p>;
+  }
+
+  const handleSubmit = async (values, { setSubmitting }) => {
+    setGuardando(true);
+    setError(null);
+    setMensaje(null);
+
     try {
-      const response = await axiosInstance.post('/proveedores', values);
-      console.log('Proveedor registrado:', response.data);
-      resetForm();
-      navigate('/dashboard/registro/proveedor'); // O redirige a la lista de proveedores
-    } catch (error) {
-      console.error('Error al registrar proveedor:', error.response?.data || error.message);
+      if (id) {
+        await axiosInstance.put(`/proveedores/${id}`, values);
+        setMensaje('Proveedor actualizado correctamente.');
+      } else {
+        await axiosInstance.post('/proveedores', values);
+        setMensaje('Proveedor registrado correctamente.');
+      }
+      // opcional: redirigir a lista
+      // navigate('/dashboard/proveedores');
+    } catch (err) {
+      console.error(err);
+      setError(err.response?.data?.msg || 'Error al guardar proveedor');
     } finally {
+      setGuardando(false);
       setSubmitting(false);
     }
   };
 
   return (
     <div className="max-w-2xl mx-auto p-6 bg-white shadow rounded">
-      <h2 className="text-2xl font-bold mb-4">Registrar Proveedor</h2>
-      <Formik initialValues={initialValues} validationSchema={validationSchema} onSubmit={handleSubmit}>
+      <h2 className="text-2xl font-bold mb-4">
+        {id ? 'Editar Proveedor' : 'Registrar Proveedor'}
+      </h2>
+
+      {error   && <p className="text-red-500 mb-2">{error}</p>}
+      {mensaje && <p className="text-green-500 mb-2">{mensaje}</p>}
+
+      <Formik
+        initialValues={initialValues}
+        validationSchema={validationSchema}
+        onSubmit={handleSubmit}
+        enableReinitialize
+      >
         {({ values, isSubmitting, setFieldValue }) => (
           <Form className="space-y-4">
-            {/* Información Básica */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Nombre</label>
-              <Field name="nombre" type="text" className="w-full border rounded p-2" />
-              <ErrorMessage name="nombre" component="div" className="text-red-500 text-xs" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Ciudad</label>
-              <Field name="ciudad" type="text" className="w-full border rounded p-2" />
-              <ErrorMessage name="ciudad" component="div" className="text-red-500 text-xs" />
-            </div>
+            {/* Nombre y ciudad */}
+            <Input label="Nombre" name="nombre" />
+            <Input label="Ciudad" name="ciudad" />
+
+            {/* Teléfonos */}
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Teléfono Oficina</label>
-                <Field name="telefonoOficina" type="text" className="w-full border rounded p-2" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Teléfono Whatsapp</label>
-                <Field name="telefonoWhatsapp" type="text" className="w-full border rounded p-2" />
-              </div>
+              <Input label="Tel. Oficina" name="telefonoOficina" />
+              <Input label="Tel. Whatsapp" name="telefonoWhatsapp" />
             </div>
+
+            {/* Dirección y web */}
+            <Input label="Dirección" name="direccion" />
+            <Input label="Sitio Web" name="sitioWeb" />
+            <Input label="Forma de Pago" name="formaPago" />
+            <Input label="Contacto (Nombre)" name="contactoNombre" />
+            <Input label="Razón Social" name="razonSocial" />
+            <Input label="CLABE Interbancaria" name="clabeInterbancaria" />
+
+            {/* Materiales */}
             <div>
-              <label className="block text-sm font-medium mb-1">Dirección</label>
-              <Field name="direccion" type="text" className="w-full border rounded p-2" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Sitio Web</label>
-              <Field name="sitioWeb" type="text" className="w-full border rounded p-2" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Forma de Pago</label>
-              <Field name="formaPago" type="text" className="w-full border rounded p-2" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Contacto (Nombre)</label>
-              <Field name="contactoNombre" type="text" className="w-full border rounded p-2" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Razón Social</label>
-              <Field name="razonSocial" type="text" className="w-full border rounded p-2" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">CLABE Interbancaria</label>
-              <Field name="clabeInterbancaria" type="text" className="w-full border rounded p-2" />
-            </div>
-            {/* Sección de Materiales Ofrecidos */}
-            <div>
-              <h3 className="text-xl font-bold mt-4">Materiales Ofrecidos</h3>
+              <h3 className="text-xl font-semibold">Materiales Ofrecidos</h3>
               <FieldArray name="materiales">
                 {({ push, remove }) => (
-                  <div>
-                    {values.materiales.map((oferta, index) => (
-                      <div key={index} className="border p-4 mb-2 rounded">
-                        <div className="mb-2">
-                          <label className="block text-sm font-medium mb-1">Material</label>
-                          {/* Usamos un select para que se tomen los materiales existentes */}
-                          <Field
-                            as="select"
-                            name={`materiales.${index}.material`}
-                            className="w-full border rounded p-2"
-                          >
-                            <option value="">-- Selecciona un material --</option>
-                            {materialesDB.map((mat) => (
-                              <option key={mat._id} value={mat._id}>
-                                {mat.nombre} ({mat.unidadMedida})
-                              </option>
-                            ))}
-                          </Field>
-                          <ErrorMessage name={`materiales.${index}.material`} component="div" className="text-red-500 text-xs" />
-                        </div>
-                        <div className="mb-2">
-                          <label className="block text-sm font-medium mb-1">Precio Unitario</label>
-                          <Field
-                            name={`materiales.${index}.precioUnitario`}
-                            type="number"
-                            placeholder="Ingrese el precio unitario"
-                            className="w-full border rounded p-2"
-                            min="0"
-                            step="0.01"
-                          />
-                          <ErrorMessage name={`materiales.${index}.precioUnitario`} component="div" className="text-red-500 text-xs" />
-                        </div>
+                  <>
+                    {values.materiales.map((_, idx) => (
+                      <div key={idx} className="border p-4 mb-2 rounded">
+                        <Select
+                          label="Material"
+                          name={`materiales.${idx}.material`}
+                          options={[{ value: '', label: '-- Selecciona --' }, ...materialesDB.map(m => ({
+                            value: m._id, label: `${m.nombre} (${m.unidadMedida})`
+                          }))]}
+                        />
+                        <Input
+                          label="Precio Unitario"
+                          name={`materiales.${idx}.precioUnitario`}
+                          type="number"
+                        />
                         <button
                           type="button"
-                          onClick={() => remove(index)}
+                          onClick={() => remove(idx)}
                           className="bg-red-500 text-white px-3 py-1 rounded mt-2"
                         >
-                          Eliminar Oferta
+                          Eliminar
                         </button>
                       </div>
                     ))}
@@ -180,34 +193,55 @@ const RegistroProveedor = () => {
                     >
                       Agregar Material
                     </button>
-                  </div>
+                  </>
                 )}
               </FieldArray>
             </div>
-            {/* Sección de Datos Fiscales */}
+
+            {/* Datos fiscales */}
             <div>
-              <h3 className="text-xl font-bold mt-4">Datos Fiscales</h3>
-              <div className="mb-2">
-                <label className="block text-sm font-medium mb-1">RFC</label>
-                <Field name="datosFiscales.rfc" type="text" className="w-full border rounded p-2" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Domicilio Fiscal</label>
-                <Field name="datosFiscales.domicilioFiscal" type="text" className="w-full border rounded p-2" />
-              </div>
+              <h3 className="text-xl font-semibold">Datos Fiscales</h3>
+              <Input label="RFC" name="datosFiscales.rfc" />
+              <Input label="Domicilio Fiscal" name="datosFiscales.domicilioFiscal" />
             </div>
+
             <button
               type="submit"
-              disabled={isSubmitting}
-              className="w-full bg-green-500 text-white py-2 rounded hover:bg-green-600 transition-colors"
+              disabled={isSubmitting || guardando}
+              className="w-full bg-green-500 text-white py-2 rounded hover:bg-green-600 disabled:opacity-50 transition"
             >
-              Registrar Proveedor
+              {guardando
+                ? 'Guardando…'
+                : id
+                  ? 'Actualizar Proveedor'
+                  : 'Registrar Proveedor'}
             </button>
           </Form>
         )}
       </Formik>
     </div>
   );
-};
+}
 
-export default RegistroProveedor;
+// Componentes auxiliares
+const Input = ({ label, name, type = 'text' }) => (
+  <div>
+    <label className="block text-sm font-medium mb-1">{label}</label>
+    <Field name={name} type={type} className="w-full border rounded p-2" />
+    <ErrorMessage name={name} component="div" className="text-red-500 text-xs" />
+  </div>
+);
+
+const Select = ({ label, name, options }) => (
+  <div>
+    <label className="block text-sm font-medium mb-1">{label}</label>
+    <Field as="select" name={name} className="w-full border rounded p-2">
+      {options.map(opt => (
+        <option key={opt.value} value={opt.value}>
+          {opt.label}
+        </option>
+      ))}
+    </Field>
+    <ErrorMessage name={name} component="div" className="text-red-500 text-xs" />
+  </div>
+);

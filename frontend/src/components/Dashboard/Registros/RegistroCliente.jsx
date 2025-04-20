@@ -1,8 +1,12 @@
-import React, { useState } from 'react';
+// src/components/Dashboard/Clientes/RegistroCliente.jsx
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import axiosInstance from '../../../api/axiosInstance';
-import { useNavigate } from 'react-router-dom';
 
 const RegistroCliente = () => {
+  const { id } = useParams();          // si existe → editar
+  const navigate = useNavigate();
+
   const [cliente, setCliente] = useState({
     nombre: '',
     razonSocial: '',
@@ -12,319 +16,173 @@ const RegistroCliente = () => {
       colonia: '',
       ciudad: '',
       estado: '',
-      codigoPostal: ''
+      codigoPostal: '',
     },
     telefono: '',
     email: '',
     sitioWeb: '',
-    // Array de contactos
-    contactos: [
-      { nombre: '', cargo: '', telefono: '', email: '' }
-    ],
+    contactos: [{ nombre: '', cargo: '', telefono: '', email: '' }],
     sector: '',
-    comentarios: ''
+    comentarios: '',
   });
 
-  const navigate = useNavigate();
+  const [guardando, setGuardando] = useState(false);
 
-  // Manejo dinámico de campos de nivel 1 y de objetos anidados en "direccion"
+  /* ----------------------- cargar cliente si es edición -------------------- */
+  useEffect(() => {
+    if (!id) return; // modo creación
+    (async () => {
+      try {
+        const res = await axiosInstance.get(`/clientes/${id}`);
+        // Asegura al menos un contacto vacío
+        if (!res.data.contactos || !res.data.contactos.length)
+          res.data.contactos = [{ nombre: '', cargo: '', telefono: '', email: '' }];
+        setCliente(res.data);
+      } catch (err) {
+        console.error('Error al cargar cliente:', err.response?.data || err.message);
+        alert('No se pudo cargar el cliente');
+        navigate(-1);
+      }
+    })();
+  }, [id, navigate]);
+
+  /* --------------------- helpers de cambio (inputs) ------------------------ */
   const handleChange = (e) => {
     const { name, value } = e.target;
-    // Si viene algo como "direccion.calle", dividimos
     if (name.includes('.')) {
       const [parent, child] = name.split('.');
       setCliente((prev) => ({
         ...prev,
-        [parent]: {
-          ...prev[parent],
-          [child]: value
-        }
+        [parent]: { ...prev[parent], [child]: value },
       }));
     } else {
       setCliente((prev) => ({ ...prev, [name]: value }));
     }
   };
 
-  // Manejo específico para los campos de cada contacto en el array "contactos"
-  const handleContactoChange = (index, e) => {
-    const { name, value } = e.target; // name podría ser "nombre", "cargo", etc.
+  const handleContactoChange = (idx, e) => {
+    const { name, value } = e.target;
     setCliente((prev) => {
-      const nuevosContactos = [...prev.contactos];
-      nuevosContactos[index][name] = value;
-      return { ...prev, contactos: nuevosContactos };
+      const c = [...prev.contactos];
+      c[idx][name] = value;
+      return { ...prev, contactos: c };
     });
   };
 
-  // Agregar un contacto vacío al array
-  const agregarContacto = () => {
-    setCliente((prev) => ({
-      ...prev,
-      contactos: [
-        ...prev.contactos,
-        { nombre: '', cargo: '', telefono: '', email: '' }
-      ]
+  const agregarContacto = () =>
+    setCliente((p) => ({
+      ...p,
+      contactos: [...p.contactos, { nombre: '', cargo: '', telefono: '', email: '' }],
     }));
-  };
 
-  // Eliminar un contacto por su índice
-  const eliminarContacto = (index) => {
-    setCliente((prev) => ({
-      ...prev,
-      contactos: prev.contactos.filter((_, i) => i !== index)
-    }));
-  };
+  const eliminarContacto = (idx) =>
+    setCliente((p) => ({ ...p, contactos: p.contactos.filter((_, i) => i !== idx) }));
 
-  // Enviar todo el objeto "cliente" al backend
+  /* ----------------------------- submit ------------------------------------ */
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setGuardando(true);
     try {
-      await axiosInstance.post('/clientes', cliente);
-      navigate('/dashboard');
-    } catch (error) {
-      console.error('Error al registrar cliente:', error);
+      if (id) {
+        await axiosInstance.put(`/clientes/${id}`, cliente);
+      } else {
+        await axiosInstance.post('/clientes', cliente);
+      }
+      navigate('/dashboard/clientes');
+    } catch (err) {
+      console.error('Error al guardar cliente:', err.response?.data || err.message);
+      alert('No se pudo guardar. Revisa la consola.');
+    } finally {
+      setGuardando(false);
     }
   };
 
+  /* -------------------------------- UI ------------------------------------ */
   return (
     <div className="p-6 max-w-2xl mx-auto">
-      <h2 className="text-xl font-bold mb-4">Registrar Cliente</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Datos generales */}
-        <div>
-          <label className="block mb-1">Nombre *</label>
-          <input
-            type="text"
-            name="nombre"
-            placeholder="Nombre"
-            value={cliente.nombre}
-            onChange={handleChange}
-            required
-            className="w-full border rounded p-2"
-          />
-        </div>
-        
-        <div>
-          <label className="block mb-1">Razón Social</label>
-          <input
-            type="text"
-            name="razonSocial"
-            placeholder="Razón Social"
-            value={cliente.razonSocial}
-            onChange={handleChange}
-            className="w-full border rounded p-2"
-          />
-        </div>
+      <h2 className="text-xl font-bold mb-4">
+        {id ? 'Editar Cliente' : 'Registrar Cliente'}
+      </h2>
 
-        {/* Sección de dirección */}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* ——— datos generales ——— */}
+        <Input label="Nombre *" name="nombre" value={cliente.nombre} onChange={handleChange} required />
+        <Input label="Razón Social" name="razonSocial" value={cliente.razonSocial} onChange={handleChange} />
+
+        {/* ——— dirección ——— */}
         <fieldset className="border p-4">
           <legend className="px-2">Dirección</legend>
-          <div>
-            <label className="block mb-1">Calle</label>
-            <input
-              type="text"
-              name="direccion.calle"
-              placeholder="Calle"
-              value={cliente.direccion.calle}
-              onChange={handleChange}
-              className="w-full border rounded p-2"
-            />
-          </div>
-          <div>
-            <label className="block mb-1">Número</label>
-            <input
-              type="text"
-              name="direccion.numero"
-              placeholder="Número"
-              value={cliente.direccion.numero}
-              onChange={handleChange}
-              className="w-full border rounded p-2"
-            />
-          </div>
-          <div>
-            <label className="block mb-1">Colonia</label>
-            <input
-              type="text"
-              name="direccion.colonia"
-              placeholder="Colonia"
-              value={cliente.direccion.colonia}
-              onChange={handleChange}
-              className="w-full border rounded p-2"
-            />
-          </div>
-          <div>
-            <label className="block mb-1">Ciudad</label>
-            <input
-              type="text"
-              name="direccion.ciudad"
-              placeholder="Ciudad"
-              value={cliente.direccion.ciudad}
-              onChange={handleChange}
-              className="w-full border rounded p-2"
-            />
-          </div>
-          <div>
-            <label className="block mb-1">Estado</label>
-            <input
-              type="text"
-              name="direccion.estado"
-              placeholder="Estado"
-              value={cliente.direccion.estado}
-              onChange={handleChange}
-              className="w-full border rounded p-2"
-            />
-          </div>
-          <div>
-            <label className="block mb-1">Código Postal</label>
-            <input
-              type="text"
-              name="direccion.codigoPostal"
-              placeholder="Código Postal"
-              value={cliente.direccion.codigoPostal}
-              onChange={handleChange}
-              className="w-full border rounded p-2"
-            />
-          </div>
+          <Input name="direccion.calle"  label="Calle"        value={cliente.direccion.calle}  onChange={handleChange} />
+          <Input name="direccion.numero" label="Número"       value={cliente.direccion.numero} onChange={handleChange} />
+          <Input name="direccion.colonia"label="Colonia"      value={cliente.direccion.colonia}onChange={handleChange} />
+          <Input name="direccion.ciudad" label="Ciudad"       value={cliente.direccion.ciudad} onChange={handleChange} />
+          <Input name="direccion.estado" label="Estado"       value={cliente.direccion.estado} onChange={handleChange} />
+          <Input name="direccion.codigoPostal" label="Código Postal"
+                 value={cliente.direccion.codigoPostal} onChange={handleChange} />
         </fieldset>
 
-        {/* Datos de contacto general */}
-        <div>
-          <label className="block mb-1">Teléfono</label>
-          <input
-            type="text"
-            name="telefono"
-            placeholder="Teléfono"
-            value={cliente.telefono}
-            onChange={handleChange}
-            className="w-full border rounded p-2"
-          />
-        </div>
+        {/* ——— contacto general ——— */}
+        <Input label="Teléfono" name="telefono" value={cliente.telefono} onChange={handleChange} />
+        <Input label="Email"    name="email"    type="email" value={cliente.email} onChange={handleChange} />
+        <Input label="Sitio Web"name="sitioWeb" value={cliente.sitioWeb} onChange={handleChange} />
 
-        <div>
-          <label className="block mb-1">Email</label>
-          <input
-            type="email"
-            name="email"
-            placeholder="Email"
-            value={cliente.email}
-            onChange={handleChange}
-            className="w-full border rounded p-2"
-          />
-        </div>
-
-        <div>
-          <label className="block mb-1">Sitio Web</label>
-          <input
-            type="text"
-            name="sitioWeb"
-            placeholder="Sitio Web"
-            value={cliente.sitioWeb}
-            onChange={handleChange}
-            className="w-full border rounded p-2"
-          />
-        </div>
-
-        {/* Contactos (array) */}
+        {/* ——— contactos múltiples ——— */}
         <fieldset className="border p-4">
           <legend className="px-2">Contactos</legend>
-          {cliente.contactos.map((contact, index) => (
-            <div key={index} className="mb-4 border-b pb-2">
-              <div>
-                <label className="block mb-1">Nombre</label>
-                <input
-                  type="text"
-                  name="nombre"
-                  placeholder="Nombre del contacto"
-                  value={contact.nombre}
-                  onChange={(e) => handleContactoChange(index, e)}
-                  className="w-full border rounded p-2 mb-2"
-                />
-              </div>
-              <div>
-                <label className="block mb-1">Cargo</label>
-                <input
-                  type="text"
-                  name="cargo"
-                  placeholder="Cargo"
-                  value={contact.cargo}
-                  onChange={(e) => handleContactoChange(index, e)}
-                  className="w-full border rounded p-2 mb-2"
-                />
-              </div>
-              <div>
-                <label className="block mb-1">Teléfono</label>
-                <input
-                  type="text"
-                  name="telefono"
-                  placeholder="Teléfono"
-                  value={contact.telefono}
-                  onChange={(e) => handleContactoChange(index, e)}
-                  className="w-full border rounded p-2 mb-2"
-                />
-              </div>
-              <div>
-                <label className="block mb-1">Email</label>
-                <input
-                  type="email"
-                  name="email"
-                  placeholder="Email"
-                  value={contact.email}
-                  onChange={(e) => handleContactoChange(index, e)}
-                  className="w-full border rounded p-2 mb-2"
-                />
-              </div>
-
+          {cliente.contactos.map((c, i) => (
+            <div key={i} className="mb-4 border-b pb-2">
+              <Input name="nombre"   label="Nombre"   value={c.nombre}   onChange={(e) => handleContactoChange(i, e)} />
+              <Input name="cargo"    label="Cargo"    value={c.cargo}    onChange={(e) => handleContactoChange(i, e)} />
+              <Input name="telefono" label="Teléfono" value={c.telefono} onChange={(e) => handleContactoChange(i, e)} />
+              <Input name="email"    type="email" label="Email" value={c.email} onChange={(e) => handleContactoChange(i, e)} />
               {cliente.contactos.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => eliminarContacto(index)}
-                  className="text-red-500 underline"
-                >
+                <button type="button" onClick={() => eliminarContacto(i)} className="text-red-500 underline">
                   Eliminar este contacto
                 </button>
               )}
             </div>
           ))}
-          <button
-            type="button"
-            onClick={agregarContacto}
-            className="bg-blue-500 text-white px-2 py-1 rounded"
-          >
+          <button type="button" onClick={agregarContacto} className="bg-blue-500 text-white px-2 py-1 rounded">
             Agregar otro contacto
           </button>
         </fieldset>
 
-        {/* Otros datos */}
-        <div>
-          <label className="block mb-1">Sector</label>
-          <input
-            type="text"
-            name="sector"
-            placeholder="Sector"
-            value={cliente.sector}
-            onChange={handleChange}
-            className="w-full border rounded p-2"
-          />
-        </div>
-        <div>
-          <label className="block mb-1">Comentarios</label>
-          <textarea
-            name="comentarios"
-            placeholder="Comentarios"
-            value={cliente.comentarios}
-            onChange={handleChange}
-            className="w-full border rounded p-2"
-          />
-        </div>
+        {/* ——— otros ——— */}
+        <Input label="Sector"      name="sector"      value={cliente.sector}      onChange={handleChange} />
+        <Textarea label="Comentarios" name="comentarios" value={cliente.comentarios} onChange={handleChange} />
 
         <button
           type="submit"
-          className="w-full bg-green-500 text-white py-2 rounded hover:bg-green-600"
+          disabled={guardando}
+          className="w-full bg-green-500 text-white py-2 rounded hover:bg-green-600 disabled:opacity-50"
         >
-          Registrar Cliente
+          {guardando ? 'Guardando…' : id ? 'Actualizar Cliente' : 'Registrar Cliente'}
         </button>
       </form>
     </div>
   );
 };
+
+/* ---------- pequeños componentes para reducir repetición ---------- */
+const Input = ({ label, name, value, onChange, required, type = 'text' }) => (
+  <div>
+    {label && <label className="block mb-1">{label}</label>}
+    <input
+      type={type}
+      name={name}
+      value={value}
+      onChange={onChange}
+      required={required}
+      className="w-full border rounded p-2"
+    />
+  </div>
+);
+
+const Textarea = ({ label, name, value, onChange }) => (
+  <div>
+    {label && <label className="block mb-1">{label}</label>}
+    <textarea name={name} value={value} onChange={onChange} className="w-full border rounded p-2" />
+  </div>
+);
 
 export default RegistroCliente;

@@ -1,11 +1,11 @@
 const express = require('express');
-const router = express.Router();
-const categoriaController = require('../controllers/categoriaController');
+const router  = express.Router();
+const ctrl    = require('../controllers/categoriaController');
 
-// Endpoint para obtener todas las categorías
-router.get('/', categoriaController.getCategorias);
-
-// Endpoint para crear una nueva categoría
-router.post('/', categoriaController.createCategoria);
+router.get('/',        ctrl.getCategorias);
+router.post('/',       ctrl.createCategoria);
+router.get('/:id',     ctrl.getCategoriaById);
+router.put('/:id',     ctrl.updateCategoria);
+router.delete('/:id',  ctrl.deleteCategoria);
 
 module.exports = router;

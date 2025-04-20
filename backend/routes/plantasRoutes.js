@@ -1,11 +1,12 @@
+// routes/plantaRoutes.js
 const express = require('express');
-const router = express.Router();
-const plantasController = require('../controllers/plantasController');
+const router  = express.Router();
+const plantaCtrl = require('../controllers/plantasController');
 
-// Obtener la lista de plantas
-router.get('/', plantasController.getPlantas);
-
-// Crear una nueva planta
-router.post('/', plantasController.createPlanta);
+router.get('/',          plantaCtrl.getPlantas);
+router.get('/:id',       plantaCtrl.getPlantaById);
+router.post('/',         plantaCtrl.createPlanta);
+router.put('/:id',       plantaCtrl.updatePlanta);
+router.delete('/:id',    plantaCtrl.deletePlanta);
 
 module.exports = router;

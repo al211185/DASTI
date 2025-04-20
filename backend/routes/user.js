@@ -1,18 +1,35 @@
 // routes/user.js
-const express = require('express');
-const router = express.Router();
-const auth = require('../middleware/auth'); // Asegúrate de tener este middleware configurado
+const express        = require('express');
+const router         = express.Router();
+const authController = require('../controllers/authController');
 const userController = require('../controllers/userController');
+const verifyToken    = require('../middleware/auth');
 
-// Endpoint protegido para obtener el perfil del usuario
-router.get('/profile', auth, userController.getProfile);
+// — Autenticación —
+// Registro
+router.post('/register', authController.register);
+// Login
+router.post('/login',    authController.login);
+// Logout
+router.post('/logout',   authController.logout);
 
-// Endpoint para registrar un nuevo usuario
-// Este endpoint es público o bien restringido según la lógica de tu aplicación
-router.post('/', userController.registerUser);
+// — Perfil (protegido) —
+// Ya que getProfile vive en authController
+router.get('/profile', verifyToken, authController.getProfile);
 
-// Ruta para obtener todos los usuarios (por ejemplo, para sugerencias en menciones)
-router.get('/usuarios', userController.getAllUsers);
+// — Health check de token —
+router.get('/check', verifyToken, (_req, res) => {
+  res.json({ msg: 'Autenticado' });
+});
 
+// — CRUD de usuarios —
+// Lista todos
+router.get('/',        verifyToken, userController.getAllUsers);
+// Obtiene uno por id
+router.get('/:id',     verifyToken, userController.getUserById);
+// Actualiza
+router.put('/:id',     verifyToken, userController.updateUser);
+// Elimina
+router.delete('/:id',  verifyToken, userController.deleteUser);
 
 module.exports = router;

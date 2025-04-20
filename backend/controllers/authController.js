@@ -1,6 +1,21 @@
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+// controllers/authController.js
+
+// Nuevo método para obtener el perfil
+exports.getProfile = async (req, res) => {
+  try {
+    const usuario = await User.findById(req.user.id)
+                              .select('-password')
+                              .populate('rol', 'nombre');
+    if (!usuario) return res.status(404).json({ msg: 'Usuario no encontrado' });
+    res.json(usuario);
+  } catch (error) {
+    console.error('Error en getProfile:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
 
 exports.register = async (req, res) => {
   const { nombre, email, password, telefono, empleadoID, departamento, rol } = req.body;

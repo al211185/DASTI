@@ -1,20 +1,15 @@
 // routes/clienteRoutes.js
-const express = require('express');
-const router = express.Router();
-const clienteController = require('../controllers/clienteController');
+const router = require('express').Router();
+const ctrl = require('../controllers/clienteController');
 
-// Listar todos los clientes
-router.get('/', clienteController.getClientes);
-// Obtener un cliente por su id
-router.get('/:id', clienteController.getClienteById);
-// Crear un nuevo cliente
-router.post('/', clienteController.createCliente);
-// Actualizar un cliente
-router.put('/:id', clienteController.updateCliente);
-// Eliminar un cliente
-router.delete('/:id', clienteController.deleteCliente);
+router.get('/',            ctrl.getClientes);
+router.post('/',           ctrl.createCliente);
+router.get('/:id',         ctrl.getClienteById);
+router.put('/:id',         ctrl.updateCliente);
+router.delete('/:id',      ctrl.deleteCliente);
 
-// Aquí la nueva ruta para agregar un contacto
-router.put('/:id/contactos', clienteController.addContacto);
+// sub‑ruta para contactos
+router.post('/:id/contactos',          ctrl.addContacto);
+router.delete('/:id/contactos/:contactoId', ctrl.removeContacto);
 
 module.exports = router;
