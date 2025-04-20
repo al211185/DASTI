@@ -1,32 +1,29 @@
-// src/hooks/useAuth.js
 import { useContext } from 'react';
 import axiosInstance from '../api/axiosInstance';
 import { UserContext } from '../context/UserContext';
 
 export const useAuth = () => {
-  const { saveToken, setUser } = useContext(UserContext);
+  const { setUser } = useContext(UserContext);
 
   const login = async ({ email, password }) => {
-    // 1) Logueamos
-    const { data } = await axiosInstance.post('/auth/login', { email, password });
-    // data = { token: 'xxx', ... }
+    // 1) Inicia sesión; la cookie HttpOnly vendrá en la respuesta
+    await axiosInstance.post('/auth/login', { email, password });
 
-    // 2) Guardamos token en localStorage y en el estado del contexto
-    saveToken(data.token);
+    // 2) Con la cookie ya en el navegador, pedimos el perfil
+    const { data } = await axiosInstance.get('/auth/profile');
 
-    // 3) Con el token ya inyectado en axiosInstance, pedimos el perfil
-    const profileResp = await axiosInstance.get('/auth/profile');
-    // 4) Actualizamos el contexto para que user deje de ser null
-    setUser(profileResp.data);
+    // 3) Actualizamos el contexto
+    setUser(data);
+  };
 
-    return data;
+  const logout = async () => {
+    await axiosInstance.post('/auth/logout');
+    setUser(null);
   };
 
   const register = async (userData) => {
-    const { data } = await axiosInstance.post('/auth/register', userData);
-    // si tu register también devuelve token, podrías hacer lo mismo aquí
-    return data;
+    return axiosInstance.post('/auth/register', userData);
   };
 
-  return { login, register };
+  return { login, logout, register };
 };
