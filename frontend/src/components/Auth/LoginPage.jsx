@@ -3,17 +3,17 @@ import React, { useEffect } from 'react';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { useAuth } from '../../hooks/useAuth';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const LoginPage = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  // Si ya hay token, redirige al Home (o ruta protegida)
+  // Si ya hay token, redirige al Dashboard
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      navigate('/');
+      navigate('/dashboard');
     }
   }, [navigate]);
 
@@ -23,35 +23,30 @@ const LoginPage = () => {
     password: Yup.string().required('Requerido'),
   });
 
-const onSubmit = async (values, { setSubmitting, setStatus }) => {
-  try {
-    await login(values);
-    setStatus({ success: 'Inicio de sesión exitoso' });
-    navigate('/dashboard'); // Redirige al Dashboard
-  } catch (error) {
-    const errorMsg = error.response?.data?.msg || 'Error al iniciar sesión';
-    setStatus({ error: errorMsg });
-  } finally {
-    setSubmitting(false);
-  }
-};
+  const onSubmit = async (values, { setSubmitting, setStatus }) => {
+    try {
+      await login(values);
+      setStatus({ success: 'Inicio de sesión exitoso' });
+      // Redirige inmediatamente al Dashboard
+      navigate('/dashboard');
+    } catch (error) {
+      const errorMsg = error.response?.data?.msg || 'Error al iniciar sesión';
+      setStatus({ error: errorMsg });
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex">
       {/* Sección Izquierda: Formulario de Login */}
       <div className="w-full md:w-1/2 bg-gray-100 flex flex-col justify-center items-center p-8">
-        {/* Logo (opcional) */}
-        <img
-          src="/logo.png"
-          alt="DASTI-CORP"
-          className="h-12 mb-4"
-        />
+        <img src="/logo.png" alt="DASTI-CORP" className="h-12 mb-4" />
         <h2 className="text-2xl font-bold mb-2">Inicia sesión</h2>
         <p className="text-gray-600 mb-6 text-center">
           Por favor ingresa tu usuario y contraseña para continuar
         </p>
 
-        {/* Formik */}
         <div className="w-full max-w-sm">
           <Formik
             initialValues={initialValues}
@@ -103,20 +98,6 @@ const onSubmit = async (values, { setSubmitting, setStatus }) => {
             )}
           </Formik>
         </div>
-      </div>
-
-      {/* Sección Derecha: Enlace a Registro */}
-      <div className="w-full md:w-1/2 flex flex-col justify-center items-center p-8">
-        <h3 className="text-xl font-semibold mb-2">¿Aún no tienes cuenta?</h3>
-        <p className="text-gray-600 mb-6 text-center">
-          Regístrate de forma rápida y sencilla para trabajar con nosotros
-        </p>
-        <Link
-          to="/register"
-          className="bg-blue-500 text-white px-4 py-2 rounded"
-        >
-          Registrarme
-        </Link>
       </div>
     </div>
   );
