@@ -124,22 +124,31 @@ const NuevaCotizacion = () => {
     const [modalComentariosIndex, setModalComentariosIndex] = useState(null);
     const [modalDocumentosIndex, setModalDocumentosIndex] = useState(null);
 
+    // Reemplaza tu función actual por esta en NuevaCotizacion.jsx
     const calcularCostoRenglon = (renglon) => {
-        let costoMaterial = 0;
-        if (renglon.material && renglon.material.length > 0) {
-            costoMaterial = renglon.material.reduce(
-                (acc, mat) =>
-                    acc + (mat.proveedorSeleccionado ? mat.proveedorSeleccionado.precioUnitario * (mat.cantidadSeleccionada || 1) : 0),
-                0
-            );
-        }
-        let costoTiempos = 0;
-        if (renglon.tiempos && renglon.tiempos.length > 0) {
-            costoTiempos = renglon.tiempos.reduce((acc, tiempo) => acc + tiempo.horas * tiempo.costoHora, 0);
-        }
-        const subtotal = (costoMaterial + costoTiempos) * renglon.cantidad;
-        return subtotal + subtotal * (renglon.porcentaje / 100);
+        // 1) Costo de materiales: qty * precioUnitario
+        const costoMaterial = (renglon.material || []).reduce((sum, mat) => {
+            const qty = mat.cantidad || 0;
+            const price = mat.proveedorSeleccionado?.precioUnitario || 0;
+            return sum + qty * price;
+        }, 0);
+
+        // 2) Costo de tiempos (igual que antes)
+        const costoTiempos = (renglon.tiempos || []).reduce(
+            (sum, t) => sum + (t.horas || 0) * (t.costoHora || 0),
+            0
+        );
+
+        // 3) Subtotal por unidad de renglón
+        const costoPorUnidad = costoMaterial + costoTiempos;
+
+        // 4) Multiplica por la cantidad global del renglón (renglon.cantidad)
+        const subtotal = costoPorUnidad * (renglon.cantidad || 1);
+
+        // 5) Aplica el porcentaje
+        return subtotal * (1 + (renglon.porcentaje || 0) / 100);
     };
+
 
     const calcularTotalCotizacion = (renglones) =>
         renglones.reduce((sum, r) => sum + calcularCostoRenglon(r), 0);
@@ -263,6 +272,7 @@ const NuevaCotizacion = () => {
                                             ...proveedor,
                                             precioUnitario: oferta ? oferta.precioUnitario : 0,
                                         },
+                                        cantidad: 1        // <= aquí le das valor inicial
                                     };
                                     nuevosRenglones[modalProveedores.renglonIndex].material = [...materialesActuales, nuevoMaterial];
                                     setFieldValue('renglones', nuevosRenglones);

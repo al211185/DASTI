@@ -12,8 +12,8 @@ export default function RegistroProveedor() {
   const [materialesDB, setMaterialesDB] = useState([]);
   const [initialValues, setInitialValues] = useState(null);
   const [guardando, setGuardando] = useState(false);
-  const [mensaje, setMensaje]   = useState(null);
-  const [error, setError]       = useState(null);
+  const [mensaje, setMensaje] = useState(null);
+  const [error, setError] = useState(null);
 
   // Esquema validación
   const validationSchema = Yup.object({
@@ -22,7 +22,10 @@ export default function RegistroProveedor() {
     materiales: Yup.array().of(
       Yup.object({
         material: Yup.string().required('Requerido'),
-        precioUnitario: Yup.number().required('Requerido').min(0, '>= 0')
+        precioPresentacion: Yup.number().required('Requerido').min(0, '>= 0'),
+        unidadPresentacion: Yup.string().required('Requerido'),
+        cantidadPresentacion: Yup.number().required('Requerido').min(0.000001, '> 0'),
+        factorConversion: Yup.number().required('Requerido').min(0.000001, '> 0'),
       })
     )
   });
@@ -50,6 +53,13 @@ export default function RegistroProveedor() {
       razonSocial: '',
       clabeInterbancaria: '',
       materiales: [{ material: '', precioUnitario: '' }],
+      materiales: [{
+        material: '',
+        precioPresentacion: '',
+        unidadPresentacion: '',
+        cantidadPresentacion: '',
+        factorConversion: '',
+      }],
       datosFiscales: { rfc: '', domicilioFiscal: '' }
     };
 
@@ -77,10 +87,19 @@ export default function RegistroProveedor() {
           clabeInterbancaria: data.clabeInterbancaria || '',
           materiales: (data.materiales && data.materiales.length)
             ? data.materiales.map(m => ({
-                material: m.material._id || m.material,
-                precioUnitario: m.precioUnitario
-              }))
-            : [{ material: '', precioUnitario: '' }],
+              material: m.material._id || m.material,
+              precioPresentacion: m.precioPresentacion,
+              unidadPresentacion: m.unidadPresentacion,
+              cantidadPresentacion: m.cantidadPresentacion,
+              factorConversion: m.factorConversion,
+            }))
+            : [{
+              material: '',
+              precioPresentacion: '',
+              unidadPresentacion: '',
+              cantidadPresentacion: '',
+              factorConversion: '',
+            }],
           datosFiscales: {
             rfc: data.datosFiscales?.rfc || '',
             domicilioFiscal: data.datosFiscales?.domicilioFiscal || ''
@@ -128,7 +147,7 @@ export default function RegistroProveedor() {
         {id ? 'Editar Proveedor' : 'Registrar Proveedor'}
       </h2>
 
-      {error   && <p className="text-red-500 mb-2">{error}</p>}
+      {error && <p className="text-red-500 mb-2">{error}</p>}
       {mensaje && <p className="text-green-500 mb-2">{mensaje}</p>}
 
       <Formik
@@ -165,18 +184,57 @@ export default function RegistroProveedor() {
                   <>
                     {values.materiales.map((_, idx) => (
                       <div key={idx} className="border p-4 mb-2 rounded">
+                        {/* Material */}
                         <Select
                           label="Material"
                           name={`materiales.${idx}.material`}
-                          options={[{ value: '', label: '-- Selecciona --' }, ...materialesDB.map(m => ({
-                            value: m._id, label: `${m.nombre} (${m.unidadMedida})`
-                          }))]}
+                          options={[
+                            { value: '', label: '-- Selecciona --' },
+                            ...materialesDB.map(m => ({
+                              value: m._id,
+                              label: `${m.nombre} (${m.unidadMedida})`
+                            }))
+                          ]}
                         />
+
+                        {/* Precio por presentación */}
                         <Input
-                          label="Precio Unitario"
-                          name={`materiales.${idx}.precioUnitario`}
+                          label="Precio por presentación"
+                          name={`materiales.${idx}.precioPresentacion`}
                           type="number"
                         />
+
+                        {/* Unidad de presentación */}
+                        <Select
+                          label="Unidad de presentación"
+                          name={`materiales.${idx}.unidadPresentacion`}
+                          options={[
+                            { value: '', label: '-- Selecciona unidad --' },
+                            { value: 'PIES', label: 'PIES' },
+                            { value: 'PULGADAS', label: 'PULGADAS' },
+                            { value: 'CENTIMETROS', label: 'CENTÍMETROS' },
+                            { value: 'MILIMETROS', label: 'MILÍMETROS' },
+                            { value: 'LIBRAS', label: 'LIBRAS' },
+                            { value: 'GRAMOS', label: 'GRAMOS' },
+                            { value: 'KILOS', label: 'KILOS' },
+                          ]}
+                        />
+
+
+                        {/* Cantidad de esa presentación */}
+                        <Input
+                          label="Cantidad presentación"
+                          name={`materiales.${idx}.cantidadPresentacion`}
+                          type="number"
+                        />
+
+                        {/* Factor de conversión */}
+                        <Input
+                          label="Factor de conversión"
+                          name={`materiales.${idx}.factorConversion`}
+                          type="number"
+                        />
+
                         <button
                           type="button"
                           onClick={() => remove(idx)}
@@ -186,9 +244,16 @@ export default function RegistroProveedor() {
                         </button>
                       </div>
                     ))}
+
                     <button
                       type="button"
-                      onClick={() => push({ material: '', precioUnitario: '' })}
+                      onClick={() => push({
+                        material: '',
+                        precioPresentacion: '',
+                        unidadPresentacion: '',
+                        cantidadPresentacion: '',
+                        factorConversion: '',
+                      })}
                       className="bg-blue-500 text-white px-4 py-2 rounded"
                     >
                       Agregar Material

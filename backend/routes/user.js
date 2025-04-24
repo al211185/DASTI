@@ -5,31 +5,24 @@ const authController = require('../controllers/authController');
 const userController = require('../controllers/userController');
 const verifyToken    = require('../middleware/auth');
 
-// — Autenticación —
-// Registro
+// ---------------- Autenticación ----------------
 router.post('/register', authController.register);
-// Login
 router.post('/login',    authController.login);
-// Logout
 router.post('/logout',   authController.logout);
 
-// — Perfil (protegido) —
-// Ya que getProfile vive en authController
+// ---------------- Perfil ----------------
 router.get('/profile', verifyToken, authController.getProfile);
 
-// — Health check de token —
+// ---------------- Health check ----------------
 router.get('/check', verifyToken, (_req, res) => {
   res.json({ msg: 'Autenticado' });
 });
 
-// — CRUD de usuarios —
-// Lista todos
+// ---------------- CRUD de usuarios ----------------
 router.get('/',        verifyToken, userController.getAllUsers);
-// Obtiene uno por id
 router.get('/:id',     verifyToken, userController.getUserById);
-// Actualiza
 router.put('/:id',     verifyToken, userController.updateUser);
-// Elimina
 router.delete('/:id',  verifyToken, userController.deleteUser);
++router.post('/',      verifyToken, userController.registerUser); // <── AÑADE ESTO
 
 module.exports = router;

@@ -28,7 +28,14 @@ const TablaRenglones = ({
                   cantidad: 1,
                   descripcion: '',
                   documentos: [],
-                  material: [],
+                  material: [{
+                    _id: '',
+                    nombre: '',
+                    unidadMedida: '',
+                    proveedorSeleccionado: null,
+                    cantidad: 1,
+                    precio: 0
+                  }],
                   tiempos: [],
                   porcentaje: 0,
                   costo: 0,
@@ -134,151 +141,168 @@ const TablaRenglones = ({
 
                   {/* ------ material (N → N) ------ */}
                   <td className="p-2 border align-top">
-                    {r.material.length > 0 && (
-                      <div className="space-y-2 mb-2">
-                        {r.material.map((mat, iMat) => (
-                          <div key={iMat} className="flex items-center space-x-2">
-                            {mat.imagen && (
-                              <img
-                                src={`${API_URL}${mat.imagen}`}
-                                alt={mat.nombre}
-                                className="w-12 h-12 object-cover rounded"
-                              />
-                            )}
-                            <div className="flex-1">
-                              <p className="font-medium text-sm">{mat.nombre}</p>
-                              <p className="text-xs text-gray-500">
-                                {mat.categoria?.nombre}
+                    {r.material.map((mat, iMat) => (
+                      <div key={iMat} className="border p-2 rounded space-y-2">
+                        {/* —– EXISTENTE: imagen, datos y botón eliminar —– */}
+                        <div className="flex items-center space-x-2">
+                          {mat.imagen && (
+                            <img
+                              src={`${API_URL}${mat.imagen}`}
+                              alt={mat.nombre}
+                              className="w-12 h-12 object-cover rounded"
+                            />
+                          )}
+                          <div className="flex-1">
+                            <p className="font-medium text-sm">{mat.nombre}</p>
+                            <p className="text-xs text-gray-500">{mat.categoria?.nombre}</p>
+
+                            {/* ← AQUÍ: nombre del proveedor */}
+                            {mat.proveedorSeleccionado && (
+                              <p className="text-xs text-gray-600">
+                                Proveedor: {mat.proveedorSeleccionado.nombre}
                               </p>
-                              {mat.proveedorSeleccionado && (
-                                <p className="text-xs text-gray-600">
-                                  $
-                                  {mat.proveedorSeleccionado.precioUnitario.toFixed(
-                                    2
-                                  )}
-                                  /{mat.unidadMedida}
-                                </p>
-                              )}
-                            </div>
-                            <button
-                              type="button"
-                              className="text-red-500 hover:text-red-700"
-                              onClick={() => {
-                                const nuevos = [...values.renglones];
-                                nuevos[index].material = nuevos[index].material.filter(
-                                  (_, k) => k !== iMat
-                                );
-                                setFieldValue('renglones', nuevos);
-                              }}
-                            >
-                              ✕
-                            </button>
+                            )}
+
+                            {/* precio unitario */}
+                            {mat.proveedorSeleccionado && (
+                              <p className="text-xs text-gray-600">
+                                ${mat.proveedorSeleccionado.precioUnitario.toFixed(2)}/{mat.unidadMedida}
+                              </p>
+                            )}
                           </div>
-                        ))}
+                          <button>✕</button>
                       </div>
-                    )}
 
-                    {/* 👉 siempre visible para permitir agregar más */}
-                    <button
-                      type="button"
-                      className="bg-gray-200 px-2 py-1 rounded w-full"
-                      onClick={() => setModalMaterialesIndex(index)}
-                    >
-                      {r.material.length ? 'Agregar otro material' : 'Agregar material'}
-                    </button>
-                  </td>
 
-                  {/* ------ tiempos ------ */}
-                  <td className="p-2 border text-center">
-                    {r.tiempos.length > 0 && (
-                      <div className="space-y-1 mb-2">
-                        {r.tiempos.map((t, iT) => (
-                          <div key={iT} className="flex items-center space-x-1">
-                            <span className="text-sm">
-                              {t.maquina} ({t.horas} h)
-                            </span>
-                            <button
-                              type="button"
-                              className="text-red-500 text-xs"
-                              onClick={() => {
-                                const n = [...values.renglones];
-                                n[index].tiempos = n[index].tiempos.filter(
-                                  (_, k) => k !== iT
-                                );
-                                setFieldValue('renglones', n);
-                              }}
-                            >
-                              X
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    <button
-                      type="button"
-                      className="bg-gray-200 px-2 py-1 rounded"
-                      onClick={() => setModalTiemposIndex(index)}
-                    >
-                      Agregar máquina
-                    </button>
-                  </td>
+                        {/* —– NUEVO: Cantidad a solicitar —– */ }
+                      < div className = "flex items-center space-x-2" >
+                          <label className="text-sm">Cant.:</label>
+                          <Field
+                            name={`renglones.${index}.material.${iMat}.cantidad`}
+                            type="number"
+                            min="0.0"
+                            className="w-16 border rounded p-1"
+                          />
+                          <span className="text-sm">{mat.unidadMedida}</span>
+                          <ErrorMessage
+                            name={`renglones.${index}.material.${iMat}.cantidad`}
+                            component="div"
+                            className="text-red-500 text-xs"
+                          />
+                        </div>
 
-                  {/* días hábiles */}
-                  <td className="p-2 border text-center">
-                    {r.tiempos.length
-                      ? (
-                          r.tiempos.reduce((tot, t) => tot + t.horas, 0) / 8
-                        ).toFixed(2)
-                      : '0'}
-                  </td>
+                  {/* Precio unitario (fijo) */}
+                  {mat.proveedorSeleccionado && (
+                    <p className="text-sm text-gray-700">
+                      Precio: ${mat.proveedorSeleccionado.precioUnitario.toFixed(2)} / {mat.unidadMedida}
+                    </p>
+                  )}
 
-                  {/* porcentaje */}
-                  <td className="p-2 border">
-                    <Field
-                      name={`renglones.${index}.porcentaje`}
-                      type="number"
-                      className="w-full border rounded p-1"
-                    />
-                    <ErrorMessage
-                      name={`renglones.${index}.porcentaje`}
-                      component="div"
-                      className="text-red-500 text-xs"
-                    />
-                  </td>
-
-                  {/* costo */}
-                  <td className="p-2 border text-right">
-                    ${calcularCostoRenglon(r).toFixed(2)}
-                  </td>
-
-                  {/* comentarios */}
-                  <td className="p-2 border text-center">
-                    <button
-                      type="button"
-                      className="bg-gray-200 px-2 py-1 rounded"
-                      onClick={() => setModalComentariosIndex(index)}
-                    >
-                      {r.comentarios.length} Coment.
-                    </button>
-                  </td>
-
-                  {/* eliminar renglón */}
-                  <td className="p-2 border text-center">
-                    <button
-                      type="button"
-                      onClick={() => remove(index)}
-                      className="bg-red-500 text-white px-2 py-1 rounded"
-                    >
-                      Eliminar
-                    </button>
-                  </td>
-                </tr>
+                </div>
               ))}
-            </tbody>
+
+
+              {/* 👉 siempre visible para permitir agregar más */}
+              <button
+                type="button"
+                className="bg-gray-200 px-2 py-1 rounded w-full"
+                onClick={() => setModalMaterialesIndex(index)}
+              >
+                {r.material.length ? 'Agregar otro material' : 'Agregar material'}
+              </button>
+            </td>
+
+            {/* ------ tiempos ------ */}
+            <td className="p-2 border text-center">
+              {r.tiempos.length > 0 && (
+                <div className="space-y-1 mb-2">
+                  {r.tiempos.map((t, iT) => (
+                    <div key={iT} className="flex items-center space-x-1">
+                      <span className="text-sm">
+                        {t.maquina} ({t.horas} h)
+                      </span>
+                      <button
+                        type="button"
+                        className="text-red-500 text-xs"
+                        onClick={() => {
+                          const n = [...values.renglones];
+                          n[index].tiempos = n[index].tiempos.filter(
+                            (_, k) => k !== iT
+                          );
+                          setFieldValue('renglones', n);
+                        }}
+                      >
+                        X
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <button
+                type="button"
+                className="bg-gray-200 px-2 py-1 rounded"
+                onClick={() => setModalTiemposIndex(index)}
+              >
+                Agregar máquina
+              </button>
+            </td>
+
+            {/* días hábiles */}
+            <td className="p-2 border text-center">
+              {r.tiempos.length
+                ? (
+                  r.tiempos.reduce((tot, t) => tot + t.horas, 0) / 8
+                ).toFixed(2)
+                : '0'}
+            </td>
+
+            {/* porcentaje */}
+            <td className="p-2 border">
+              <Field
+                name={`renglones.${index}.porcentaje`}
+                type="number"
+                className="w-full border rounded p-1"
+              />
+              <ErrorMessage
+                name={`renglones.${index}.porcentaje`}
+                component="div"
+                className="text-red-500 text-xs"
+              />
+            </td>
+
+            {/* costo */}
+            <td className="p-2 border text-right">
+              ${calcularCostoRenglon(r).toFixed(2)}
+            </td>
+
+            {/* comentarios */}
+            <td className="p-2 border text-center">
+              <button
+                type="button"
+                className="bg-gray-200 px-2 py-1 rounded"
+                onClick={() => setModalComentariosIndex(index)}
+              >
+                {r.comentarios.length} Coment.
+              </button>
+            </td>
+
+            {/* eliminar renglón */}
+            <td className="p-2 border text-center">
+              <button
+                type="button"
+                onClick={() => remove(index)}
+                className="bg-red-500 text-white px-2 py-1 rounded"
+              >
+                Eliminar
+              </button>
+            </td>
+          </tr>
+              ))}
+        </tbody>
           </table>
-        </div>
+        </div >
       )}
-    </FieldArray>
+    </FieldArray >
   );
 };
 

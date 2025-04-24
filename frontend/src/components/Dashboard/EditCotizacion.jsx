@@ -30,7 +30,20 @@ const validationSchema = Yup.object({
       .required('Requerido')
       .min(Yup.ref('tiempoEntregaMin'), 'Debe ser mayor o igual al mínimo'),
   }),
-  // Renglones, etc., si necesitas validación a detalle
+  renglones: Yup.array().of(
+    Yup.object({
+      cantidad: Yup.number().required('Requerido').min(1, 'Mínimo 1'),
+      descripcion: Yup.string().required('Requerido'),
+      porcentaje: Yup.number().min(0, 'Mínimo 0%').max(100, 'Máximo 100%'),
+      material: Yup.array().of(
+        Yup.object({
+          cantidad: Yup.number().required('Requerido').min(0.0001, '> 0'),
+          // si quieres, asegúrate de que proveedorSeleccionado exista
+          proveedorSeleccionado: Yup.object().required(),
+        })
+      )
+    })
+  )
 });
 
 const EditCotizacion = ({ fullName }) => {
@@ -82,8 +95,14 @@ const EditCotizacion = ({ fullName }) => {
             tiempoEntregaMin: cot.tiempoEntregaMin || '',
             tiempoEntregaMax: cot.tiempoEntregaMax || '',
           },
-          // Asigna renglones tal cual vengan. Si necesitas limpiar o mapear algo, hazlo aquí.
-          renglones: cot.renglones || [],
+          renglones: cot.renglones.map(r => ({
+            ...r,
+            // si vienen de la API, asegúrate de que r.material tenga la forma esperada:
+            material: (r.material || []).map(m => ({
+              ...m,
+              cantidad: m.cantidad ?? 1  // default a 1 si no existe
+            }))
+          }))
         });
       } catch (error) {
         console.error('Error al cargar cotización:', error);
@@ -95,8 +114,8 @@ const EditCotizacion = ({ fullName }) => {
   }, [id]);
 
 
-   // *** 2) Cargar las listas de clientes, vendedores y plantas (igual que en NuevaCotizacion)
-   useEffect(() => {
+  // *** 2) Cargar las listas de clientes, vendedores y plantas (igual que en NuevaCotizacion)
+  useEffect(() => {
     const fetchDataSelects = async () => {
       try {
         // Ajusta las rutas si en tu back-end se llaman diferente
@@ -118,28 +137,22 @@ const EditCotizacion = ({ fullName }) => {
   if (loading || !initialValues) return <div>Cargando cotización...</div>;
 
   // -------------- Funciones de cálculo de costos --------------
-  const calcularCostoRenglon = (renglon) => {
-    let costoMaterial = 0;
-    if (Array.isArray(renglon.material) && renglon.material.length > 0) {
-      costoMaterial = renglon.material.reduce((acc, mat) => {
-        return (
-          acc +
-          (mat.proveedorSeleccionado
-            ? mat.proveedorSeleccionado.precioUnitario * (mat.cantidadSeleccionada || 1)
-            : 0)
-        );
-      }, 0);
-    }
-    let costoTiempos = 0;
-    if (Array.isArray(renglon.tiempos) && renglon.tiempos.length > 0) {
-      costoTiempos = renglon.tiempos.reduce(
-        (acc, tiempo) => acc + tiempo.horas * tiempo.costoHora,
-        0
-      );
-    }
-    const subtotal = (costoMaterial + costoTiempos) * (renglon.cantidad || 1);
-    return subtotal + subtotal * ((renglon.porcentaje || 0) / 100);
+  const calcularCostoRenglon = (r) => {
+    const costoMaterial = (r.material || []).reduce((sum, mat) => {
+      const qty   = mat.cantidad || 0;
+      const price = mat.proveedorSeleccionado?.precioUnitario || 0;
+      return sum + qty * price;
+    }, 0);
+  
+    const costoTiempos = (r.tiempos || []).reduce(
+      (sum, t) => sum + (t.horas || 0) * (t.costoHora || 0),
+      0
+    );
+  
+    const subtotal = (costoMaterial + costoTiempos) * (r.cantidad || 1);
+    return subtotal * (1 + (r.porcentaje || 0) / 100);
   };
+  
 
   const calcularTotalCotizacion = (renglones) =>
     renglones.reduce((sum, r) => sum + calcularCostoRenglon(r), 0);
@@ -268,24 +281,29 @@ const EditCotizacion = ({ fullName }) => {
                 onClose={() =>
                   setModalProveedores({ open: false, material: null, renglonIndex: null })
                 }
-                onProveedorSelect={(proveedor) => {
-                  const nuevosRenglones = [...values.renglones];
-                  const materialesActuales = Array.isArray(
-                    nuevosRenglones[modalProveedores.renglonIndex].material
-                  )
-                    ? nuevosRenglones[modalProveedores.renglonIndex].material
+                onProveedorSelect={(selected) => {
+                  const { proveedor, oferta } = selected;
+                  const nuevos = [...values.renglones];
+                  const idx    = modalProveedores.renglonIndex;
+                  const actuales = Array.isArray(nuevos[idx].material)
+                    ? nuevos[idx].material
                     : [];
-                  const nuevoMaterial = {
+                
+                  // Aquí agregas la cantidad por defecto
+                  const nuevoMat = {
                     ...modalProveedores.material,
-                    proveedorSeleccionado: proveedor,
+                    proveedorSeleccionado: {
+                      ...proveedor,
+                      precioUnitario: oferta?.precioUnitario || 0
+                    },
+                    cantidad: 1    // <— valor inicial
                   };
-                  nuevosRenglones[modalProveedores.renglonIndex].material = [
-                    ...materialesActuales,
-                    nuevoMaterial,
-                  ];
-                  setFieldValue('renglones', nuevosRenglones);
+                
+                  nuevos[idx].material = [...actuales, nuevoMat];
+                  setFieldValue('renglones', nuevos);
                   setModalProveedores({ open: false, material: null, renglonIndex: null });
                 }}
+                
               />
             )}
 

@@ -8,11 +8,6 @@ const materialSchema = new mongoose.Schema({
     ref: 'Categoria', 
     required: true 
   },
-  unidadMedida: { 
-    type: String,
-    enum: ["PIES","PULGADAS","LIBRAS","MILIMETROS","CENTIMETROS","GRAMOS","KILOS"],
-    required: true 
-  },
   imagen: { 
     type: String,   // guardaremos la URL o ruta en el servidor
     trim: true 

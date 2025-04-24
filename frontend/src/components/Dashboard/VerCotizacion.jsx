@@ -45,7 +45,7 @@ const VerCotizacion = () => {
   };
 
   if (loading) return <p className="p-4">Cargando cotización...</p>;
-  if (error)   return <p className="p-4 text-red-500">{error}</p>;
+  if (error) return <p className="p-4 text-red-500">{error}</p>;
   if (!cotizacion) return <p className="p-4">Cotización no encontrada.</p>;
 
   return (
@@ -112,53 +112,65 @@ const VerCotizacion = () => {
                 <td className="p-2 border text-right">
                   ${(r.costo || 0).toFixed(2)}
                 </td>
-                <td className="p-2 border">
+                <td className="p-2 border align-top">
                   {Array.isArray(r.material) && r.material.length > 0
-                    ? r.material.map((m, j) => (
-                        <div key={j}>
-                          {m.nombre}
-                          {m.proveedorSeleccionado
-                            ? `: $${m.proveedorSeleccionado.precioUnitario}`
-                            : ''}
+                    ? r.material.map((m, j) => {
+                      const qty = m.cantidad || 0;
+                      const unit = m.unidadMedida;
+                      const unitPrice = m.proveedorSeleccionado?.precioUnitario || 0;
+                      const subtotal = qty * unitPrice;
+                      return (
+                        <div key={j} className="mb-3">
+                          <strong>{m.nombre}</strong><br />
+                          <span className="text-sm">
+                            Cantidad solicitada: {qty} {unit}
+                          </span><br />
+                          <span className="text-sm">
+                            Precio unitario: ${unitPrice.toFixed(2)} / {unit}
+                          </span><br />
+                          <span className="text-sm font-medium">
+                            Subtotal: ${subtotal.toFixed(2)}
+                          </span>
                         </div>
-                      ))
+                      );
+                    })
                     : '—'}
                 </td>
                 <td className="p-2 border">
                   {Array.isArray(r.tiempos) && r.tiempos.length > 0
                     ? r.tiempos.map((t, j) => (
-                        <div key={j}>
-                          {t.maquina}: {t.horas}h
-                        </div>
-                      ))
+                      <div key={j}>
+                        {t.maquina}: {t.horas}h
+                      </div>
+                    ))
                     : '—'}
                 </td>
                 <td className="p-2 border">
                   {Array.isArray(r.comentarios) && r.comentarios.length > 0
                     ? r.comentarios.map((c, j) => (
-                        <div key={j}>"{c.texto}"</div>
-                      ))
+                      <div key={j}>"{c.texto}"</div>
+                    ))
                     : '—'}
                 </td>
                 <td className="p-2 border">
                   {Array.isArray(r.documentos) && r.documentos.length > 0
                     ? r.documentos.map((d, j) =>
-                        /\.(jpe?g|png|gif)$/i.test(d.url) ? (
-                          <img
-                            key={j}
-                            src={d.url}
-                            alt=""
-                            className="h-8 mb-1"
-                            crossOrigin="anonymous"
-                          />
-                        ) : (
-                          <div key={j}>
-                            <a href={d.url} target="_blank" rel="noopener noreferrer">
-                              {d.originalName || 'Descargar'}
-                            </a>
-                          </div>
-                        )
+                      /\.(jpe?g|png|gif)$/i.test(d.url) ? (
+                        <img
+                          key={j}
+                          src={d.url}
+                          alt=""
+                          className="h-8 mb-1"
+                          crossOrigin="anonymous"
+                        />
+                      ) : (
+                        <div key={j}>
+                          <a href={d.url} target="_blank" rel="noopener noreferrer">
+                            {d.originalName || 'Descargar'}
+                          </a>
+                        </div>
                       )
+                    )
                     : '—'}
                 </td>
               </tr>

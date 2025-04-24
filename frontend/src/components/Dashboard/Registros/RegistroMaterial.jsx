@@ -3,15 +3,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 import axiosInstance from '../../../api/axiosInstance';
 
 const API_URL = import.meta.env.VITE_API_URL; // e.g. "http://localhost:5000"
-const UNIDADES_MEDIDA = [
-  'PIES',
-  'PULGADAS',
-  'LIBRAS',
-  'MILIMETROS',
-  'CENTIMETROS',
-  'GRAMOS',
-  'KILOS'
-];
 
 const RegistroMaterial = () => {
   const { id } = useParams();
@@ -21,7 +12,6 @@ const RegistroMaterial = () => {
   const [material, setMaterial] = useState({
     nombre: '',
     categoria: '',
-    unidadMedida: '',
     imagen: null,
   });
   const [previewUrl, setPreviewUrl] = useState(null);
@@ -59,7 +49,6 @@ const RegistroMaterial = () => {
         setMaterial({
           nombre: mat.nombre,
           categoria: mat.categoria._id,
-          unidadMedida: mat.unidadMedida,
           imagen: null, // el user puede subir archivo nuevo si lo desea
         });
         setPreviewUrl(`${API_URL}${mat.imagen}`);
@@ -112,7 +101,6 @@ const RegistroMaterial = () => {
     const formData = new FormData();
     formData.append('nombre', material.nombre.trim());
     formData.append('categoria', material.categoria);
-    formData.append('unidadMedida', material.unidadMedida);
     if (material.imagen) {
       formData.append('imagen', material.imagen);
     }
@@ -179,26 +167,6 @@ const RegistroMaterial = () => {
             <option value="">-- Selecciona una categoría --</option>
             {categorias.map(cat => (
               <option key={cat._id} value={cat._id}>{cat.nombre}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Unidad de medida */}
-        <div>
-          <label className="block text-sm font-medium mb-1">
-            Unidad de Medida
-          </label>
-          <select
-            name="unidadMedida"
-            value={material.unidadMedida}
-            onChange={handleChange}
-            className="w-full border rounded p-2"
-            required
-            disabled={submitting}
-          >
-            <option value="">-- Selecciona la unidad --</option>
-            {UNIDADES_MEDIDA.map(unidad => (
-              <option key={unidad} value={unidad}>{unidad}</option>
             ))}
           </select>
         </div>
