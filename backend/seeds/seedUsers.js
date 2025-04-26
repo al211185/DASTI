@@ -13,8 +13,8 @@ const seedUsers = async () => {
     });
 
     // Buscar los roles correspondientes en la colección de Roles
-    const directorRole = await Role.findOne({ nombre: 'Director' });
-    const adminRole = await Role.findOne({ nombre: 'Administrador' });    
+    const directorRole = await Role.findOne({ nombre: 'director' });
+    const adminRole = await Role.findOne({ nombre: 'administrador' });    
 
     if (!directorRole || !adminRole) {
       throw new Error('Roles necesarios no fueron encontrados en la base de datos');

@@ -4,7 +4,7 @@ const Role = require('../models/Role');
 exports.getVendedores = async (req, res) => {
   try {
     // Buscar el rol "Ventas"
-    const ventasRole = await Role.findOne({ nombre: "Ventas" });
+    const ventasRole = await Role.findOne({ nombre: "vendedores" });
     if (!ventasRole) {
       return res.status(404).json({ msg: "Rol de Ventas no encontrado" });
     }

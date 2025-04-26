@@ -52,7 +52,6 @@ export default function RegistroProveedor() {
       contactoNombre: '',
       razonSocial: '',
       clabeInterbancaria: '',
-      materiales: [{ material: '', precioUnitario: '' }],
       materiales: [{
         material: '',
         precioPresentacion: '',

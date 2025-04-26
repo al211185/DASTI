@@ -6,7 +6,7 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   telefono: { type: String },
   empleadoID: { type: String, unique: true },
-  departamento: { type: String, enum: ['administración', 'ventas', 'requisiciones', 'diseño', 'producción'] },
+  departamento: { type: String, enum: ['administración', 'ventas', 'diseño', 'producción'] },
   rol: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Role',

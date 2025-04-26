@@ -8,6 +8,11 @@ const EncabezadoCotizacion = ({ header, onChange, vendedores, plantas }) => {
   const [requisitores, setRequisitores] = useState([]);
   const { user } = useContext(UserContext); // Usuario actual
 
+  // Determinamos el rol en minúsculas
+  const userRole = user?.rol?.nombre?.toLowerCase();
+  // Sólo estos roles pueden editar
+  const canEdit = ['vendedores', 'administrador', 'director'].includes(userRole);
+
   // Cargar la lista de clientes de la API al montar el componente
   useEffect(() => {
     axiosInstance
@@ -52,7 +57,7 @@ const EncabezadoCotizacion = ({ header, onChange, vendedores, plantas }) => {
     // Determinar si el usuario actual es del rol "Ventas" o pertenece al departamento "ventas"
     const esVendedor =
       user &&
-      (user.rol?.nombre === 'Ventas' || user.departamento === 'ventas');
+      (user.rol?.nombre === 'vendedores' || user.departamento === 'ventas');
 
     if (esVendedor && user && !header.vendedor) {
       onChange('vendedor', user._id);
@@ -63,9 +68,9 @@ const EncabezadoCotizacion = ({ header, onChange, vendedores, plantas }) => {
   // Puedes filtrar por rol, departamento, o ambos.
   const vendedoresFiltrados = vendedores.filter((v) => {
     // Si cada vendedor viene con un campo 'rol' (populated) y 'departamento', puedes hacer:
-    return (v.rol && v.rol.nombre === 'Ventas') || v.departamento === 'ventas';
+    return (v.rol && v.rol.nombre === 'vendedores') || v.departamento === 'ventas';
   });
-  
+
   return (
     <div className="bg-white p-4 rounded shadow space-y-4 mb-6">
       <h2 className="text-xl font-semibold">Datos de la Cotización</h2>
@@ -77,6 +82,7 @@ const EncabezadoCotizacion = ({ header, onChange, vendedores, plantas }) => {
             className="w-full border rounded p-2"
             value={header.cliente}
             onChange={(e) => onChange('cliente', e.target.value)}
+            disabled={!canEdit}
           >
             <option value="">Seleccione un cliente</option>
             {clientes.map((c) => (
@@ -93,6 +99,7 @@ const EncabezadoCotizacion = ({ header, onChange, vendedores, plantas }) => {
             className="w-full border rounded p-2"
             value={header.requisitor}
             onChange={(e) => onChange('requisitor', e.target.value)}
+            disabled={!canEdit}
           >
             <option value="">Seleccione un requisitor</option>
             {requisitores.map((r, index) => (
@@ -109,6 +116,7 @@ const EncabezadoCotizacion = ({ header, onChange, vendedores, plantas }) => {
             className="w-full border rounded p-2"
             value={header.vendedor}
             onChange={(e) => onChange('vendedor', e.target.value)}
+            disabled={!canEdit}
           >
             <option value="">Seleccione un vendedor</option>
             {vendedores.map((v) => (
@@ -127,6 +135,7 @@ const EncabezadoCotizacion = ({ header, onChange, vendedores, plantas }) => {
             className="w-full border rounded p-2"
             value={header.fechaInicio}
             onChange={(e) => onChange('fechaInicio', e.target.value)}
+            disabled={!canEdit}
           />
         </div>
         {/* Planta */}
@@ -136,6 +145,7 @@ const EncabezadoCotizacion = ({ header, onChange, vendedores, plantas }) => {
             className="w-full border rounded p-2"
             value={header.planta}
             onChange={(e) => onChange('planta', e.target.value)}
+            disabled={!canEdit}
           >
             <option value="">Seleccione una planta</option>
             {plantas.map((p) => (
@@ -157,6 +167,7 @@ const EncabezadoCotizacion = ({ header, onChange, vendedores, plantas }) => {
               name="header.tiempoEntregaMin"
               placeholder="Min"
               className="w-full border rounded p-2"
+              disabled={!canEdit}
             />
             <span className="flex items-center">-</span>
             <Field
@@ -164,6 +175,7 @@ const EncabezadoCotizacion = ({ header, onChange, vendedores, plantas }) => {
               name="header.tiempoEntregaMax"
               placeholder="Max"
               className="w-full border rounded p-2"
+              disabled={!canEdit}
             />
           </div>
           <ErrorMessage name="header.tiempoEntregaMin" component="div" className="text-red-500 text-sm" />

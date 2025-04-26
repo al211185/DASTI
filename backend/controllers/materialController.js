@@ -32,12 +32,12 @@ exports.getMaterialById = async (req, res) => {
 exports.createMaterial = async (req, res) => {
   try {
     // Desestructuramos el body
-    const { nombre, categoria, unidadMedida } = req.body;
+    const { nombre, categoria} = req.body;
     // Si multer procesó un archivo, añadimos su ruta
     const imagen = req.file ? `/uploads/materiales/${req.file.filename}` : undefined;
 
     // Creamos y guardamos
-    const newMaterial = new Material({ nombre, categoria, unidadMedida, imagen });
+    const newMaterial = new Material({ nombre, categoria, imagen });
     const savedMaterial = await newMaterial.save();
 
     // Populamos antes de responder

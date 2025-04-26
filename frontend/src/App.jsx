@@ -31,6 +31,8 @@ import ListadoCategorias from './components/Dashboard/Registros/ListadoCategoria
 import ListadoProveedores from './components/Dashboard/Registros/ListadoProveedores';
 import ListadoMaquinas from './components/Dashboard/Registros/ListadoMaquinas';
 
+import SolicitudesAprobacion from './components/Dashboard/SolicitudesAprobacion';
+
 function App() {
   return (
     <BrowserRouter>
@@ -246,6 +248,17 @@ function App() {
             <DashboardLayout><RegistroMaquina /></DashboardLayout>
           </ProtectedRoute>
         } />
+
+        <Route
+          path="/dashboard/solicitudes-aprobacion"
+          element={
+            <ProtectedRoute allowedRoles={['administrador', 'director']}>
+              <DashboardLayout>
+                <SolicitudesAprobacion />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
 
         {/* Búsqueda global */}
         <Route path="/dashboard/buscar-proyectos" element={
