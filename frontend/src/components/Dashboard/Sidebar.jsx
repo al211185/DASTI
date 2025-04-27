@@ -7,7 +7,6 @@ import {
   ArrowLeftOnRectangleIcon, 
   PlusCircleIcon,
   MagnifyingGlassIcon,
-  // icono para solicitudes:
   ClipboardDocumentListIcon 
 } from '@heroicons/react/24/outline';
 import { UserContext } from '../../context/UserContext';
@@ -18,24 +17,20 @@ const Sidebar = () => {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
-    try {
-      await axiosInstance.post('/auth/logout');
-      setUser(null);
-      navigate('/');
-    } catch (error) {
-      console.error('Error al cerrar sesión:', error);
-    }
+    await axiosInstance.post('/auth/logout');
+    setUser(null);
+    navigate('/');
   };
 
-  // Sólo Director y Administrador ven los registros (ya tenías esto):
-  const mostrarRegistro =
-    user?.rol?.nombre &&
-    ['director','administrador'].includes(user.rol.nombre.toLowerCase());
+  const role = user?.rol?.nombre?.toLowerCase();
 
-  // Sólo Director y Administrador ven las solicitudes de aprobación:
-  const mostrarSolicitudes =
-    user?.rol?.nombre &&
-    ['director','administrador'].includes(user.rol.nombre.toLowerCase());
+  // ¿Quiénes pueden crear una nueva cotización?
+  const mostrarNuevaCotizacion = ['director','administrador','vendedores','disenador']
+    .includes(role);
+
+  // Sólo Director y Administrador ven el registro y las solicitudes
+  const mostrarRegistro = ['director','administrador', 'almacen', 'compras'].includes(role);
+  const mostrarSolicitudes = ['director','administrador'].includes(role);
 
   return (
     <div className="w-20 flex flex-col items-center bg-white border-r h-screen">
@@ -46,14 +41,21 @@ const Sidebar = () => {
         <Link to="/dashboard" className="text-gray-500 hover:text-blue-500" title="Inicio">
           <HomeIcon className="h-6 w-6" />
         </Link>
-        <Link to="/dashboard/nueva-cotizacion" className="text-gray-500 hover:text-blue-500" title="Nueva Cotización">
-          <DocumentPlusIcon className="h-6 w-6" />
-        </Link>
+
+        {mostrarNuevaCotizacion && (
+          <Link
+            to="/dashboard/nueva-cotizacion"
+            className="text-gray-500 hover:text-blue-500"
+            title="Nueva Cotización"
+          >
+            <DocumentPlusIcon className="h-6 w-6" />
+          </Link>
+        )}
+
         <Link to="/dashboard/buscar-proyectos" className="text-gray-500 hover:text-blue-500" title="Buscar Proyectos">
           <MagnifyingGlassIcon className="h-6 w-6" />
         </Link>
 
-        {/* Enlace a Solicitudes de Aprobación */}
         {mostrarSolicitudes && (
           <Link
             to="/dashboard/solicitudes-aprobacion"
@@ -64,7 +66,6 @@ const Sidebar = () => {
           </Link>
         )}
 
-        {/* Registro (planta, clientes, etc.) */}
         {mostrarRegistro && (
           <Link to="/dashboard/registro-seleccion" className="text-gray-500 hover:text-blue-500" title="Registro">
             <PlusCircleIcon className="h-6 w-6" />

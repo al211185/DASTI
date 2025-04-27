@@ -47,8 +47,8 @@ const cotizacionSchema = new Schema({
   },
   fechaCreacion: { type: Date, default: Date.now },
   historialCambios: [historialCambioSchema],
+  comentarios: [comentarioSchema],
 });
-
 
 
 // Pre-save hook para generar el serial autoincremental por planta

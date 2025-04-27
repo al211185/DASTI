@@ -11,7 +11,10 @@ const EncabezadoCotizacion = ({ header, onChange, vendedores, plantas }) => {
   // Determinamos el rol en minúsculas
   const userRole = user?.rol?.nombre?.toLowerCase();
   // Sólo estos roles pueden editar
-  const canEdit = ['vendedores', 'administrador', 'director'].includes(userRole);
+  const canEdit = ['vendedores', 'administrador', 'director', 'disenador'].includes(userRole);
+
+  // Si es jefe de produccion, ocultamos todo el bloque
+  if (userRole === 'jefe de produccion') return null;
 
   // Cargar la lista de clientes de la API al montar el componente
   useEffect(() => {

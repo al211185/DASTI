@@ -99,7 +99,7 @@ function App() {
         <Route
           path="/dashboard/registro-seleccion"
           element={
-            <ProtectedRoute allowedRoles={['administrador', 'director']}>
+            <ProtectedRoute allowedRoles={['administrador', 'director', 'almacen', 'compras']}>
               <DashboardLayout>
                 <RegistroSeleccion />
               </DashboardLayout>
@@ -169,62 +169,62 @@ function App() {
 
         {/* Materiales: crear, listar/gestionar y editar */}
         <Route path="/dashboard/registro/material" element={
-          <ProtectedRoute allowedRoles={['administrador', 'director']}>
+          <ProtectedRoute allowedRoles={['administrador', 'director', 'almacen', 'compras']}>
             <DashboardLayout><RegistroMaterial /></DashboardLayout>
           </ProtectedRoute>
         } />
 
         {/* ← Aquí: ruta para LISTAR/GESTIONAR materiales */}
         <Route path="/dashboard/registro/materiales" element={
-          <ProtectedRoute allowedRoles={['administrador', 'director']}>
+          <ProtectedRoute allowedRoles={['administrador', 'director', 'almacen', 'compras']}>
             <DashboardLayout><ListadoMateriales /></DashboardLayout>
           </ProtectedRoute>
         } />
 
         {/* Edición de un material concreto */}
         <Route path="/dashboard/registro/material/:id" element={
-          <ProtectedRoute allowedRoles={['administrador', 'director']}>
+          <ProtectedRoute allowedRoles={['administrador', 'director', 'almacen', 'compras']}>
             <DashboardLayout><RegistroMaterial /></DashboardLayout>
           </ProtectedRoute>
         } />
 
         {/* Categorías, proveedores, máquinas */}
         <Route path="/dashboard/registro/categoria" element={
-          <ProtectedRoute allowedRoles={['administrador', 'director']}>
+          <ProtectedRoute allowedRoles={['administrador', 'director', 'almacen', 'compras']}>
             <DashboardLayout><RegistroCategoria /></DashboardLayout>
           </ProtectedRoute>
         } />
 
         {/* ← Aquí: ruta para LISTAR/GESTIONAR categorias */}
         <Route path="/dashboard/registro/categorias" element={
-          <ProtectedRoute allowedRoles={['administrador', 'director']}>
+          <ProtectedRoute allowedRoles={['administrador', 'director', 'almacen', 'compras']}>
             <DashboardLayout><ListadoCategorias /></DashboardLayout>
           </ProtectedRoute>
         } />
 
         {/* Edición de una categoria concreta */}
         <Route path="/dashboard/registro/categoria/:id" element={
-          <ProtectedRoute allowedRoles={['administrador', 'director']}>
+          <ProtectedRoute allowedRoles={['administrador', 'director', 'almacen', 'compras']}>
             <DashboardLayout><RegistroCategoria /></DashboardLayout>
           </ProtectedRoute>
         } />
 
         <Route path="/dashboard/registro/proveedor" element={
-          <ProtectedRoute allowedRoles={['administrador', 'director']}>
+          <ProtectedRoute allowedRoles={['administrador', 'director', 'almacen', 'compras']}>
             <DashboardLayout><RegistroProveedor /></DashboardLayout>
           </ProtectedRoute>
         } />
 
         {/* ← Aquí: ruta para LISTAR/GESTIONAR proveedores */}
         <Route path="/dashboard/registro/proveedores" element={
-          <ProtectedRoute allowedRoles={['administrador', 'director']}>
+          <ProtectedRoute allowedRoles={['administrador', 'director', 'almacen', 'compras']}>
             <DashboardLayout><ListadoProveedores /></DashboardLayout>
           </ProtectedRoute>
         } />
 
         {/* Edición de una categoria concreta */}
         <Route path="/dashboard/registro/proveedor/:id" element={
-          <ProtectedRoute allowedRoles={['administrador', 'director']}>
+          <ProtectedRoute allowedRoles={['administrador', 'director', 'almacen', 'compras']}>
             <DashboardLayout><RegistroProveedor /></DashboardLayout>
           </ProtectedRoute>
         } />

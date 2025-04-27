@@ -357,14 +357,117 @@ exports.updateCotizacion = async (req, res) => {
     }
 
     // 5) ADMIN / DIRECTOR —> flujo normal, sin solicitud
+    const cambios = [];
+
+    // 2.1) Cabecera
+    const camposCabecera = [
+      'cliente','requisitor','vendedor','fechaInicio',
+      'planta','total','estado','tiempoEntregaMin','tiempoEntregaMax'
+    ];
+    for (const campo of camposCabecera) {
+      if (req.body[campo] !== undefined) {
+        let ant = original[campo], nue = req.body[campo];
+        if (['cliente','planta'].includes(campo)) {
+          ant = original[campo]?.nombre;
+          const Model = campo === 'cliente' ? Cliente : Planta;
+          const doc = await Model.findById(nue).lean();
+          nue = doc?.nombre || nue;
+        }
+        if (campo === 'vendedor') {
+          ant = original.vendedor?.nombre;
+          const doc = await User.findById(nue).lean();
+          nue = doc?.nombre || nue;
+        }
+        if (campo === 'fechaInicio') {
+          ant = new Date(ant).toLocaleDateString();
+          nue = new Date(nue).toLocaleDateString();
+        }
+        if (`${ant}` !== `${nue}`) {
+          cambios.push({ campo, actionType: 'edit', valorAnterior: ant, valorNuevo: nue, usuario, fecha: new Date() });
+        }
+      }
+    }
+
+    // 2.2) Renglones (creados, eliminados y edits en sus campos)
+    const oldRows = original.renglones || [];
+    const newRows = req.body.renglones || oldRows;
+    const maxLen = Math.max(oldRows.length, newRows.length);
+    for (let i = 0; i < maxLen; i++) {
+      const o = oldRows[i], n = newRows[i];
+      if (!o && n) {
+        cambios.push({
+          campo: `renglones > ${i+1}`,
+          actionType: 'create',
+          valorAnterior: '—',
+          valorNuevo: `${n.cantidad}× ${n.descripcion}`,
+          usuario, fecha: new Date()
+        });
+        continue;
+      }
+      if (o && !n) {
+        cambios.push({
+          campo: `renglones > ${i+1}`,
+          actionType: 'delete',
+          valorAnterior: `${o.cantidad}× ${o.descripcion}`,
+          valorNuevo: '—',
+          usuario, fecha: new Date()
+        });
+        continue;
+      }
+      // comparación de campos internos:
+      ['cantidad','descripcion','precioUnitario','importe'].forEach(cf => {
+        if (`${o[cf]}` !== `${n[cf]}`) {
+          cambios.push({
+            campo: `renglones > ${i+1} > ${cf}`,
+            actionType: 'edit',
+            valorAnterior: o[cf],
+            valorNuevo: n[cf],
+            usuario, fecha: new Date()
+          });
+        }
+      });
+      // comentarios y documentos análogos…
+      const antCom = (o.comentarios||[]).map(c=>c.texto).join(', ');
+      const nueCom = (n.comentarios||[]).map(c=>c.texto).join(', ');
+      if (antCom !== nueCom) cambios.push({
+        campo: `renglones > ${i+1} > comentarios`,
+        actionType: 'edit',
+        valorAnterior: antCom||'—',
+        valorNuevo: nueCom||'—',
+        usuario, fecha: new Date()
+      });
+      const antDoc = (o.documentos||[]).map(d=>d.originalName||d.url).join(', ');
+      const nueDoc = (n.documentos||[]).map(d=>d.originalName||d.url).join(', ');
+      if (antDoc !== nueDoc) cambios.push({
+        campo: `renglones > ${i+1} > documentos`,
+        actionType: 'edit',
+        valorAnterior: antDoc||'—',
+        valorNuevo: nueDoc||'—',
+        usuario, fecha: new Date()
+      });
+    }
+
+    // 3) Aplico el update
     const { serial, ...toUpdate } = req.body;
     const updated = await Cotizacion.findByIdAndUpdate(id, toUpdate, { new: true });
 
-    // (Opcional: aquí podrías también generar un historial 'actualizado' para admin/director)
+    // 4) **GUARDAR historial** con actionType 'edit'
+    const version = await CotizacionHistorial.countDocuments({ cotizacionId: id }) + 1;
+    await CotizacionHistorial.create({
+      cotizacionId: id,
+      version,
+      action: 'actualizado',
+      actionType: 'edit',
+      usuario,
+      cambios
+    });
+
+    // 5) Respondo
     return res.json({
       msg: 'Cotización actualizada correctamente',
       cotizacion: updated
     });
+
   } catch (error) {
     console.error('Error al actualizar cotización:', error);
     return res.status(500).json({
@@ -564,3 +667,33 @@ exports.responderSolicitud = async (req, res) => {
     msg: `Solicitud ${aprovado ? 'aprobada' : 'rechazada'} con éxito`
   });
 };
+
+// GET /cotizaciones/:id/comentarios
+exports.listComentarios = async (req, res) => {
+  const cot = await Cotizacion.findById(req.params.id);
+  if (!cot) return res.status(404).json({ msg: 'No encontrada' });
+  // a) globales
+  const globales = cot.comentarios.map(c => ({ ...c.toObject(), tipo:'general' }));
+  // b) renglón
+  const porRenglon = cot.renglones.flatMap((r, idx) =>
+    (r.comentarios||[]).map(c => ({ ...c.toObject(), tipo:'renglon', renglon: idx+1 }))
+  );
+  res.json({ comentarios: [...globales, ...porRenglon] });
+};
+
+
+// POST /cotizaciones/:id/comentarios
+exports.addComentario = async (req, res) => {
+  const { texto } = req.body;
+  const usuario = req.user.nombre || req.user.email || 'Desconocido';
+  const nuevo = { texto, usuario, fecha: new Date() };
+
+  await Cotizacion.updateOne(
+    { _id: req.params.id },
+    { $push: { comentarios: nuevo } }
+    // opcional: , { runValidators: true }
+  );
+
+  res.status(201).json({ comentario: nuevo });
+};
+

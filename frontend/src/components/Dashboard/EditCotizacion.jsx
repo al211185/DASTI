@@ -1,7 +1,8 @@
 // src/components/Dashboard/EditCotizacion.jsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Formik, Form } from 'formik';
+import { UserContext } from '../../context/UserContext';  // ◀️ este import faltaba
 import axiosInstance from '../../api/axiosInstance';
 import EncabezadoCotizacion from './NuevaCotizacion/EncabezadoCotizacion';
 import TablaRenglones from './NuevaCotizacion/TablaRenglones';
@@ -48,6 +49,7 @@ const validationSchema = Yup.object({
 
 const EditCotizacion = ({ fullName }) => {
   const { id } = useParams();
+  const { user } = useContext(UserContext);
   const navigate = useNavigate();
   const [initialValues, setInitialValues] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -139,20 +141,20 @@ const EditCotizacion = ({ fullName }) => {
   // -------------- Funciones de cálculo de costos --------------
   const calcularCostoRenglon = (r) => {
     const costoMaterial = (r.material || []).reduce((sum, mat) => {
-      const qty   = mat.cantidad || 0;
+      const qty = mat.cantidad || 0;
       const price = mat.proveedorSeleccionado?.precioUnitario || 0;
       return sum + qty * price;
     }, 0);
-  
+
     const costoTiempos = (r.tiempos || []).reduce(
       (sum, t) => sum + (t.horas || 0) * (t.costoHora || 0),
       0
     );
-  
+
     const subtotal = (costoMaterial + costoTiempos) * (r.cantidad || 1);
     return subtotal * (1 + (r.porcentaje || 0) / 100);
   };
-  
+
 
   const calcularTotalCotizacion = (renglones) =>
     renglones.reduce((sum, r) => sum + calcularCostoRenglon(r), 0);
@@ -258,18 +260,18 @@ const EditCotizacion = ({ fullName }) => {
               />
             )}
 
-            {modalTiemposIndex !== null && (
+            {modalTiemposIndex && (
               <ModalTiempos
+                tipo={modalTiemposIndex.tipo}
                 onClose={() => setModalTiemposIndex(null)}
                 onTiemposSelect={(tiempo) => {
-                  const nuevosRenglones = [...values.renglones];
-                  const tiemposActuales = Array.isArray(
-                    nuevosRenglones[modalTiemposIndex].tiempos
-                  )
-                    ? nuevosRenglones[modalTiemposIndex].tiempos
-                    : [];
-                  nuevosRenglones[modalTiemposIndex].tiempos = [...tiemposActuales, tiempo];
-                  setFieldValue('renglones', nuevosRenglones);
+                  // añadimos el tiempo (ya con .tipo) al renglón correspondiente
+                  const nuevos = [...values.renglones];
+                  nuevos[modalTiemposIndex.index].tiempos = [
+                    ...(nuevos[modalTiemposIndex.index].tiempos || []),
+                    tiempo
+                  ];
+                  setFieldValue('renglones', nuevos);
                   setModalTiemposIndex(null);
                 }}
               />
@@ -284,11 +286,11 @@ const EditCotizacion = ({ fullName }) => {
                 onProveedorSelect={(selected) => {
                   const { proveedor, oferta } = selected;
                   const nuevos = [...values.renglones];
-                  const idx    = modalProveedores.renglonIndex;
+                  const idx = modalProveedores.renglonIndex;
                   const actuales = Array.isArray(nuevos[idx].material)
                     ? nuevos[idx].material
                     : [];
-                
+
                   // Aquí agregas la cantidad por defecto
                   const nuevoMat = {
                     ...modalProveedores.material,
@@ -298,37 +300,42 @@ const EditCotizacion = ({ fullName }) => {
                     },
                     cantidad: 1    // <— valor inicial
                   };
-                
+
                   nuevos[idx].material = [...actuales, nuevoMat];
                   setFieldValue('renglones', nuevos);
                   setModalProveedores({ open: false, material: null, renglonIndex: null });
                 }}
-                
+
               />
             )}
 
             {modalComentariosIndex !== null && (
+
               <ModalComentarios
                 comentarios={values.renglones[modalComentariosIndex].comentarios}
                 onClose={() => setModalComentariosIndex(null)}
-                onAgregarComentario={(comentario, usuario) => {
-                  const nuevosRenglones = [...values.renglones];
-                  nuevosRenglones[modalComentariosIndex].comentarios.push({
-                    texto: comentario,
+                onAgregarComentario={(texto) => {
+                  const nuevos = [...values.renglones];
+                  nuevos[modalComentariosIndex].comentarios.push({
+                    texto,
                     fecha: new Date(),
-                    usuario,
+                    usuario: user.nombre || user.email || 'Desconocido',
                   });
-                  setFieldValue('renglones', nuevosRenglones);
+                  setFieldValue('renglones', nuevos);
                   setModalComentariosIndex(null);
                 }}
-                usuario={fullName}
+                usuario={user.nombre || user.email || 'Desconocido'}
               />
             )}
 
+
+
             {modalDocumentosIndex !== null && (
               <ModalDocumentos
+                existingDocuments={values.renglones[modalDocumentosIndex].documentos}
                 onClose={() => setModalDocumentosIndex(null)}
                 onDocumentSelect={(selectedFiles) => {
+                  // los selectedFiles ya vienen combinados con los previos dentro del modal
                   const nuevosRenglones = [...values.renglones];
                   nuevosRenglones[modalDocumentosIndex].documentos = selectedFiles;
                   setFieldValue('renglones', nuevosRenglones);

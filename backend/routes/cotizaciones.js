@@ -26,9 +26,14 @@ router.get(
 
 router.post('/:id/solicitudes/:historialId', verifyToken, cotizacionController.responderSolicitud);
 
+router.get('/:id/comentarios',   verifyToken, cotizacionController.listComentarios);
+router.post('/:id/comentarios',  verifyToken, cotizacionController.addComentario);
+
 // Finalmente, las genéricas con :id
 router.get('/:id', verifyToken, cotizacionController.getCotizacionById);
 router.put('/:id', verifyToken, cotizacionController.updateCotizacion);
 router.delete('/:id', verifyToken, cotizacionController.deleteCotizacion);
+
+
 
 module.exports = router;

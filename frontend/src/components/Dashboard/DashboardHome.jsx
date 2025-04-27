@@ -5,20 +5,29 @@ import axiosInstance from '../../api/axiosInstance';
 import { UserContext } from '../../context/UserContext';
 import ModalAprobacionRechazo from './ModalAprobacionRechazo';
 import CotizacionesTable from './CotizacionesTable';
+import ModalComentarios from './NuevaCotizacion/modals/ModalComentarios';  // ← 1) importar
+
 
 const DashboardHome = () => {
   const navigate = useNavigate();
   const { user } = useContext(UserContext);
   const userRole = user.rol.nombre.toLowerCase(); // 'vendedores' | 'administrador' | 'director'
+
   const [cotizaciones, setCotizaciones] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
   const [modalData, setModalData] = useState({
     open: false,
     cotizacionId: null,
     currentState: '',
     action: '',   // 'approve' | 'edit' | 'delete'
   });
+
+  // ** NUEVO: estado para los comentarios **
+  const [commentModalOpen, setCommentModalOpen] = useState(false);
+  const [currentComments, setCurrentComments] = useState([]);
+  const [currentCotizacionId, setCurrentCotizacionId] = useState(null);
 
   useEffect(() => {
     axiosInstance.get('/cotizaciones')
@@ -98,7 +107,11 @@ const DashboardHome = () => {
         case 'pendiente':
           return alert('Tu solicitud está pendiente de aprobación.');
         case 'rechazada':
-          return alert('Tu solicitud fue rechazada.');
+          // Pregunto si quiere reenviar o lo hago automáticamente:
+          if (window.confirm('Tu solicitud fue rechazada. ¿Deseas enviarla de nuevo?')) {
+            return requestApproval({ cotizacionId, action });
+          }
+          return;
         case 'aprobada':
           // DESBLOQUEO la acción
           if (action === 'edit') {
@@ -108,12 +121,15 @@ const DashboardHome = () => {
             setCotizaciones(cs => cs.filter(c => c._id !== cotizacionId));
           }
           return;
+        default:
+          return;
       }
     } catch (err) {
       console.error('Error al verificar historial:', err);
       alert('No se pudo verificar la solicitud.');
     }
   };
+
 
   const handleOpenModalAprobacion = ({ cotizacionId, currentState, action }) => {
     // Si es vendedor y quiere editar o eliminar, pasamos por el flujo de solicitud/aprobación:
@@ -138,6 +154,12 @@ const DashboardHome = () => {
     if (userRole === 'jefe de produccion' && action === 'edit') {
       return navigate(`/dashboard/editar-cotizacion/${cotizacionId}`);
     }
+
+    // Jefe de producción → **solo** edit directo
+    if (userRole === 'disenador' && action === 'edit') {
+      return navigate(`/dashboard/editar-cotizacion/${cotizacionId}`);
+    }
+
 
     // Si es admin/director y quiere "approve" (cambiar estado), abrimos modal
     if ((userRole === 'administrador' || userRole === 'director') && action === 'approve') {
@@ -170,6 +192,33 @@ const DashboardHome = () => {
     }
   };
 
+  // ** NUEVO: carga comentarios y abre modal **
+  const handleComments = async (cotizacionId) => {
+    try {
+      const res = await axiosInstance.get(`/cotizaciones/${cotizacionId}/comentarios`);
+      setCurrentComments(res.data.comentarios);
+      setCurrentCotizacionId(cotizacionId);
+      setCommentModalOpen(true);
+    } catch (err) {
+      console.error('Error al obtener comentarios:', err);
+    }
+  };
+
+  // ** NUEVO: añade un comentario y recarga la lista **
+  const handleAddComment = async (texto) => {
+    try {
+      await axiosInstance.post(
+        `/cotizaciones/${currentCotizacionId}/comentarios`,
+        { texto }
+      );
+      // recarga
+      const res = await axiosInstance.get(`/cotizaciones/${currentCotizacionId}/comentarios`);
+      setCurrentComments(res.data.comentarios);
+    } catch (err) {
+      console.error('Error al agregar comentario:', err);
+    }
+  };
+
   if (loading) return <div className="p-4">Cargando cotizaciones…</div>;
   if (error) return <div className="p-4 text-red-500">{error}</div>;
 
@@ -184,6 +233,7 @@ const DashboardHome = () => {
         onDuplicar={handleDuplicar}
         onVerCotizacion={id => navigate(`/dashboard/cotizacion/${id}`)}
         onEliminarCotizacion={id => handleOpenModalAprobacion({ cotizacionId: id, action: 'delete' })}
+        onComments={handleComments}           // ← le pasamos la nueva prop
       />
 
       {modalData.open && (
@@ -192,6 +242,16 @@ const DashboardHome = () => {
           currentState={modalData.currentState}
           onClose={() => setModalData({ open: false, cotizacionId: null, currentState: '', action: '' })}
           onSubmit={handleAprobarRechazar}
+        />
+      )}
+
+      {/* -- NUEVO: Modal de comentarios -- */}
+      {commentModalOpen && (
+        <ModalComentarios
+          comentarios={currentComments}
+          usuario={user.nombre || user.email}
+          onClose={() => setCommentModalOpen(false)}
+          onAgregarComentario={(texto) => handleAddComment(texto)}
         />
       )}
     </div>

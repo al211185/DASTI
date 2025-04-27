@@ -245,14 +245,15 @@ const NuevaCotizacion = () => {
                         )}
                         {modalTiemposIndex !== null && (
                             <ModalTiempos
+                                tipo={modalTiemposIndex.tipo}
                                 onClose={() => setModalTiemposIndex(null)}
                                 onTiemposSelect={(tiempo) => {
-                                    const nuevosRenglones = [...values.renglones];
-                                    const tiemposActuales = Array.isArray(nuevosRenglones[modalTiemposIndex].tiempos)
-                                        ? nuevosRenglones[modalTiemposIndex].tiempos
-                                        : [];
-                                    nuevosRenglones[modalTiemposIndex].tiempos = [...tiemposActuales, tiempo];
-                                    setFieldValue('renglones', nuevosRenglones);
+                                    // agrega el nuevo tiempo incluyendo su .tipo
+                                    const nuevos = [...values.renglones];
+                                    nuevos[modalTiemposIndex.index].tiempos.push(tiempo);
+                                    setFieldValue('renglones', nuevos);
+                                    // cerramos el modal
+                                    setModalTiemposIndex(null);
                                 }}
                             />
                         )}
