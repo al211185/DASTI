@@ -1,7 +1,5 @@
-// src/components/Dashboard/RegistroSeleccion.jsx
-import React, { useContext } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { UserContext } from '../../../context/UserContext';
 
 // Define aquí las entidades que quieres crear y gestionar
 const ENTIDADES = [
@@ -16,14 +14,6 @@ const ENTIDADES = [
 
 const RegistroSeleccion = () => {
   const navigate = useNavigate();
-  const { user } = useContext(UserContext);
-  const role = user?.rol?.nombre?.toLowerCase();
-
-  // Si es 'almacen' o 'compras', sólo mostramos material, categoría y proveedor
-  const entidadesFiltradas = 
-    ['almacen', 'compras'].includes(role)
-      ? ENTIDADES.filter(e => ['material','categoria','proveedor'].includes(e.key))
-      : ENTIDADES;
 
   const handleCreate = (key) => {
     navigate(`/dashboard/registro/${key}`);
@@ -37,7 +27,7 @@ const RegistroSeleccion = () => {
     <div className="min-h-screen flex flex-col justify-center items-center bg-gray-100 p-4">
       <h1 className="text-3xl font-bold mb-8">Administrar Registros</h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-2xl">
-        {entidadesFiltradas.map(({ key, label, plural }) => (
+        {ENTIDADES.map(({ key, label, plural }) => (
           <div
             key={key}
             className="bg-white rounded-lg shadow p-4 flex flex-col justify-between"
