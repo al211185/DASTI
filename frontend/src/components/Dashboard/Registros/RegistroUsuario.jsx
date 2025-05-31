@@ -63,7 +63,7 @@ export default function RegistroUsuario() {
       } else {
         await axiosInstance.post('/user', payload);
       }
-      navigate('/dashboard/usuarios');
+      navigate('/dashboard/registro/usuarios');
     } catch (err) {
       console.error('Error al guardar usuario:', err);
       setError(err.response?.data?.msg || 'Error al guardar usuario');
@@ -73,89 +73,93 @@ export default function RegistroUsuario() {
   };
 
   return (
-    <div className="p-6 max-w-md mx-auto">
-      <h2 className="text-xl font-bold mb-4">
-        {id ? 'Editar Usuario' : 'Registrar Usuario'}
-      </h2>
+    <div className="min-h-screen py-10">
+      <div className="max-w-3xl mx-auto bg-white border rounded-2xl shadow-lg p-8">
+        <h2 className="text-2xl font-medium text-accent1 text-center mb-6">
+          {id ? 'Editar Usuario' : 'Registrar Usuario'}
+        </h2>
 
-      {error && <p className="text-red-500 mb-2">{error}</p>}
+        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <Input
-          label="Nombre"
-          name="nombre"
-          value={userData.nombre}
-          onChange={handleChange}
-          required
-        />
-        <Input
-          label="Email"
-          name="email"
-          type="email"
-          value={userData.email}
-          onChange={handleChange}
-          required
-        />
-        <Input
-          label={id ? 'Nueva Contraseña (dejar vacío si no cambia)' : 'Contraseña'}
-          name="password"
-          type="password"
-          value={userData.password}
-          onChange={handleChange}
-          required={!id}
-        />
-        <Input
-          label="Teléfono"
-          name="telefono"
-          value={userData.telefono}
-          onChange={handleChange}
-        />
-        <Input
-          label="Empleado ID"
-          name="empleadoID"
-          value={userData.empleadoID}
-          onChange={handleChange}
-        />
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <Input
+            label="Nombre"
+            name="nombre"
+            value={userData.nombre}
+            onChange={handleChange}
+            required
+          />
+          <Input
+            label="Email"
+            name="email"
+            type="email"
+            value={userData.email}
+            onChange={handleChange}
+            required
+          />
+          <Input
+            label={id ? 'Nueva Contraseña (dejar vacío si no cambia)' : 'Contraseña'}
+            name="password"
+            type="password"
+            value={userData.password}
+            onChange={handleChange}
+            required={!id}
+          />
+          <Input
+            label="Teléfono"
+            name="telefono"
+            value={userData.telefono}
+            onChange={handleChange}
+          />
+          <Input
+            label="Empleado ID"
+            name="empleadoID"
+            value={userData.empleadoID}
+            onChange={handleChange}
+          />
 
-        <Select
-          label="Departamento"
-          name="departamento"
-          value={userData.departamento}
-          onChange={handleChange}
-          options={[
-            { value: '', label: 'Seleccione Departamento' },
-            { value: 'administración', label: 'Administración' },
-            { value: 'ventas', label: 'Ventas' },
-            { value: 'requisiciones', label: 'Requisiciones' },
-            { value: 'diseño', label: 'Diseño' },
-            { value: 'producción', label: 'Producción' },
-          ]}
-          required
-        />
+          <Select
+            label="Departamento"
+            name="departamento"
+            value={userData.departamento}
+            onChange={handleChange}
+            options={[
+              { value: '', label: 'Seleccione Departamento' },
+              { value: 'administración', label: 'Administración' },
+              { value: 'ventas', label: 'Ventas' },
+              { value: 'requisiciones', label: 'Requisiciones' },
+              { value: 'diseño', label: 'Diseño' },
+              { value: 'producción', label: 'Producción' },
+            ]}
+            required
+          />
 
-        <Select
-          label="Rol"
-          name="rol"
-          value={userData.rol}
-          onChange={handleChange}
-          options={[{ value: '', label: 'Seleccione Rol' }, ...roles.map(r => ({
-            value: r._id, label: r.nombre
-          }))]}
-          required
-        />
+          <Select
+            label="Rol"
+            name="rol"
+            value={userData.rol}
+            onChange={handleChange}
+            options={[{ value: '', label: 'Seleccione Rol' }, ...roles.map(r => ({
+              value: r._id, label: r.nombre
+            }))]}
+            required
+          />
 
-        <button
-          type="submit"
-          disabled={guardando}
-          className="w-full bg-purple-500 text-white py-2 rounded hover:bg-purple-600 disabled:opacity-50 transition"
-        >
-          {guardando
-            ? 'Guardando…'
-            : id
-              ? 'Actualizar Usuario'
-              : 'Registrar Usuario'}
-        </button>
-      </form>
+          <div className="md:col-span-2">
+            <button
+              type="submit"
+              disabled={guardando}
+              className="w-full h-12 bg-secondary text-white rounded-full text-base font-medium hover:bg-secondary-dark disabled:opacity-50 transition"
+            >
+              {guardando
+                ? 'Guardando…'
+                : id
+                  ? 'Actualizar Usuario'
+                  : 'Registrar Usuario'}
+            </button>
+            </div>
+        </form>
+      </div>
     </div>
   );
 }
@@ -170,7 +174,7 @@ const Input = ({ label, name, type = 'text', value, onChange, required }) => (
       value={value}
       onChange={onChange}
       required={required}
-      className="w-full border rounded p-2"
+      className="w-full h-12 bg-gray-200 placeholder-gray-500 rounded-full px-6 focus:outline-none focus:ring-2 focus:ring-primary"
     />
   </div>
 );
@@ -183,7 +187,7 @@ const Select = ({ label, name, value, onChange, options, required }) => (
       value={value}
       onChange={onChange}
       required={required}
-      className="w-full border rounded p-2"
+      className="appearance-none w-full h-12 bg-gray-200 rounded-full px-6 focus:outline-none focus:ring-2 focus:ring-primary"
     >
       {options.map(opt => (
         <option key={opt.value} value={opt.value}>

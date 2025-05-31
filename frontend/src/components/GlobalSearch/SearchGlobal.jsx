@@ -1,10 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../../api/axiosInstance';
+import { UserContext } from '../../context/UserContext';
+
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 const SearchGlobal = () => {
+  const { user } = useContext(UserContext);
+  const role = user?.rol?.nombre?.toLowerCase();
+  const isVendedor = role === 'vendedores';
+  const isDisenador = role === 'disenador';
+  const isJefe = role === 'jefe de produccion';
+  const isDirector = role === 'director';
+  const isAdmin = role === 'administrador';
+  const canViewFinancial = isDirector || isAdmin;
+
   const [query, setQuery] = useState('');
   const [resultados, setResultados] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -63,25 +74,26 @@ const SearchGlobal = () => {
   );
 
   return (
-    <div className="bg-gray-50 min-h-screen py-10">
+    <div className="h-screen py-10 overflow-hidden">
       <div className="max-w-7xl mx-auto px-4">
-        <h2 className="text-3xl font-extrabold text-gray-800 mb-6">
+        <h1 className="text-3xl font-bold text-gray-800 mb-6">
           Búsqueda Global de Proyectos
-        </h2>
+        </h1>
         <form
           onSubmit={e => e.preventDefault()}
-          className="flex mb-8 space-x-4"
+          className="flex mb-8 gap-4"
         >
           <input
             type="text"
             placeholder="Buscar proyecto..."
             value={query}
             onChange={e => setQuery(e.target.value)}
-            className="flex-grow px-4 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500"
+            className="w-full h-12 bg-gray-200 placeholder-gray-600 rounded-full px-4 focus:outline-none focus:ring-2 focus:ring-primary transition"
           />
+          
           <button
             type="submit"
-            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+            className="px-6 py-2 bg-primary hover:bg-primary-dark  text-white rounded-lg"
           >
             Buscar
           </button>
@@ -100,7 +112,7 @@ const SearchGlobal = () => {
               {proyectosFiltrados.map(cot => (
                 <div
                   key={cot._id}
-                  className="bg-white rounded-lg shadow-md p-6 mb-6 hover:shadow-lg transition"
+                  className="bg-white rounded-lg shadow-md p-6 mb-6 hover:shadow-lg transition border"
                 >
                   <div className="flex flex-col sm:flex-row sm:justify-between">
                     <div className="flex-grow space-y-1">
@@ -133,29 +145,33 @@ const SearchGlobal = () => {
                       onClick={() =>
                         navigate(`/dashboard/cotizacion/${cot._id}`)
                       }
-                      className="mt-4 sm:mt-0 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
+                      className="mt-4 sm:mt-0 bg-[#f7941e] hover:bg-[#e68310] text-white px-4 py-1 leading-tight rounded-lg"
                     >
                       Ver Cotización
                     </button>
                   </div>
 
                   {/* Tabla de Renglones */}
-                  <div className="overflow-x-auto mt-6">
-                    <table className="min-w-full bg-white border">
+                  <div className="overflow-x-auto mt-6 shadow rounded-lg">
+                    <table className="table-auto min-w-max bg-white divide-y divide-gray-200">
                       <thead className="bg-gray-100">
                         <tr>
-                          <th className="p-2 border text-left">Cant</th>
-                          <th className="p-2 border text-left">Descripción</th>
-                          <th className="p-2 border text-left">Material</th>
-                          <th className="p-2 border text-left">Tiempos</th>
-                          <th className="p-2 border text-left">Días hábiles</th>
-                          <th className="p-2 border text-left">%</th>
-                          <th className="p-2 border text-right">Costo</th>
-                          <th className="p-2 border text-left">Comentarios</th>
-                          <th className="p-2 border text-left">Documentos</th>
+                          <th className="min-w-[60px] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Cant</th>
+                          <th className="min-w-[150px] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Descripción</th>
+                          <th className="min-w-[200px] py-3 text-left text-xs font-semibold uppercase tracking-wider">Material</th>
+                          {canViewFinancial && (
+                            <>
+                          <th className="min-w-[200px] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Tiempos</th>
+                          <th className="min-w-[100px] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Días hábiles</th>
+                          <th className="min-w-[80px] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">%</th>
+                          <th className="min-w-[100px] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Costo</th>
+                          </>
+                          )}
+                          <th className="min-w-[80px] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Comentarios</th>
+                          <th className="min-w-[120px] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Documentos</th>
                         </tr>
                       </thead>
-                      <tbody>
+                      <tbody className="divide-y divide-gray-200">
                         {cot.renglones.map((r, i) => {
                           const diasHabiles =
                             (r.tiempos.reduce((sum, t) => sum + t.horas, 0) /
@@ -163,9 +179,9 @@ const SearchGlobal = () => {
                             ).toFixed(2);
                           return (
                             <tr key={i} className="hover:bg-gray-50">
-                              <td className="p-2 border">{r.cantidad}</td>
-                              <td className="p-2 border">{r.descripcion}</td>
-                              <td className="p-2 border">
+                              <td className="px-4 py-2 whitespace-normal break-words text-sm text-gray-700 border">{r.cantidad}</td>
+                              <td className="px-4 py-2 whitespace-normal break-words text-sm text-gray-700 border">{r.descripcion}</td>
+                              <td className="px-4 py-2 whitespace-normal break-words text-sm text-gray-700 border">
                                 {Array.isArray(r.material) &&
                                   r.material.map((m, idx) => (
                                     <div
@@ -190,7 +206,9 @@ const SearchGlobal = () => {
                                     </div>
                                   ))}
                               </td>
-                              <td className="p-2 border">
+                              {canViewFinancial && (
+                                <>
+                              <td className="px-4 py-2 whitespace-normal break-words text-sm text-gray-700 border">
                                 {Array.isArray(r.tiempos) &&
                                   r.tiempos.map((t, idx) => (
                                     <div key={idx} className="text-sm">
@@ -198,11 +216,13 @@ const SearchGlobal = () => {
                                     </div>
                                   ))}
                               </td>
-                              <td className="p-2 border">{diasHabiles}</td>
-                              <td className="p-2 border">{r.porcentaje}%</td>
-                              <td className="p-2 border text-right">
+                              <td className="px-4 py-2 whitespace-normal break-words text-sm text-gray-700 border">{diasHabiles}</td>
+                              <td className="px-4 py-2 whitespace-normal break-words text-sm text-gray-700 border">{r.porcentaje}%</td>
+                              <td className="px-4 py-2 whitespace-normal break-words text-sm text-gray-700 border">
                                 ${((r.costo || 0).toFixed(2))}
                               </td>
+                              </>
+                              )}
                               <td className="p-2 border">
                                 {r.comentarios.map((c, idx) => (
                                   <div key={idx} className="text-sm mb-1">
@@ -210,7 +230,7 @@ const SearchGlobal = () => {
                                   </div>
                                 ))}
                               </td>
-                              <td className="p-2 border">
+                              <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-700 border">
                                 {r.documentos.map((d, idx) =>
                                   /\.(jpe?g|png|gif)$/i.test(d.url) ? (
                                     <img
@@ -243,12 +263,12 @@ const SearchGlobal = () => {
             </div>
 
             {/* Columna Derecha: Galería de Imágenes */}
-            <div className="w-1/2 overflow-y-auto max-h-[calc(100vh-200px)] pl-2">
+            <div className="w-1/2 overflow-y-auto max-h-[calc(100vh-200px)] pl-4">
               <h3 className="text-xl font-semibold mb-4">Imágenes de Proyectos</h3>
               {imagenes.length === 0 ? (
                 <p className="text-gray-500">No hay imágenes para mostrar.</p>
               ) : (
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 gap-4">
                   {imagenes.map((img, i) => (
                     <div
                       key={i}
@@ -260,7 +280,7 @@ const SearchGlobal = () => {
                       <img
                         src={buildImageSrc(img.url)}
                         alt={img.originalName}
-                        className="w-full h-32 object-cover"
+                        className="w-full h-56 object-cover"
                       />
                     </div>
                   ))}

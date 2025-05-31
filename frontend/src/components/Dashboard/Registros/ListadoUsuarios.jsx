@@ -44,57 +44,62 @@ export default function ListadoUsuarios() {
   };
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold">Usuarios</h2>
-        <button
-          onClick={() => navigate('/dashboard/registro/usuario')}
-          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
-        >
-          Nuevo usuario
-        </button>
-      </div>
-
-      {usuarios.length === 0 ? (
-        <p className="text-gray-500">No hay usuarios registrados.</p>
-      ) : (
-        <div className="grid gap-4">
-          {usuarios.map((u) => (
-            <div
-              key={u._id}
-              className="flex justify-between items-center p-4 border rounded"
-            >
-              <div>
-                <p className="font-medium">{u.nombre}</p>
-                <p className="text-xs text-gray-500">{u.email}</p>
-                <p className="text-xs text-gray-400">{u.departamento}</p>
-                <p className="text-xs text-gray-400">
-                  {u.rol?.nombre || u.rol || 'Sin rol'}
-                </p>
-              </div>
-
-              <div className="space-x-2">
-                {/* editar */}
-                <button
-                  onClick={() => navigate(`/dashboard/registro/usuario/${u._id}`)}
-                  className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded"
-                >
-                  Editar
-                </button>
-
-                {/* eliminar */}
-                <button
-                  disabled={eliminando === u._id}
-                  onClick={() => handleEliminar(u._id)}
-                  className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded disabled:opacity-50"
-                >
-                  {eliminando === u._id ? 'Eliminando…' : 'Eliminar'}
-                </button>
-              </div>
-            </div>
-          ))}
+    <div className="min-h-screen py-8 px-4 md:px-8">
+      <div className="max-w-screen-xl mx-auto bg-white border rounded-2xl shadow-lg p-6">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row justify-between items-center mb-6">
+          <h2 className="text-3xl font-semibold text-gray-800 mb-4 md:mb-0">
+            Usuarios
+          </h2>
+          <button
+            onClick={() => navigate('/dashboard/registro/usuario')}
+            className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg shadow transition"
+          >
+            Nuevo usuario
+          </button>
         </div>
-      )}
+
+        {/* Listado */}
+        {usuarios.length === 0 ? (
+          <p className="text-center text-gray-500 py-10">
+            No hay usuarios registrados.
+          </p>
+        ) : (
+          <div className="space-y-4">
+            {usuarios.map(u => (
+              <div
+                key={u._id}
+                className="bg-white border border-gray-200 rounded-lg shadow-sm p-4 flex justify-between items-center hover:shadow-md transition"
+              >
+                <div>
+                  <p className="text-lg text-gray-700 font-medium">{u.nombre}</p>
+                  <p className="text-sm text-gray-500">{u.email}</p>
+                  <p className="text-sm text-gray-400">{u.departamento}</p>
+                  <p className="text-sm text-gray-400">
+                    {u.rol?.nombre || u.rol || 'Sin rol'}
+                  </p>
+                </div>
+
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => navigate(`/dashboard/registro/usuario/${u._id}`)}
+                    className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-1 rounded-md transition"
+                  >
+                    Editar
+                  </button>
+                  <button
+                    disabled={eliminando === u._id}
+                    onClick={() => handleEliminar(u._id)}
+                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-1 rounded-md disabled:opacity-50 transition"
+                  >
+                    {eliminando === u._id ? 'Eliminando…' : 'Eliminar'}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
-  );
+  )
 }

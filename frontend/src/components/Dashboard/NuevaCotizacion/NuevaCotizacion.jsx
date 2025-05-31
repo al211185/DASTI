@@ -225,12 +225,12 @@ const NuevaCotizacion = () => {
                                 Ver Historial
                             </button>
                         )}
-                        <div className="bg-white p-4 rounded shadow flex justify-end items-center mb-6">
+                        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6 border flex justify-end items-center mb-6">
                             <span className="mr-4 font-semibold">Total Cotización:</span>
                             <span className="text-xl font-bold">${calcularTotalCotizacion(values.renglones).toFixed(2)}</span>
                         </div>
                         <div className="flex justify-end">
-                            <button type="submit" disabled={isSubmitting} className="bg-green-500 text-white px-4 py-2 rounded">
+                            <button type="submit" disabled={isSubmitting} className="bg-green-500 text-white font-medium px-4 py-2 rounded-lg shadow transition">
                                 Guardar Cotización
                             </button>
                         </div>

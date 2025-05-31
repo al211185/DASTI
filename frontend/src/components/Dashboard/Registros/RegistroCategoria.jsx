@@ -46,6 +46,7 @@ export default function RegistroCategoria() {
         setMensaje('Categoría registrada correctamente.');
         setNombre('');
       }
+      navigate('/dashboard/registro/categorias');
       // Opcional: redirigir a la lista tras unos segundos
       // setTimeout(() => navigate('/dashboard/categorias'), 1000);
     } catch (err) {
@@ -57,41 +58,38 @@ export default function RegistroCategoria() {
   };
 
   return (
-    <div className="max-w-md mx-auto p-6 bg-white shadow rounded">
-      <h2 className="text-2xl font-bold mb-4">
-        {id ? 'Editar Categoría' : 'Registrar Categoría'}
-      </h2>
+    <div className="min-h-full flex items-start justify-center py-12 px-4">
+      <div className="w-full max-w-md bg-white border rounded-3xl shadow-lg p-8">
+        <h2 className="text-2xl font-medium text-accent1 text-center mb-6">
+          {id ? 'Editar Categoría' : 'Registrar Categoría'}
+        </h2>
 
-      {error && <p className="text-red-500 mb-2">{error}</p>}
-      {mensaje && <p className="text-green-500 mb-2">{mensaje}</p>}
+        {error   && <p className="text-red-500 text-sm mb-4">{error}</p>}
+        {mensaje && <p className="text-green-600 text-sm mb-4">{mensaje}</p>}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">
-            Nombre de la Categoría
-          </label>
+        <form onSubmit={handleSubmit} className="space-y-5">
           <input
-            type="text"
             name="nombre"
+            type="text"
+            placeholder="Nombre de la categoría"
             value={nombre}
-            onChange={handleChange}
-            placeholder="Ingresa el nombre"
-            className="w-full border rounded p-2"
+            onChange={e => setNombre(e.target.value)}
             required
             disabled={guardando}
+            className="w-full h-12 bg-gray-200 placeholder-gray-500 rounded-full px-6 focus:outline-none focus:ring-2 focus:ring-primary"
           />
-        </div>
 
-        <button
-          type="submit"
-          disabled={guardando}
-          className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 disabled:opacity-50 transition-colors"
-        >
-          {guardando
-            ? (id ? 'Guardando cambios…' : 'Registrando…')
-            : (id ? 'Actualizar Categoría' : 'Registrar Categoría')}
-        </button>
-      </form>
+          <button
+            type="submit"
+            disabled={guardando}
+            className="w-1/2 h-10 mx-auto block bg-secondary hover:bg-secondary-dark text-white rounded-full text-base font-medium disabled:opacity-50 transition"
+          >
+            {guardando
+              ? id ? 'Guardando cambios…' : 'Registrando…'
+              : id ? 'Actualizar' : 'Registrar'}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

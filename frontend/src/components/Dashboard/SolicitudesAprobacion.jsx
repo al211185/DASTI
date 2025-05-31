@@ -44,60 +44,68 @@ const SolicitudesAprobacion = () => {
     if (loading) return <p>Cargando solicitudes…</p>;
 
     return (
-        <div className="p-4">
-            <h2 className="text-xl font-bold mb-4">Solicitudes de Aprobación</h2>
-            <table className="w-full border">
-                <thead className="bg-gray-100">
-                    <tr>
-                        <th className="p-2 border">Cotización</th>
-                        <th className="p-2 border">Usuario</th>
-                        <th className="p-2 border">Acción</th>
-                        <th className="p-2 border">Fecha</th>
-                        <th className="p-2 border">Decisión</th>
-                    </tr>
-                </thead>
-                {/* … */}
-                <tbody>
-                    {solicitudes.map(s => (
-                        <tr key={s._id}>
-                            {/* serial */}
-                            <td className="p-2 border">{s.cotizacionId.serial}</td>
+        <div className="min-h-screen py-8 px-4 md:px-8">
+            <div className="max-w-screen-xl mx-auto bg-white border rounded-2xl shadow-lg p-6">
+                {/* Header */}
+                <div className="mb-6">
+                    <h2 className="text-3xl font-semibold text-gray-800">
+                        Solicitudes de Aprobación
+                    </h2>
+                </div>
 
-                            {/* usuario que pidió la solicitud */}
-                            <td className="p-2 border">{s.usuario}</td>
+                <div className="overflow-x-auto">
+                    <table className="w-full border">
+                        <thead className="bg-gray-100">
+                            <tr>
+                                <th className="p-2 border">Cotización</th>
+                                <th className="p-2 border">Usuario</th>
+                                <th className="p-2 border">Acción</th>
+                                <th className="p-2 border">Fecha</th>
+                                <th className="p-2 border">Decisión</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {solicitudes.map(s => (
+                                <tr key={s._id}>
+                                    {/* serial */}
+                                    <td className="p-2 border">{s.cotizacionId.serial}</td>
 
-                            {/* acción */}
-                            <td className="p-2 border">
-                                {s.action === 'solicitud_edit' ? 'Editar' : 'Eliminar'}
-                            </td>
+                                    {/* usuario que pidió la solicitud */}
+                                    <td className="p-2 border">{s.usuario}</td>
 
-                            {/* fecha de la solicitud */}
-                            <td className="p-2 border">
-                                {new Date(s.createdAt).toLocaleString()}
-                            </td>
+                                    {/* acción */}
+                                    <td className="p-2 border">
+                                        {s.action === 'solicitud_edit' ? 'Editar' : 'Eliminar'}
+                                    </td>
 
-                            {/* botones */}
-                            <td className="p-2 border space-x-2">
-                                <button
-                                    className="px-2 py-1 bg-green-500 text-white rounded"
-                                    onClick={() => handleDecision(s._id, s.cotizacionId._id, true)}
-                                >
-                                    Aprobar
-                                </button>
-                                <button
-                                    className="px-2 py-1 bg-red-500 text-white rounded"
-                                    onClick={() => handleDecision(s._id, s.cotizacionId._id, false)}
-                                >
-                                    Rechazar
-                                </button>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
+                                    {/* fecha de la solicitud */}
+                                    <td className="p-2 border">
+                                        {new Date(s.createdAt).toLocaleString()}
+                                    </td>
 
-            </table>
+                                    {/* botones */}
+                                    <td className="p-2 border flex justify-center items-center space-x-2">
+                                        <button
+                                            className="px-2 py-1 bg-green-500 text-white rounded"
+                                            onClick={() => handleDecision(s._id, s.cotizacionId._id, true)}
+                                        >
+                                            Aprobar
+                                        </button>
+                                        <button
+                                            className="px-2 py-1 bg-red-500 text-white rounded"
+                                            onClick={() => handleDecision(s._id, s.cotizacionId._id, false)}
+                                        >
+                                            Rechazar
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
-    );
+  );
 };
 
 export default SolicitudesAprobacion;

@@ -1,7 +1,7 @@
+// src/components/Dashboard/RegistroSeleccion.jsx
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-// Define aquí las entidades que quieres crear y gestionar
 const ENTIDADES = [
   { key: 'planta', label: 'Planta', plural: 'plantas' },
   { key: 'cliente', label: 'Cliente', plural: 'clientes' },
@@ -24,31 +24,53 @@ const RegistroSeleccion = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center bg-gray-100 p-4">
-      <h1 className="text-3xl font-bold mb-8">Administrar Registros</h1>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-2xl">
-        {ENTIDADES.map(({ key, label, plural }) => (
-          <div
-            key={key}
-            className="bg-white rounded-lg shadow p-4 flex flex-col justify-between"
-          >
-            <h2 className="text-xl font-semibold mb-4">{label}</h2>
-            <div className="flex gap-2">
-              <button
-                onClick={() => handleCreate(key)}
-                className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded transition-colors"
-              >
-                Registrar {label}
-              </button>
-              <button
-                onClick={() => handleManage(plural)}
-                className="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 rounded transition-colors"
-              >
-                Gestionar {plural.charAt(0).toUpperCase() + plural.slice(1)}
-              </button>
+    <div className="min-h-screen p-6">
+      {/* Contenedor principal */}
+      <div className="max-w-5xl mx-auto">
+        {/* Título */}
+        <h1 className="text-3xl font-bold text-gray-800 mb-6">
+          Administrar Registros
+        </h1>
+
+        {/* Grid de tarjetas */}
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          {ENTIDADES.map(({ key, label, plural }) => (
+            <div
+              key={key}
+              className="bg-white border border-gray-200 rounded-2xl shadow-sm hover:shadow-md transition-shadow p-6 flex flex-col justify-between"
+            >
+              <div>
+                {/* Iconito opcional */}
+                <div className="h-12 w-12 mb-4 flex items-center justify-center bg-blue-50 rounded-full">
+                  {/* Aquí podrías inyectar un icono SVG según la entidad */}
+                  <span className="text-blue-500 font-bold">{label.charAt(0)}</span>
+                </div>
+                <h2 className="text-2xl font-semibold text-gray-700">
+                  {label}
+                </h2>
+                <p className="mt-2 text-gray-500">
+                  Crea o administra tus {plural}.
+                </p>
+              </div>
+
+              {/* Botones */}
+              <div className="mt-6 flex space-x-3">
+                <button
+                  onClick={() => handleCreate(key)}
+                  className="flex-1 inline-flex items-center justify-center gap-2 py-2 px-4 bg-primary hover:bg-primary-dark text-white font-medium rounded-lg transition-colors"
+                >
+                  Registrar
+                </button>
+                <button
+                  onClick={() => handleManage(plural)}
+                  className="flex-1 inline-flex items-center justify-center gap-2 py-2 px-4 bg-secondary hover:bg-secondary-dark text-white font-medium rounded-lg transition-colors"
+                >
+                  Gestionar
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );

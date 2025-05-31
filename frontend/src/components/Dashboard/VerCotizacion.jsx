@@ -4,6 +4,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axiosInstance from '../../api/axiosInstance';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import LogoLetters from '../../Images/Dasti_logo_Letras.png';
+import LogoImage from '../../Images/Dasti_logo_Icon.png';
+
+import '../../styles/pdf.css';
 
 const VerCotizacion = () => {
   const { id } = useParams();
@@ -12,6 +16,18 @@ const VerCotizacion = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const pdfRef = useRef();
+
+  // ––––––– HELPERS –––––––
+  const formatDireccion = ({ calle, numero, colonia, ciudad, estado, codigoPostal }) => {
+    if (!calle) return '';
+    return `${calle} ${numero}, ${colonia}. C.P. ${codigoPostal} ${ciudad}, ${estado}`;
+  };
+
+  const primerContacto = (contactos) => {
+    if (!Array.isArray(contactos) || contactos.length === 0) return '';
+    const { nombre, cargo } = contactos[0];
+    return cargo ? `${nombre} (${cargo})` : nombre;
+  };
 
   useEffect(() => {
     const fetchCotizacion = async () => {
@@ -39,10 +55,23 @@ const VerCotizacion = () => {
       const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      // Si necesitas múltiples páginas:
+      if (pdfHeight > pdf.internal.pageSize.getHeight()) {
+        let remainingHeight = pdfHeight;
+        let position = 0;
+        while (remainingHeight > 0) {
+          pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
+          remainingHeight -= pdf.internal.pageSize.getHeight();
+          position -= pdf.internal.pageSize.getHeight();
+          if (remainingHeight > 0) pdf.addPage();
+        }
+      } else {
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      }
       pdf.save(`cotizacion_${cotizacion.serial}.pdf`);
     });
-  };
+};
+
 
   if (loading) return <p className="p-4">Cargando cotización...</p>;
   if (error) return <p className="p-4 text-red-500">{error}</p>;
@@ -53,65 +82,97 @@ const VerCotizacion = () => {
       <div className="flex justify-end mb-4">
         <button
           onClick={handleGeneratePDF}
-          className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
-        >
+          className="bg-secondary hover:bg-secondary-dark text-white px-4 py-2 rounded">
           Descargar PDF
         </button>
       </div>
 
-      <div ref={pdfRef} className="font-sans text-sm">
+      <div ref={pdfRef} className="pdf-container border">
         {/* Header azul */}
-        <div className="bg-blue-800 text-white p-6 flex justify-between items-center">
-          <div>
-            <img
-              src="/logo.png"
-              alt="Tu Logo"
-              className="h-12 mb-2"
-              crossOrigin="anonymous"
-            />
-            <div>Calle cualquiera 123</div>
-            <div>Cualquier lugar, CP: 12345</div>
+        <header className="pdf-header">
+          <div className="header-left">
+            <img src={LogoImage} alt="Logo icono" className="logo-icon" />
+            <img src={LogoLetters} alt="Logo letras" className="logo-text" />
           </div>
-          <div className="text-right">
-            <div className="text-2xl font-bold">
-              COTIZACIÓN #{cotizacion.serial.split('-').pop()}
+
+          <div className="header-right">
+            <div>
+              <span className="label-blue">FOLIO:</span> {cotizacion.serial}
             </div>
             <div>
-              <strong>Fecha:</strong>{' '}
-              {new Date(cotizacion.fechaInicio).toLocaleDateString()}
+              <span className="label-blue">FECHA:</span> {new Date(cotizacion.fechaInicio)
+                .toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })
+                .toUpperCase()}
             </div>
             <div>
-              <strong>Vendedor:</strong> {cotizacion.vendedor?.nombre}
-            </div>
-            <div>
-              <strong>Cliente:</strong> {cotizacion.cliente?.nombre}
+              <span className="label-blue">HORA:</span> {new Date(cotizacion.fechaInicio)
+                .toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })
+                .toLowerCase()}
             </div>
           </div>
-        </div>
+        </header>
+
+        {/* --- SECCIÓN DE DATOS DE LA EMPRESA --- */}
+        <section className="company-info">
+          <h2>DESARROLLO DE APLICACIONES Y SERVICIOS TÉCNICOS E INDUSTRIALES S. DE R.L. DE C.V.</h2>
+          <p className="company-rfc">DDA100126IX5</p>
+          <p>OCTAVA 1419, TORRES DEL PRI, C.P. 32574, CD. JUÁREZ, CHIHUAHUA, MÉXICO</p>
+          <p>656 208 0800</p>
+        </section>
+
+        {/* --- SECCIÓN CLIENTE / DOMICILIO / TELÉFONO / CONTACTO / ENTREGA / PÁGINA --- */}
+        <section className="client-info">
+          <div className="info-left">
+            <div className="info-item">
+              <span className="label orange">CLIENTE:</span>
+              <span className="value">{cotizacion.cliente.nombre}</span>
+            </div>
+            <div className="info-item">
+              <span className="label orange">DOMICILIO:</span>
+              <span className="value">
+                {formatDireccion(cotizacion.cliente.direccion)}
+              </span>
+            </div>
+            <div className="info-item">
+              <span className="label orange">TELÉFONO:</span>
+              <span className="value">{cotizacion.cliente.telefono}</span>
+            </div>
+            <div className="info-item">
+              <span className="label orange">CONTACTO:</span>
+              <span className="value">
+                {primerContacto(cotizacion.cliente.contactos)}
+              </span>
+            </div>
+            <div className="info-item">
+              <span className="label orange">TIEMPO DE ENTREGA:</span>
+              <span className="value">
+                {cotizacion.tiempoEntregaMin} – {cotizacion.tiempoEntregaMax} semanas
+              </span>
+            </div>
+            <div className="info-item">
+              <span className="label orange">PÁGINA:</span>
+              <span className="value">1 DE {cotizacion.totalPaginas || 1}</span>
+            </div>
+          </div>
+        </section>
 
         {/* Tabla de renglones */}
         <table className="w-full border-collapse mt-6">
           <thead>
             <tr className="bg-blue-800 text-white">
-              <th className="p-2 border">Descripción</th>
-              <th className="p-2 border">Cantidad</th>
-              <th className="p-2 border">%</th>
-              <th className="p-2 border">Costo</th>
+              <th className="p-2 border bg-orange-600 text-white">Cantidad</th>
+              <th className="p-2 border bg-orange-600 text-white">Descripción</th>
               <th className="p-2 border">Material</th>
-              <th className="p-2 border">Tiempos</th>
-              <th className="p-2 border">Comentarios</th>
-              <th className="p-2 border">Documentos</th>
+              <th className="p-2 border bg-orange-600 text-white">Tiempos</th>
+              <th className="p-2 border bg-orange-600 text-white">%</th>
+              <th className="p-2 border bg-orange-600 text-white text-right">Costo</th>
             </tr>
           </thead>
           <tbody>
             {cotizacion.renglones.map((r, i) => (
               <tr key={i}>
-                <td className="p-2 border">{r.descripcion}</td>
                 <td className="p-2 border text-center">{r.cantidad}</td>
-                <td className="p-2 border text-center">{r.porcentaje}%</td>
-                <td className="p-2 border text-right">
-                  ${(r.costo || 0).toFixed(2)}
-                </td>
+                <td className="p-2 border">{r.descripcion}</td>
                 <td className="p-2 border align-top">
                   {Array.isArray(r.material) && r.material.length > 0
                     ? r.material.map((m, j) => {
@@ -145,33 +206,9 @@ const VerCotizacion = () => {
                     ))
                     : '—'}
                 </td>
-                <td className="p-2 border">
-                  {Array.isArray(r.comentarios) && r.comentarios.length > 0
-                    ? r.comentarios.map((c, j) => (
-                      <div key={j}>"{c.texto}"</div>
-                    ))
-                    : '—'}
-                </td>
-                <td className="p-2 border">
-                  {Array.isArray(r.documentos) && r.documentos.length > 0
-                    ? r.documentos.map((d, j) =>
-                      /\.(jpe?g|png|gif)$/i.test(d.url) ? (
-                        <img
-                          key={j}
-                          src={d.url}
-                          alt=""
-                          className="h-8 mb-1"
-                          crossOrigin="anonymous"
-                        />
-                      ) : (
-                        <div key={j}>
-                          <a href={d.url} target="_blank" rel="noopener noreferrer">
-                            {d.originalName || 'Descargar'}
-                          </a>
-                        </div>
-                      )
-                    )
-                    : '—'}
+                <td className="p-2 border text-center">{r.porcentaje}%</td>
+                <td className="p-2 border text-right">
+                  ${(r.costo || 0).toFixed(2)}
                 </td>
               </tr>
             ))}
@@ -186,15 +223,11 @@ const VerCotizacion = () => {
           </tbody>
         </table>
 
-        {/* Footer con firmas */}
-        <div className="mt-12 flex justify-between">
-          <div className="w-1/3 border-t text-center pt-2">Firma de Cliente</div>
-          <div className="w-1/3 border-t text-center pt-2">Firma de Vendedor</div>
-        </div>
-
-        <p className="mt-6 text-xs text-gray-600">
-          Cotización válida por 30 días
-        </p>
+        {/* Footer*/}
+        <section className="footer-messages">
+          <p>ESTOS PRECIOS NO INCLUYEN IVA</p>
+          <p>ESTA COTIZACIÓN TIENE VALIDEZ DE TREINTA DÍAS A PARTIR DE SU FECHA ELABORADA</p>
+        </section>
       </div>
 
       {/* Botón volver */}

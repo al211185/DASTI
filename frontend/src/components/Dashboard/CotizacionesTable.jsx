@@ -144,50 +144,51 @@ const CotizacionesTable = ({
                   </button>
                 </td>
 
-                <td className="p-2 border text-center space-x-1">
-                  <button
-                    className="bg-cyan-500 text-white px-2 py-1 rounded"
-                    onClick={() => onVerCotizacion(cot._id)}
+                {/* Acciones reemplazadas por select */}
+                <td className="p-2 border text-center">
+                  <select
+                    defaultValue=""
+                    onChange={e => {
+                      const action = e.target.value
+                      e.target.value = ''
+                      switch (action) {
+                        case 'view':
+                          onVerCotizacion(cot._id)
+                          break
+                        case 'edit':
+                          onOpenModalAprobacion({
+                            cotizacionId: cot._id,
+                            currentState: cot.estado,
+                            action: 'edit',
+                          })
+                          break
+                        case 'hist':
+                          navigate(`/dashboard/cotizacion/${cot._id}/historial`)
+                          break
+                        case 'dup':
+                          onDuplicar(cot._id)
+                          break
+                        case 'comments':
+                          onComments(cot._id)
+                          break
+                        case 'delete':
+                          onEliminarCotizacion(cot._id)
+                          break
+                        default:
+                      }
+                    }}
+                    className="bg-gray-100 text-gray-700 rounded px-2 py-1 focus:outline-none"
                   >
-                    Ver
-                  </button>
-                  {canEdit && (
-                    <button
-                      className="bg-blue-500 text-white px-2 py-1 rounded"
-                      onClick={() => onOpenModalAprobacion({
-                        cotizacionId: cot._id,
-                        currentState: cot.estado,
-                        action: 'edit'
-                      })}
-                    >
-                      Editar
-                    </button>
-                  )}
-                  <button
-                    className="bg-green-500 text-white px-2 py-1 rounded"
-                    onClick={() => navigate(`/dashboard/cotizacion/${cot._id}/historial`)}
-                  >
-                    Hist
-                  </button>
-                  {canDuplicate && (
-                    <button
-                      className="bg-yellow-500 text-white px-2 py-1 rounded"
-                      onClick={() => onDuplicar(cot._id)}
-                    >
-                      Dup
-                    </button>
-                  )}
-                  {canDelete && (
-                    <button
-                      className="bg-red-500 text-white px-2 py-1 rounded"
-                      onClick={() => onEliminarCotizacion(cot._id)}
-                    >
-                      Eliminar
-                    </button>
-                  )}
+                    <option value="" disabled>Acciones…</option>
+                    <option value="view">Ver</option>
+                    {canEdit && <option value="edit">Editar</option>}
+                    <option value="hist">Hist</option>
+                    {canDuplicate && <option value="dup">Dup</option>}
+                    {canDelete && <option value="delete">Eliminar</option>}
+                  </select>
                 </td>
               </tr>
-            );
+            )
           })}
         </tbody>
       </table>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axiosInstance from '../../../api/axiosInstance';
+import { ChevronDownIcon } from '@heroicons/react/24/solid';
 
 const API_URL = import.meta.env.VITE_API_URL; // e.g. "http://localhost:5000"
 
@@ -129,82 +130,94 @@ const RegistroMaterial = () => {
   };
 
   return (
-    <div className="p-6 max-w-md mx-auto bg-white rounded shadow">
-      <h2 className="text-2xl font-bold mb-4">
-        {isEdit ? 'Editar Material' : 'Registrar Material'}
-      </h2>
-      {error && <p className="text-red-500 mb-4">{error}</p>}
-      {success && <p className="text-green-600 mb-4">{success}</p>}
+    <div className="min-h-full flex items-start justify-center py-12 px-4">
+      <div className="w-full max-w-md bg-white border rounded-3xl shadow-lg p-8">
+        <h2 className="text-2xl font-medium text-accent1 text-center mb-6">
+          {isEdit ? 'Editar Material' : 'Registrar Material'}
+        </h2>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Nombre */}
-        <div>
-          <label className="block text-sm font-medium mb-1">
-            Nombre del Material
-          </label>
+        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+        {success && <p className="text-green-600 text-sm mb-4">{success}</p>}
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Nombre */}
           <input
-            type="text"
             name="nombre"
+            type="text"
+            placeholder="Nombre del material"
             value={material.nombre}
             onChange={handleChange}
-            className="w-full border rounded p-2"
             required
             disabled={submitting}
+            className="w-full h-12 bg-gray-200 placeholder-gray-500 rounded-full px-6 focus:outline-none focus:ring-2 focus:ring-primary"
           />
-        </div>
 
-        {/* Categoría */}
-        <div>
-          <label className="block text-sm font-medium mb-1">Categoría</label>
-          <select
-            name="categoria"
-            value={material.categoria}
-            onChange={handleChange}
-            className="w-full border rounded p-2"
-            required
+          {/* Categoría */}
+          <div className="relative">
+            <select
+              name="categoria"
+              value={material.categoria}
+              onChange={handleChange}
+              required
+              disabled={submitting}
+              className="appearance-none w-full h-12 bg-gray-200 rounded-full px-6 focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              <option value="">— Selecciona categoría —</option>
+              {categorias.map(cat => (
+                <option key={cat._id} value={cat._id}>{cat.nombre}</option>
+              ))}
+            </select>
+            {/* flecha custom */}
+            <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center">
+              <ChevronDownIcon className="w-5 h-5 text-gray-500" />
+            </div>
+          </div>
+
+          {/* Imagen */}
+          <div className="flex flex-col">
+            <label className="block text-sm text-gray-600 mb-2">Imagen (opcional)</label>
+              <label
+                htmlFor="imagen"
+                className="
+                  flex items-center justify-center
+                  w-full h-12 
+                  bg-primary/70 rounded-full
+                  cursor-pointer
+                  hover:bg-primary hover:text-white
+                  transition
+                "
+              >
+                <span className="text-white">Seleccionar archivo</span>
+              </label>
+              <input
+                id="imagen"
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                disabled={submitting}
+                className="hidden"
+              />
+              {previewUrl && (
+                <img
+                  src={previewUrl}
+                  alt="Preview"
+                  className="mt-3 w-full h-32 object-contain border border-accent3 rounded-lg"
+                />
+              )}
+            </div>
+
+          {/* Botón */}
+          <button
+            type="submit"
             disabled={submitting}
+            className={`w-full h-12 bg-secondary text-white rounded-full text-base font-medium hover:bg-secondary-dark disabled:opacity-50 transition`}
           >
-            <option value="">-- Selecciona una categoría --</option>
-            {categorias.map(cat => (
-              <option key={cat._id} value={cat._id}>{cat.nombre}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Imagen */}
-        <div>
-          <label className="block text-sm font-medium mb-1">Imagen</label>
-          <input
-            type="file"
-            name="imagen"
-            accept="image/*"
-            onChange={handleFileChange}
-            className="w-full"
-            disabled={submitting}
-          />
-          {previewUrl && (
-            <img
-              src={previewUrl}
-              alt="Preview"
-              className="mt-2 h-24 object-contain border rounded"
-            />
-          )}
-        </div>
-
-        <button
-          type="submit"
-          disabled={submitting}
-          className={`w-full py-2 rounded transition ${
-            submitting
-              ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
-              : 'bg-blue-500 text-white hover:bg-blue-600'
-          }`}
-        >
-          {submitting
-            ? isEdit ? 'Actualizando...' : 'Registrando...'
-            : isEdit ? 'Actualizar Material' : 'Registrar Material'}
-        </button>
-      </form>
+            {submitting
+              ? isEdit ? 'Actualizando…' : 'Registrando…'
+              : isEdit ? 'Actualizar Material' : 'Registrar Material'}
+          </button>
+        </form>
+      </div>
     </div>
   );
 };

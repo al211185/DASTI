@@ -24,11 +24,11 @@ const TablaRenglones = ({
   return (
     <FieldArray name="renglones">
       {({ push, remove }) => (
-        <div className="bg-white p-4 rounded shadow mb-6">
+        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6 border">
           {/* sólo no muestran agregar renglón los jefes */}
           {!isJefe && (
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold">Renglones</h2>
+              <h2 className="text-xl font-semibold text-gray-800">Renglones</h2>
               <button
                 type="button"
                 onClick={() =>
@@ -50,29 +50,31 @@ const TablaRenglones = ({
                     comentarios: [],
                   })
                 }
-                className="bg-blue-500 text-white px-4 py-2 rounded"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg shadow transition"
               >
                 Agregar renglón
               </button>
             </div>
           )}
 
-          <table className="w-full border">
+        <div className="overflow-x-auto">
+          
+          <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-100">
               <tr>
-                <th className="p-2 border">Cant</th>
-                <th className="p-2 border">Descripción</th>
-                <th className="p-2 border">Documentos</th>
-                <th className="p-2 border">Material</th>
-                <th className="p-2 border">Tiempos</th>
-                <th className="p-2 border">Días Hábs.</th>
-                <th className="p-2 border">%</th>
-                <th className="p-2 border">Costo</th>
-                <th className="p-2 border">Comentarios</th>
-                <th className="p-2 border">Acciones</th>
+                <th className="w-16 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Cant</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Descripción</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Documentos</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Material</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Tiempos</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Días Hábs.</th>
+                <th className="w-16 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">%</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Costo</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap"></th>
+                <th className="w-16 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap"></th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="bg-white divide-y divide-gray-200">
               {renglones.map((r, idx) => (
                 <tr key={idx}>
                   {/* Cantidad */}
@@ -152,7 +154,7 @@ const TablaRenglones = ({
                   </td>
 
                   {/* Material */}
-                  <td className="p-2 border align-top">
+                  <td className="p-2 border text-center">
                     {isJefe
                       ? r.material.map((m, i) => (
                           <div key={i} className="text-sm mb-1">
@@ -337,7 +339,7 @@ const TablaRenglones = ({
                       className="bg-gray-200 px-2 py-1 rounded text-sm"
                       onClick={() => setModalComentariosIndex(idx)}
                     >
-                      {r.comentarios.length} Coment.
+                      <span>💬</span> {r.comentarios.length}
                     </button>
                   </td>
 
@@ -349,7 +351,7 @@ const TablaRenglones = ({
                         onClick={() => remove(idx)}
                         className="bg-red-500 text-white px-2 py-1 rounded"
                       >
-                        Eliminar
+                        X
                       </button>
                     )}
                   </td>
@@ -357,6 +359,8 @@ const TablaRenglones = ({
               ))}
             </tbody>
           </table>
+          
+          </div>
         </div>
       )}
     </FieldArray>

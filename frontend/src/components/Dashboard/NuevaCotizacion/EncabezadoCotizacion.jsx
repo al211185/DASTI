@@ -75,14 +75,14 @@ const EncabezadoCotizacion = ({ header, onChange, vendedores, plantas }) => {
   });
 
   return (
-    <div className="bg-white p-4 rounded shadow space-y-4 mb-6">
-      <h2 className="text-xl font-semibold">Datos de la Cotización</h2>
-      <div className="flex flex-wrap gap-4">
+    <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 mb-6">
+      <h2 className="text-2xl font-semibold text-gray-800 mb-4">Datos de la Cotización</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Cliente */}
-        <div className="flex-1 min-w-[200px]">
-          <label className="block text-sm font-medium mb-1">Cliente</label>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Cliente</label>
           <select
-            className="w-full border rounded p-2"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 appearance-none"
             value={header.cliente}
             onChange={(e) => onChange('cliente', e.target.value)}
             disabled={!canEdit}
@@ -96,10 +96,10 @@ const EncabezadoCotizacion = ({ header, onChange, vendedores, plantas }) => {
           </select>
         </div>
         {/* Requisitor */}
-        <div className="flex-1 min-w-[200px]">
-          <label className="block text-sm font-medium mb-1">Requisitor</label>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Requisitor</label>
           <select
-            className="w-full border rounded p-2"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 appearance-none"
             value={header.requisitor}
             onChange={(e) => onChange('requisitor', e.target.value)}
             disabled={!canEdit}
@@ -116,7 +116,7 @@ const EncabezadoCotizacion = ({ header, onChange, vendedores, plantas }) => {
         <div className="flex-1 min-w-[200px]">
           <label className="block text-sm font-medium mb-1">Vendedor</label>
           <select
-            className="w-full border rounded p-2"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 appearance-none"
             value={header.vendedor}
             onChange={(e) => onChange('vendedor', e.target.value)}
             disabled={!canEdit}
@@ -135,7 +135,7 @@ const EncabezadoCotizacion = ({ header, onChange, vendedores, plantas }) => {
           <label className="block text-sm font-medium mb-1">Fecha de inicio</label>
           <input
             type="date"
-            className="w-full border rounded p-2"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
             value={header.fechaInicio}
             onChange={(e) => onChange('fechaInicio', e.target.value)}
             disabled={!canEdit}
@@ -145,7 +145,7 @@ const EncabezadoCotizacion = ({ header, onChange, vendedores, plantas }) => {
         <div className="flex-1 min-w-[200px]">
           <label className="block text-sm font-medium mb-1">Planta</label>
           <select
-            className="w-full border rounded p-2"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 appearance-none"
             value={header.planta}
             onChange={(e) => onChange('planta', e.target.value)}
             disabled={!canEdit}
@@ -169,7 +169,7 @@ const EncabezadoCotizacion = ({ header, onChange, vendedores, plantas }) => {
               type="number"
               name="header.tiempoEntregaMin"
               placeholder="Min"
-              className="w-full border rounded p-2"
+              className="w-full border rounded-lg p-2"
               disabled={!canEdit}
             />
             <span className="flex items-center">-</span>
@@ -177,7 +177,7 @@ const EncabezadoCotizacion = ({ header, onChange, vendedores, plantas }) => {
               type="number"
               name="header.tiempoEntregaMax"
               placeholder="Max"
-              className="w-full border rounded p-2"
+              className="w-full border rounded-lg p-2"
               disabled={!canEdit}
             />
           </div>
@@ -185,6 +185,7 @@ const EncabezadoCotizacion = ({ header, onChange, vendedores, plantas }) => {
           <ErrorMessage name="header.tiempoEntregaMax" component="div" className="text-red-500 text-sm" />
         </div>
         {/* Serial */}
+        {header.serial && (
         <div className="flex-1 min-w-[200px]">
           <label className="block text-sm font-medium mb-1">Serial</label>
           <input
@@ -192,8 +193,9 @@ const EncabezadoCotizacion = ({ header, onChange, vendedores, plantas }) => {
             className="w-full border rounded p-2"
             value={header.serial || ''}
             readOnly
-          />
-        </div>
+            />
+            </div>
+          )}
 
       </div>
     </div>

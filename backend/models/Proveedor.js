@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 // subdocumento enriquecido:
 const proveedorMaterialSchema = new mongoose.Schema({
-  material: { 
+  material: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Material',
     required: true
@@ -10,33 +10,41 @@ const proveedorMaterialSchema = new mongoose.Schema({
   precioPresentacion: { type: Number, required: true },
   unidadPresentacion: {
     type: String,
-    enum: ["PIES","PULGADAS","LIBRAS","MILIMETROS","CENTIMETROS","GRAMOS","KILOS"],
+    enum: ["PIES", "PULGADAS", "LIBRAS", "MILIMETROS", "CENTIMETROS", "GRAMOS", "KILOS"],
     required: true
   },
   cantidadPresentacion: { type: Number, required: true, min: 0.001 },
-  factorConversion:    { type: Number, required: true, min: 0.000001 },
+  factorConversion: { type: Number, required: true, min: 0.000001 },
   // campos opcionales como fecha de actualización, condiciones, etc.
 }, { _id: false });
 
 const proveedorSchema = new mongoose.Schema({
-  nombre:            { type: String, required: true, trim: true },
-  comentarios:       { type: String, trim: true },
+  nombre: { type: String, required: true, trim: true },
+  comentarios: { type: String, trim: true },
   catalogo: [{
-    url:      { type: String, required: true, trim: true },
+    url: { type: String, required: true, trim: true },
     filename: { type: String, trim: true },
   }],
-  ciudad:            { type: String, required: true, trim: true },
-  formaPago:         { type: String, trim: true },
-  sitioWeb:          { type: String, trim: true },
-  direccion:         { type: String, trim: true },
-  telefonoOficina:   { type: String, trim: true },
-  telefonoWhatsapp:  { type: String, trim: true },
-  contactoNombre:    { type: String, trim: true },
-  razonSocial:       { type: String, trim: true },
-  clabeInterbancaria:{ type: String, trim: true },
-  materiales:        [proveedorMaterialSchema],
+  ciudad: { type: String, required: true, trim: true },
+  formaPago: { type: String, trim: true },
+  sitioWeb: { type: String, trim: true },
+  direccion: { type: String, trim: true },
+  telefonoOficina: { type: String, trim: true },
+  telefonoWhatsapp: { type: String, trim: true },
+  contactoNombre: { type: String, trim: true },
+  // ← Aquí agregamos el campo de correo electrónico
+  correo: {
+    type: String,
+    required: true,
+    trim: true,
+    lowercase: true,
+    match: [/^\S+@\S+\.\S+$/, 'Por favor ingresa un correo válido']
+  },
+  razonSocial: { type: String, trim: true },
+  clabeInterbancaria: { type: String, trim: true },
+  materiales: [proveedorMaterialSchema],
   datosFiscales: {
-    rfc:             { type: String, trim: true },
+    rfc: { type: String, trim: true },
     domicilioFiscal: { type: String, trim: true },
   },
 }, {

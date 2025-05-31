@@ -1,0 +1,190 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+/* Contenedor blanco por defecto */
+.pdf-container {
+  background: white;
+  padding: 100px 140px;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* Header principal: fondo blanco, flex para separar izq/der */
+.pdf-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  background: white;
+}
+
+/* Logos izq */
+.header-left {
+  display: flex;
+  align-items: center;
+}
+.logo-icon {
+  height: 40px;
+}
+.logo-text {
+  height: 32px;
+  margin-left: 8px;
+}
+
+/* Datos der */
+.header-right {
+  text-align: left;
+  font-size: 16px;
+  line-height: 2;
+}
+.label-blue {
+  color: #107cbc;
+  font-weight: bold;
+  text-transform: uppercase;
+  margin-right: 4px;
+}
+
+/* SECCIÓN DE DATOS DE LA EMPRESA */
+.company-info {
+  text-align: center;
+  color: #107cbc;
+  margin: 30px 0;       /* espacio arriba y abajo */
+  font-size: 18px;
+  line-height: 2;
+}
+.company-info h2 {
+  font-size: 20px;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  font-weight: bold;
+}
+.company-info .company-rfc {
+  font-size: 18px;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+.company-info p {
+  margin: 2px 0;
+}
+
+.client-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin: 30px 0;  /* ya tenías algo similar */
+  font-size: 16px;
+  color: #555;
+}
+
+.client-info .info-left,
+.client-info .info-right {
+  display: block;
+  width: 100%;
+}
+
+.client-info .info-item {
+  margin-right: 24px;
+  margin-bottom: 12px;
+  display: block;
+}
+
+.client-info .label {
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+/* Opcional: si quieres que etiqueta y valor queden juntos en inline */
+.client-info .label,
+.client-info .value {
+  display: inline;
+}
+
+.client-info .orange {
+  color: #f7941e;
+}
+
+.client-info .value {
+  color: #555;
+}
+
+.client-info .info-item .label {
+  margin-right: 8px;  /* ajusta la medida a tu gusto */
+}
+
+
+/* 1) Reset al background del <tr> de encabezado */
+.pdf-container table thead tr {
+  background: none;
+}
+
+/* 2) Estilo base para todas las celdas */
+.pdf-container table th,
+.pdf-container table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  vertical-align: top;
+  font-size: 14px;
+}
+
+/* 3) Cabecera en naranja por defecto */
+.pdf-container table thead th {
+  background-color: #f7941e;
+  color: white;
+  text-transform: uppercase;
+  font-weight: normal;
+}
+
+/* 4) Última columna de encabezado en azul */
+.pdf-container table thead th:last-child {
+  background-color: #005bae;
+}
+
+/* 5) Alineaciones */
+.pdf-container table td.text-right {
+  text-align: right;
+}
+.pdf-container table td.text-center {
+  text-align: center;
+}
+
+/* 6) Celdas de importe en negrita */
+.pdf-container table td.font-bold {
+  font-weight: bold;
+}
+
+/* 7) Body sobre fondo blanco */
+.pdf-container table tbody tr td {
+  background: white;
+  color: #555;
+}
+
+
+.footer-totals {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 24px;
+}
+
+.summary {
+  width: 35%;
+  font-size: 12px;
+}
+.summary div {
+  margin-bottom: 6px;
+}
+.summary .label.orange {
+  display: inline-block;
+  width: 90px;
+}
+.total-final {
+  margin-top: 8px;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.footer-messages {
+  margin-top: 20px;
+  font-size: 12px;
+  color: #777;
+}
+.footer-messages p {
+  margin: 2px 0;
+}

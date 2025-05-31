@@ -60,7 +60,7 @@ export default function RegistroMaquina() {
       }
 
       // redirigir opcional
-      // navigate('/dashboard/maquinas');
+      navigate('/dashboard/registro/maquinas');
     } catch (err) {
       console.error('Error al guardar máquina:', err);
       setError(err.response?.data?.msg || 'Error al guardar la máquina.');
@@ -70,53 +70,49 @@ export default function RegistroMaquina() {
   };
 
   return (
-    <div className="max-w-md mx-auto p-6 bg-white shadow rounded">
-      <h2 className="text-2xl font-bold mb-4">
-        {id ? 'Editar Máquina' : 'Registrar Nueva Máquina'}
-      </h2>
+    <div className="min-h-full flex items-start justify-center py-12 px-4">
+      <div className="w-full max-w-md bg-white border rounded-3xl shadow-lg p-8">
+        <h2 className="text-2xl font-medium text-accent1 text-center mb-6">
+          {id ? 'Editar Máquina' : 'Registrar Nueva Máquina'}
+        </h2>
 
-      {mensaje && <div className="text-green-600 mb-2">{mensaje}</div>}
-      {error   && <div className="text-red-600 mb-2">{error}</div>}
+        {mensaje && <p className="text-green-600 text-sm mb-4">{mensaje}</p>}
+        {error   && <p className="text-red-500 text-sm mb-4">{error}</p>}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block mb-1">Nombre de la máquina</label>
+        <form onSubmit={handleSubmit} className="space-y-5">
           <input
-            type="text"
             name="nombre"
+            type="text"
+            placeholder="Nombre de la máquina"
             value={maquina.nombre}
             onChange={handleChange}
-            className="w-full border rounded p-2"
             required
             disabled={guardando}
+            className="w-full h-12 bg-gray-200 placeholder-gray-500 rounded-full px-6 focus:outline-none focus:ring-2 focus:ring-primary"
           />
-        </div>
-        <div>
-          <label className="block mb-1">Costo por hora</label>
+
           <input
-            type="number"
             name="costoHora"
+            type="number"
             min="0"
             step="0.01"
+            placeholder="Costo por hora"
             value={maquina.costoHora}
             onChange={handleChange}
-            className="w-full border rounded p-2"
             required
             disabled={guardando}
+            className="w-full h-12 bg-gray-200 placeholder-gray-500 rounded-full px-6 focus:outline-none focus:ring-2 focus:ring-primary"
           />
-        </div>
-        <button
-          type="submit"
-          disabled={guardando}
-          className="bg-blue-500 text-white w-full py-2 rounded hover:bg-blue-600 disabled:opacity-50 transition-colors"
-        >
-          {guardando
-            ? 'Guardando…'
-            : id
-              ? 'Actualizar Máquina'
-              : 'Registrar Máquina'}
-        </button>
-      </form>
+
+          <button
+            type="submit"
+            disabled={guardando}
+            className="w-1/2 h-10 mx-auto block bg-secondary hover:bg-secondary-dark text-white rounded-full text-base font-medium disabled:opacity-50 transition"
+          >
+            {guardando ? 'Guardando…' : id ? 'Actualizar' : 'Registrar'}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

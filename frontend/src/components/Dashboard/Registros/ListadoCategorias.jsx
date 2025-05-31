@@ -46,46 +46,58 @@ export default function ListadoCategorias() {
   };
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold">Categorías</h2>
-        <button
-          onClick={() => navigate('/dashboard/registro/categoria')}
-          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
-        >
-          Nueva Categoría
-        </button>
-      </div>
-
-      {categorias.length === 0 ? (
-        <p className="text-gray-500">No hay categorías registradas.</p>
-      ) : (
-        <div className="grid gap-4">
-          {categorias.map(cat => (
-            <div
-              key={cat._id}
-              className="flex justify-between items-center p-4 border rounded"
-            >
-              <span className="font-medium">{cat.nombre}</span>
-              <div className="space-x-2">
-                <button
-                  onClick={() => navigate(`/dashboard/registro/categoria/${cat._id}`)}
-                  className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded"
-                >
-                  Editar
-                </button>
-                <button
-                  disabled={eliminando === cat._id}
-                  onClick={() => handleEliminar(cat._id)}
-                  className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded disabled:opacity-50"
-                >
-                  {eliminando === cat._id ? 'Eliminando…' : 'Eliminar'}
-                </button>
-              </div>
-            </div>
-          ))}
+    <div className="min-h-screen py-8 px-4">
+      <div className="w-full bg-white border rounded-2xl shadow-lg p-6">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row justify-between items-center mb-6">
+          <h2 className="text-3xl font-semibold text-gray-800 mb-4 md:mb-0">
+            Categorías
+          </h2>
+          <button
+            onClick={() => navigate('/dashboard/registro/categoria')}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg shadow transition"
+          >
+            Nueva Categoría
+          </button>
         </div>
-      )}
+
+        {/* Listado */}
+        {categorias.length === 0 ? (
+          <p className="text-center text-gray-500 py-10">
+            No hay categorías registradas.
+          </p>
+        ) : (
+          <div className="space-y-4">
+            {categorias.map((cat) => (
+              <div
+                key={cat._id}
+                className="bg-white border border-gray-200 rounded-lg shadow-sm p-4 flex justify-between items-center hover:shadow-md transition"
+              >
+                <span className="text-lg text-gray-700 font-medium">
+                  {cat.nombre}
+                </span>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() =>
+                      navigate(`/dashboard/registro/categoria/${cat._id}`)
+                    }
+                    className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-1 rounded-md transition"
+                  >
+                    Editar
+                  </button>
+                  <button
+                    disabled={eliminando === cat._id}
+                    onClick={() => handleEliminar(cat._id)}
+                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-1 rounded-md disabled:opacity-50 transition"
+                  >
+                    {eliminando === cat._id ? 'Eliminando…' : 'Eliminar'}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
-  );
+  )
 }

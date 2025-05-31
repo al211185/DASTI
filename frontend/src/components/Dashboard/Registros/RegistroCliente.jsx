@@ -88,7 +88,7 @@ const RegistroCliente = () => {
       } else {
         await axiosInstance.post('/clientes', cliente);
       }
-      navigate('/dashboard/clientes');
+      navigate('/dashboard/registro/clientes');
     } catch (err) {
       console.error('Error al guardar cliente:', err.response?.data || err.message);
       alert('No se pudo guardar. Revisa la consola.');
@@ -99,90 +99,136 @@ const RegistroCliente = () => {
 
   /* -------------------------------- UI ------------------------------------ */
   return (
-    <div className="p-6 max-w-2xl mx-auto">
-      <h2 className="text-xl font-bold mb-4">
-        {id ? 'Editar Cliente' : 'Registrar Cliente'}
-      </h2>
+    <div className="min-h-screen py-10">
+      <div className="max-w-3xl mx-auto bg-white border rounded-2xl shadow-lg p-8">
+        <h2 className="text-3xl font-semibold text-gray-800 text-center mb-8">
+          {id ? 'Editar Cliente' : 'Registrar Cliente'}
+        </h2>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* ——— datos generales ——— */}
-        <Input label="Nombre *" name="nombre" value={cliente.nombre} onChange={handleChange} required />
-        <Input label="Razón Social" name="razonSocial" value={cliente.razonSocial} onChange={handleChange} />
-
-        {/* ——— dirección ——— */}
-        <fieldset className="border p-4">
-          <legend className="px-2">Dirección</legend>
-          <Input name="direccion.calle"  label="Calle"        value={cliente.direccion.calle}  onChange={handleChange} />
-          <Input name="direccion.numero" label="Número"       value={cliente.direccion.numero} onChange={handleChange} />
-          <Input name="direccion.colonia"label="Colonia"      value={cliente.direccion.colonia}onChange={handleChange} />
-          <Input name="direccion.ciudad" label="Ciudad"       value={cliente.direccion.ciudad} onChange={handleChange} />
-          <Input name="direccion.estado" label="Estado"       value={cliente.direccion.estado} onChange={handleChange} />
-          <Input name="direccion.codigoPostal" label="Código Postal"
-                 value={cliente.direccion.codigoPostal} onChange={handleChange} />
-        </fieldset>
-
-        {/* ——— contacto general ——— */}
-        <Input label="Teléfono" name="telefono" value={cliente.telefono} onChange={handleChange} />
-        <Input label="Email"    name="email"    type="email" value={cliente.email} onChange={handleChange} />
-        <Input label="Sitio Web"name="sitioWeb" value={cliente.sitioWeb} onChange={handleChange} />
-
-        {/* ——— contactos múltiples ——— */}
-        <fieldset className="border p-4">
-          <legend className="px-2">Contactos</legend>
-          {cliente.contactos.map((c, i) => (
-            <div key={i} className="mb-4 border-b pb-2">
-              <Input name="nombre"   label="Nombre"   value={c.nombre}   onChange={(e) => handleContactoChange(i, e)} />
-              <Input name="cargo"    label="Cargo"    value={c.cargo}    onChange={(e) => handleContactoChange(i, e)} />
-              <Input name="telefono" label="Teléfono" value={c.telefono} onChange={(e) => handleContactoChange(i, e)} />
-              <Input name="email"    type="email" label="Email" value={c.email} onChange={(e) => handleContactoChange(i, e)} />
-              {cliente.contactos.length > 1 && (
-                <button type="button" onClick={() => eliminarContacto(i)} className="text-red-500 underline">
-                  Eliminar este contacto
-                </button>
-              )}
-            </div>
-          ))}
-          <button type="button" onClick={agregarContacto} className="bg-blue-500 text-white px-2 py-1 rounded">
-            Agregar otro contacto
-          </button>
-        </fieldset>
-
-        {/* ——— otros ——— */}
-        <Input label="Sector"      name="sector"      value={cliente.sector}      onChange={handleChange} />
-        <Textarea label="Comentarios" name="comentarios" value={cliente.comentarios} onChange={handleChange} />
-
-        <button
-          type="submit"
-          disabled={guardando}
-          className="w-full bg-green-500 text-white py-2 rounded hover:bg-green-600 disabled:opacity-50"
+        <form
+          onSubmit={handleSubmit}
+          className="grid grid-cols-1 md:grid-cols-2 gap-6"
         >
-          {guardando ? 'Guardando…' : id ? 'Actualizar Cliente' : 'Registrar Cliente'}
-        </button>
-      </form>
+          {/* — Nombre & Razón Social — */}
+          <div>
+            <Input label="Nombre *" name="nombre" value={cliente.nombre} onChange={handleChange} required />
+          </div>
+          <div>
+            <Input label="Razón Social" name="razonSocial" value={cliente.razonSocial} onChange={handleChange} />
+          </div>
+
+          {/* — Dirección (2 columnas) — */}
+          <fieldset className="md:col-span-2 border rounded-xl p-4">
+            <legend className="text-gray-700 font-medium px-2">Dirección</legend>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <Input label="Calle" name="direccion.calle" value={cliente.direccion.calle} onChange={handleChange} />
+              <Input label="Número" name="direccion.numero" value={cliente.direccion.numero} onChange={handleChange} />
+              <Input label="Colonia" name="direccion.colonia" value={cliente.direccion.colonia} onChange={handleChange} />
+              <Input label="Ciudad" name="direccion.ciudad" value={cliente.direccion.ciudad} onChange={handleChange} />
+              <Input label="Estado" name="direccion.estado" value={cliente.direccion.estado} onChange={handleChange} />
+              <Input label="Código Postal" name="direccion.codigoPostal" value={cliente.direccion.codigoPostal} onChange={handleChange} />
+            </div>
+          </fieldset>
+
+          {/* — Teléfono & Email — */}
+          <div>
+            <Input label="Teléfono" name="telefono" value={cliente.telefono} onChange={handleChange} />
+          </div>
+          <div>
+            <Input label="Email" name="email" type="email" value={cliente.email} onChange={handleChange} />
+          </div>
+
+          {/* — Sitio Web & Sector — */}
+          <div>
+            <Input label="Sitio Web" name="sitioWeb" value={cliente.sitioWeb} onChange={handleChange} />
+          </div>
+          <div>
+            <Input label="Sector" name="sector" value={cliente.sector} onChange={handleChange} />
+          </div>
+
+          {/* — Contactos múltiples — */}
+          <fieldset className="md:col-span-2 border rounded-xl p-4">
+            <legend className="text-gray-700 font-medium px-2">Contactos</legend>
+            <div className="space-y-6 mt-4">
+              {cliente.contactos.map((c, i) => (
+                <div key={i} className="relative border-b pb-4">
+                  {cliente.contactos.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => eliminarContacto(i)}
+                      className="absolute top-0 right-4 transform -translate-y-1/2 bg-red-500 text-white px-4 py-1 rounded-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-300"
+                    >
+                      Eliminar
+                    </button>
+                  )}
+                  <Input label="Nombre" name="nombre" value={c.nombre} onChange={e => handleContactoChange(i, e)} />
+                  <Input label="Cargo" name="cargo" value={c.cargo} onChange={e => handleContactoChange(i, e)} />
+                  <Input label="Teléfono" name="telefono" value={c.telefono} onChange={e => handleContactoChange(i, e)} />
+                  <Input label="Email" name="email" type="email" value={c.email} onChange={e => handleContactoChange(i, e)} />
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={agregarContacto}
+                className="inline-block bg-primary text-white px-6 py-2 rounded-full hover:bg-primary-dark"
+              >
+                + Agregar contacto
+              </button>
+            </div>
+          </fieldset>
+
+          {/* — Comentarios (span 2) — */}
+          <div className="md:col-span-2">
+            <Textarea label="Comentarios" name="comentarios" value={cliente.comentarios} onChange={handleChange} />
+          </div>
+
+          {/* — Botón Guardar (span 2) — */}
+          <div className="md:col-span-2 text-center">
+            <button
+              type="submit"
+              disabled={guardando}
+              className="w-1/2 bg-orange-600 text-white py-3 rounded-full hover:bg-orange-700 disabled:opacity-50"
+            >
+              {guardando ? 'Guardando…' : id ? 'Actualizar Cliente' : 'Registrar Cliente'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function Input({ label, name, value, onChange, required, type = 'text' }) {
+  return (
+    <div>
+      {label && <label htmlFor={name} className="block mb-1 text-gray-700">{label}</label>}
+      <input
+        id={name}
+        name={name}
+        type={type}
+        value={value}
+        required={required}
+        onChange={onChange}
+        className="w-full h-12 bg-gray-200 placeholder-gray-600 rounded-full px-4 focus:outline-none focus:ring-2 focus:ring-primary"
+      />
+    </div>
+  );
+}
+
+function Textarea({ label, name, value, onChange }) {
+  return (
+    <div>
+      {label && <label htmlFor={name} className="block mb-1 text-gray-700">{label}</label>}
+      <textarea
+        id={name}
+        name={name}
+        rows={4}
+        value={value}
+        onChange={onChange}
+        className="w-full bg-gray-200 placeholder-gray-600 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+      />
     </div>
   );
 };
-
-/* ---------- pequeños componentes para reducir repetición ---------- */
-const Input = ({ label, name, value, onChange, required, type = 'text' }) => (
-  <div>
-    {label && <label className="block mb-1">{label}</label>}
-    <input
-      type={type}
-      name={name}
-      value={value}
-      onChange={onChange}
-      required={required}
-      className="w-full border rounded p-2"
-    />
-  </div>
-);
-
-const Textarea = ({ label, name, value, onChange }) => (
-  <div>
-    {label && <label className="block mb-1">{label}</label>}
-    <textarea name={name} value={value} onChange={onChange} className="w-full border rounded p-2" />
-  </div>
-);
 
 export default RegistroCliente;

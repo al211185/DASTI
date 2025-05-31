@@ -45,52 +45,56 @@ export default function ListadoPlantas() {
 
   /* -------------------------------- render ------------------------------ */
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold">Plantas</h2>
-
-        {/* botón crear */}
-        <button
-          onClick={() => navigate('/dashboard/registro/planta')}
-          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-        >
-          Nueva planta
-        </button>
-      </div>
-
-      <div className="grid gap-4">
-        {plantas.length === 0 && (
-          <p className="text-gray-500">No hay plantas registradas.</p>
-        )}
-
-        {plantas.map((p) => (
-          <div
-            key={p._id}
-            className="flex justify-between items-center p-4 border rounded"
+    <div className="min-h-screen py-8 px-4 md:px-8">
+      <div className="max-w-screen-xl mx-auto bg-white border rounded-2xl shadow-lg p-6">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row justify-between items-center mb-6">
+          <h2 className="text-3xl font-semibold text-gray-800 mb-4 md:mb-0">
+            Plantas
+          </h2>
+          <button
+            onClick={() => navigate('/dashboard/registro/planta')}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg shadow transition"
           >
-            <span>{p.nombre}</span>
+            Nueva planta
+          </button>
+        </div>
 
-            <div className="space-x-2">
-              {/* botón editar */}
-              <button
-                onClick={() => navigate(`/dashboard/registro/planta/${p._id}`)}
-                className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded"
+        {/* Listado */}
+        {plantas.length === 0 ? (
+          <p className="text-center text-gray-500 py-10">
+            No hay plantas registradas.
+          </p>
+        ) : (
+          <div className="space-y-4">
+            {plantas.map(p => (
+              <div
+                key={p._id}
+                className="bg-white border border-gray-200 rounded-lg shadow-sm p-4 flex justify-between items-center hover:shadow-md transition"
               >
-                Editar
-              </button>
-
-              {/* botón eliminar */}
-              <button
-                disabled={eliminando === p._id}
-                onClick={() => handleEliminar(p._id)}
-                className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded disabled:opacity-50"
-              >
-                {eliminando === p._id ? 'Eliminando…' : 'Eliminar'}
-              </button>
-            </div>
+                <span className="text-lg text-gray-700 font-medium">
+                  {p.nombre}
+                </span>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => navigate(`/dashboard/registro/planta/${p._id}`)}
+                    className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-1 rounded-md transition"
+                  >
+                    Editar
+                  </button>
+                  <button
+                    disabled={eliminando === p._id}
+                    onClick={() => handleEliminar(p._id)}
+                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-1 rounded-md disabled:opacity-50 transition"
+                  >
+                    {eliminando === p._id ? 'Eliminando…' : 'Eliminar'}
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
+        )}
       </div>
     </div>
-  );
+  )
 }

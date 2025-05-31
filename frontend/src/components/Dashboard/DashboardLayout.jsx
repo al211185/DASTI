@@ -5,14 +5,14 @@ import Header from './Header';
 
 const DashboardLayout = ({ children }) => {
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen bg-white">
       {/* Sidebar */}
       <Sidebar />
 
       {/* Contenido principal */}
       <div className="flex-1 flex flex-col">
         <Header />
-        <main className="p-4 overflow-auto">
+        <main className="overflow-auto">
           {children}
         </main>
       </div>
