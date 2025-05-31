@@ -24,6 +24,8 @@ import RegistroProveedor from './components/Dashboard/Registros/RegistroProveedo
 import RegistroMaquina from './components/Dashboard/Registros/RegistroMaquina';
 import RegistroUsuario from './components/Dashboard/Registros/RegistroUsuario';
 
+import ContactosProveedor from './components/Dashboard/Proveedores/ContactosProveedor';
+
 import ListadoPlantas from './components/Dashboard/Registros/ListadoPlantas';
 import ListadoClientes from './components/Dashboard/Registros/ListadoClientes';
 import ListadoUsuarios from './components/Dashboard/Registros/ListadoUsuarios';
@@ -228,6 +230,19 @@ function App() {
             <DashboardLayout><RegistroProveedor /></DashboardLayout>
           </ProtectedRoute>
         } />
+
+        {/* ← Aquí: ruta para LISTAR/VER contactos de proveedores */}
+        <Route
+          path="/dashboard/registro/contactos"
+          element={
+            <ProtectedRoute allowedRoles={['administrador', 'director', 'almacen', 'compras']}>
+              <DashboardLayout>
+                <ContactosProveedor />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
 
         <Route path="/dashboard/registro/maquina" element={
           <ProtectedRoute allowedRoles={['administrador', 'director']}>
