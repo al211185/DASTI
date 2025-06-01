@@ -1,8 +1,8 @@
 // models/Cotizacion.js
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
-const Planta = require('./Planta');      // Asegúrate de que la ruta sea correcta
 const Counter = require('./Counter');    // Modelo para el contador
+const Cliente = require('./Cliente');   // <-- Importamos Cliente para leer su prefijo
 
 const historialCambioSchema = new Schema({
   campo: { type: String, required: true },
@@ -35,7 +35,7 @@ const cotizacionSchema = new Schema({
   vendedor: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   fechaInicio: { type: Date, required: true },
   planta: { type: Schema.Types.ObjectId, ref: 'Planta', required: true },
-  serial: { type: String, required: true },
+  serial: { type: String, required: true, unique: true },
   tiempoEntregaMin: { type: Number, default: 1 },
   tiempoEntregaMax: { type: Number, default: 1 },
   renglones: [renglonSchema],  // Esto queda igual
@@ -51,36 +51,45 @@ const cotizacionSchema = new Schema({
 });
 
 
-// Pre-save hook para generar el serial autoincremental por planta
+/**
+ * HOOK pre-validate: Generar el serial usando “cliente” en lugar de “planta”
+ */
 cotizacionSchema.pre('validate', async function (next) {
   const doc = this;
+  // Solo generar el serial si es nuevo (isNew) y aún no lo tiene asignado
   if (doc.isNew) {
     try {
-      // Buscar la planta asociada usando su _id (almacenado en doc.planta)
-      const plantaDoc = await Planta.findById(doc.planta);
-      if (!plantaDoc) {
-        return next(new Error("Planta no encontrada para la cotización."));
+      // 1) Buscar al cliente completo para obtener su prefijo
+      const clienteDoc = await Cliente.findById(doc.cliente);
+      if (!clienteDoc) {
+        return next(new Error("Cliente no encontrado para la cotización."));
       }
-      // Generar el código de grupo basándose en la ubicación de la planta.
-      const rawGroup = plantaDoc.ubicacion ? plantaDoc.ubicacion.slice(0, 3).toUpperCase() : "000";
-      const groupCode = rawGroup.padEnd(3, '0');
-      
-      // Definir la clave de contador usando la planta (cada planta tendrá su propio contador)
-      const sequenceId = `cotizacionSerial_${doc.planta}`;
-      
-      // Incrementar el contador asociado a esta planta (usando upsert para crearlo si no existe)
+
+      // 2) Obtener prefijo desde el cliente
+      //    (puedes usar clienteDoc.prefijo o, si no lo tienes, derivar de nombre)
+      const pref = clienteDoc.prefijo
+        ? clienteDoc.prefijo.toUpperCase().trim()
+        : clienteDoc.nombre.slice(0, 3).toUpperCase(); 
+      // En este ejemplo, si el cliente no tiene “prefijo”, tomo las 3 primeras letras de su nombre
+
+      // 3) Usar un contador independiente por cliente:
+      const sequenceId = `cotizacionSerial_${doc.cliente}`; 
+      // Esto almacenará en Counter un documento con id = "cotizacionSerial_<clienteId>"
+
+      // 4) Incrementar el contador (upsert crea el doc si no existe)
       const counter = await Counter.findOneAndUpdate(
         { id: sequenceId },
         { $inc: { seq: 1 } },
         { new: true, upsert: true }
       );
-      
-      // Formatear el número de secuencia a 4 dígitos
-      const counterStr = counter.seq.toString().padStart(4, '0');
-      
-      // Construir el serial en el formato deseado: "CE-XXX-YYYY"
-      doc.serial = `CE-${groupCode}-${counterStr}`;
-      
+
+      // 5) Poner relleno a 4 dígitos (o los que necesites)
+      const counterStr = counter.seq.toString().padStart(4, '0'); // "0001", "0002", etc.
+
+      // 6) Construir el serial final:
+      //    Por ejemplo: "<PREFIJO>-<SECUENCIA_PAD>" => "CA-0001", "CB-0005"
+      doc.serial = `${pref}-${counterStr}`;
+
       next();
     } catch (error) {
       next(error);

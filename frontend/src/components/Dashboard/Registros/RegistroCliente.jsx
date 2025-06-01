@@ -24,6 +24,7 @@ const RegistroCliente = () => {
     contactos: [{ nombre: '', cargo: '', telefono: '', email: '' }],
     sector: '',
     comentarios: '',
+    prefijo: ''
   });
 
   const [guardando, setGuardando] = useState(false);
@@ -109,9 +110,20 @@ const RegistroCliente = () => {
           onSubmit={handleSubmit}
           className="grid grid-cols-1 md:grid-cols-2 gap-6"
         >
-          {/* — Nombre & Razón Social — */}
+          {/* — Nombre & Prefijo & Razón Social — */}
+
           <div>
             <Input label="Nombre *" name="nombre" value={cliente.nombre} onChange={handleChange} required />
+          </div>
+          <div>
+            <Input
+              label="Prefijo *"
+              name="prefijo"
+              value={cliente.prefijo}
+              onChange={handleChange}
+              required
+            // Puedes agregar un placeholder si quieres, p.ej. "CA, CB, etc."
+            />
           </div>
           <div>
             <Input label="Razón Social" name="razonSocial" value={cliente.razonSocial} onChange={handleChange} />

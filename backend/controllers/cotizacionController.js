@@ -6,7 +6,7 @@ const CotizacionHistorial = require('../models/CotizacionHistorial');
  
 // 🔽  estos tres faltaban
 const Cliente = require('../models/Cliente');
-const Planta = require('../models/Planta');
+
 const User = require('../models/User');   // o Vendedor, según tu archivo
  
 // controllers/cotizacionController.js

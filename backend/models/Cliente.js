@@ -26,19 +26,11 @@ const clienteSchema = new mongoose.Schema({
   // Reemplazamos contactoPrincipal por un array "contactos"
   contactos: [contactoSchema],
 
-  // (Opcional) si deseas conservar "contactoPrincipal", lo puedes dejar,
-  // pero ya no lo usarías al tener varios contactos
-  // contactoPrincipal: {
-  //   nombre: { type: String },
-  //   cargo: { type: String },
-  //   telefono: { type: String },
-  //   email: { type: String }
-  // },
-
   sector: { type: String },
   comentarios: { type: String },
   fechaRegistro: { type: Date, default: Date.now },
-  activo: { type: Boolean, default: true }
+  activo: { type: Boolean, default: true },
+  prefijo: { type: String, required: true, uppercase: true, trim: true }
 });
 
 module.exports = mongoose.model('Cliente', clienteSchema);
