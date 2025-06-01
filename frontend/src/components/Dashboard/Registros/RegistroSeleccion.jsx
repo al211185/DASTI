@@ -69,16 +69,10 @@ const RegistroSeleccion = () => {
                 {key === 'contactos' ? (
                   <>
                     <button
-                      onClick={() => handleCreate(key)}
-                      className="flex-1 inline-flex items-center justify-center gap-2 py-2 px-4 bg-primary hover:bg-primary-dark text-white font-medium rounded-lg transition-colors"
-                    >
-                      Ver Contactos
-                    </button>
-                    <button
                       onClick={() => handleManage(plural)}
                       className="flex-1 inline-flex items-center justify-center gap-2 py-2 px-4 bg-secondary hover:bg-secondary-dark text-white font-medium rounded-lg transition-colors"
                     >
-                      Ir a Contactos
+                      Ver Contactos
                     </button>
                   </>
                 ) : (

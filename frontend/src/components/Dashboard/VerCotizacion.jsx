@@ -77,6 +77,11 @@ const VerCotizacion = () => {
   if (error) return <p className="p-4 text-red-500">{error}</p>;
   if (!cotizacion) return <p className="p-4">Cotización no encontrada.</p>;
 
+  const sumaImportes = cotizacion.renglones.reduce(
+    (acc, r) => acc + (r.costo || 0),
+  0
+  );
+
   return (
     <div className="p-4">
       <div className="flex justify-end mb-4">
@@ -162,10 +167,8 @@ const VerCotizacion = () => {
             <tr className="bg-blue-800 text-white">
               <th className="p-2 border bg-orange-600 text-white">Cantidad</th>
               <th className="p-2 border bg-orange-600 text-white">Descripción</th>
-              <th className="p-2 border">Material</th>
-              <th className="p-2 border bg-orange-600 text-white">Tiempos</th>
-              <th className="p-2 border bg-orange-600 text-white">%</th>
-              <th className="p-2 border bg-orange-600 text-white text-right">Costo</th>
+              <th className="p-2 border bg-orange-600 text-white">Precio</th>
+              <th className="p-2 border bg-orange-600 text-white text-right">Importe</th>
             </tr>
           </thead>
           <tbody>
@@ -173,40 +176,9 @@ const VerCotizacion = () => {
               <tr key={i}>
                 <td className="p-2 border text-center">{r.cantidad}</td>
                 <td className="p-2 border">{r.descripcion}</td>
-                <td className="p-2 border align-top">
-                  {Array.isArray(r.material) && r.material.length > 0
-                    ? r.material.map((m, j) => {
-                      const qty = m.cantidad || 0;
-                      const unit = m.unidadMedida;
-                      const unitPrice = m.proveedorSeleccionado?.precioUnitario || 0;
-                      const subtotal = qty * unitPrice;
-                      return (
-                        <div key={j} className="mb-3">
-                          <strong>{m.nombre}</strong><br />
-                          <span className="text-sm">
-                            Cantidad solicitada: {qty} {unit}
-                          </span><br />
-                          <span className="text-sm">
-                            Precio unitario: ${unitPrice.toFixed(2)} / {unit}
-                          </span><br />
-                          <span className="text-sm font-medium">
-                            Subtotal: ${subtotal.toFixed(2)}
-                          </span>
-                        </div>
-                      );
-                    })
-                    : '—'}
+                <td className="p-2 border text-right">
+                  ${r.cantidad > 0? ( (r.costo || 0) / r.cantidad ).toFixed(2) : '0.00'}
                 </td>
-                <td className="p-2 border">
-                  {Array.isArray(r.tiempos) && r.tiempos.length > 0
-                    ? r.tiempos.map((t, j) => (
-                      <div key={j}>
-                        {t.maquina}: {t.horas}h
-                      </div>
-                    ))
-                    : '—'}
-                </td>
-                <td className="p-2 border text-center">{r.porcentaje}%</td>
                 <td className="p-2 border text-right">
                   ${(r.costo || 0).toFixed(2)}
                 </td>
@@ -214,10 +186,10 @@ const VerCotizacion = () => {
             ))}
             {/* Fila de total */}
             <tr>
-              <td colSpan={3} />
+              <td colSpan={2} />
               <td className="p-2 border font-bold text-right">Total</td>
-              <td colSpan={4} className="p-2 border font-bold text-right">
-                ${cotizacion.total.toFixed(2)}
+              <td className="p-2 border font-bold text-right">
+                ${sumaImportes.toFixed(2)}
               </td>
             </tr>
           </tbody>
