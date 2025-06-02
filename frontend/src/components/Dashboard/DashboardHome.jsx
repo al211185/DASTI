@@ -17,6 +17,13 @@ const DashboardHome = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const [estadoFilter, setEstadoFilter]     = useState('');   // cadena vacía = “todos”
+  const [fechaDesde, setFechaDesde]         = useState('');
+  const [fechaHasta, setFechaHasta]         = useState('');
+  const [plantaFilter, setPlantaFilter]     = useState('');   // cadena vacía = “todas”
+  const [serialFilter, setSerialFilter]     = useState('');   // búsqueda de texto libre
+  const [sortClienteAZ, setSortClienteAZ]   = useState(false); // si true, orden alfabético A→Z
+
   const [modalData, setModalData] = useState({
     open: false,
     cotizacionId: null,
@@ -59,6 +66,46 @@ const DashboardHome = () => {
   const approvedCount  = summaryCotizaciones.filter(c => c.estado === 'Aprobado').length;
   const rejectedCount  = summaryCotizaciones.filter(c => c.estado === 'Rechazado').length;
   const totalCount     = summaryCotizaciones.length;
+
+  const filteredCotizaciones = cotizaciones
+    .filter(c => {
+      // → FILTRO POR ESTADO (si hubo selección)
+      if (estadoFilter && c.estado !== estadoFilter) return false;
+
+      // → FILTRO POR RANGO DE FECHA
+      const fechaC = new Date(c.fechaInicio); // objeto Date de la cotización
+      if (fechaDesde) {
+        const desde = new Date(fechaDesde + 'T00:00:00'); 
+        if (fechaC < desde) return false;
+      }
+      if (fechaHasta) {
+        // ajustar fechaHasta para incluir todo el día (hasta 23:59:59)
+        const hasta = new Date(fechaHasta + 'T23:59:59');
+        if (fechaC > hasta) return false;
+      }
+
+      // → FILTRO POR PLANTA (suponiendo que “c.planta.nombre” existe)
+      if (plantaFilter && c.planta?.nombre !== plantaFilter) return false;
+
+      // → FILTRO POR SERIAL (búsqueda “incluye”)
+      if (serialFilter) {
+        if (!c.serial.toLowerCase().includes(serialFilter.toLowerCase())) {
+          return false;
+        }
+      }
+
+      // Si llega hasta aquí, pasa los filtros:
+      return true;
+    })
+    // 2) Orden alfabético de cliente si el switch sortClienteAZ es true:
+    .sort((a, b) => {
+      if (!sortClienteAZ) return 0; // sin ordenar
+      const nameA = a.cliente.nombre.toLowerCase();
+      const nameB = b.cliente.nombre.toLowerCase();
+      if (nameA < nameB) return -1;
+      if (nameA > nameB) return 1;
+      return 0;
+    });
 
   // --------------------------------------------------
   // Función para duplicar una cotización
@@ -328,10 +375,93 @@ const DashboardHome = () => {
           </button>
         </div>
 
+        {/* ─── COMIENZO CONTROLES DE FILTRO ─── */}
+       <div className="mb-6 bg-white border border-gray-200 rounded-2xl shadow p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+            {/* FILTRO ESTADO */}
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-gray-700 mb-1">Estado</label>
+              <select
+                value={estadoFilter}
+                onChange={e => setEstadoFilter(e.target.value)}
+                className="h-10 px-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Todos</option>
+                <option value="Pendiente de aprobación">Pendiente de aprobación</option>
+                <option value="Aprobado">Aprobado</option>
+                <option value="Rechazado">Rechazado</option>
+              </select>
+            </div>
+
+            {/* FILTRO FECHA DESDE */}
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-gray-700 mb-1">Fecha Desde</label>
+              <input
+                type="date"
+                value={fechaDesde}
+                onChange={e => setFechaDesde(e.target.value)}
+                className="h-10 px-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            {/* FILTRO FECHA HASTA */}
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-gray-700 mb-1">Fecha Hasta</label>
+              <input
+                type="date"
+                value={fechaHasta}
+                onChange={e => setFechaHasta(e.target.value)}
+                className="h-10 px-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            {/* FILTRO PLANTA */}
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-gray-700 mb-1">Planta</label>
+              <select
+                value={plantaFilter}
+                onChange={e => setPlantaFilter(e.target.value)}
+                className="h-10 px-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Todas</option>
+                <option value="Planta Norte">Planta Norte</option>
+                <option value="Planta Sur">Planta Sur</option>
+                <option value="Planta Central">Planta Central</option>
+              </select>
+            </div>
+
+            {/* FILTRO SERIAL */}
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-gray-700 mb-1">Serial</label>
+              <input
+                type="text"
+                placeholder="Buscar serial…"
+                value={serialFilter}
+                onChange={e => setSerialFilter(e.target.value)}
+                className="h-10 px-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            {/* SWITCH ORDEN ALFABÉTICO */}
+            <div className="flex flex-col justify-end">
+              <label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={sortClienteAZ}
+                  onChange={e => setSortClienteAZ(e.target.checked)}
+                  className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700">Ordenar clientes A → Z</span>
+              </label>
+            </div>
+          </div>
+        </div>
+       {/* ─── FIN CONTROLES DE FILTRO ─── */}
+
         {/* Tabla */}
         <div className="overflow-x-auto">
           <CotizacionesTable
-            cotizaciones={cotizaciones}
+            cotizaciones={filteredCotizaciones}
             userRole={userRole}
             onOpenModalAprobacion={handleOpenModalAprobacion}
             onDuplicar={handleDuplicar}
