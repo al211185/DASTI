@@ -1,7 +1,11 @@
+// controllers/authController.js
+
 const User = require('../models/User');
+const Notificacion = require('../models/Notificacion');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-// controllers/authController.js
+// Importamos io para emitir eventos de WebSocket
+const { io } = require('../index');
 
 // Nuevo método para obtener el perfil
 exports.getProfile = async (req, res) => {
@@ -9,35 +13,21 @@ exports.getProfile = async (req, res) => {
     const usuario = await User.findById(req.user.id)
       .select('-password')
       .populate('rol', 'nombre');
-    if (!usuario) return res.status(404).json({
-      msg: 'Usuario no encontrado'
-    });
+    if (!usuario) return res.status(404).json({ msg: 'Usuario no encontrado' });
     res.json(usuario);
   } catch (error) {
     console.error('Error en getProfile:', error);
-    res.status(500).json({
-      error: error.message
-    });
+    res.status(500).json({ error: error.message });
   }
 };
 
 exports.register = async (req, res) => {
-  const {
-    nombre,
-    email,
-    password,
-    telefono,
-    empleadoID,
-    departamento,
-    rol
-  } = req.body;
+  const { nombre, email, password, telefono, empleadoID, departamento, rol } = req.body;
   try {
-    let user = await User.findOne({
-      email
-    });
-    if (user) return res.status(400).json({
-      msg: 'El usuario ya existe'
-    });
+    let user = await User.findOne({ email });
+    if (user) {
+      return res.status(400).json({ msg: 'El usuario ya existe' });
+    }
 
     user = new User({
       nombre,
@@ -54,68 +44,63 @@ exports.register = async (req, res) => {
     user.password = await bcrypt.hash(password, salt);
 
     // Guardar el usuario en la base de datos
-    await user.save();
+    const guardado = await user.save();
 
-    res.status(201).json({
-      msg: 'Usuario registrado correctamente'
+    // 1) Crear la notificación en BD (para admins)
+    const mensajeNoti = `Nuevo usuario registrado: ${guardado.nombre} (${guardado.email})`;
+    const noti = await Notificacion.create({
+      tipo: 'usuario_registrado',
+      mensaje: mensajeNoti,
+      esGlobal: true,           // para que todos los admins la vean
+      creadoPor: guardado._id,  // quien registró (puede ser él mismo)
+      refId: guardado._id       // guardamos el userId como referencia
     });
+
+    // 2) Emitir la notificación a todos los sockets en room "admin"
+    io.to('admin').emit('nueva_notificacion', {
+      _id: noti._id,
+      tipo: noti.tipo,
+      mensaje: noti.mensaje,
+      fecha: noti.fecha,
+      refId: noti.refId
+    });
+
+    return res.status(201).json({ msg: 'Usuario registrado correctamente' });
   } catch (error) {
     console.error(error);
-    res.status(500).json({
-      error: error.message
-    });
+    return res.status(500).json({ error: error.message });
   }
 };
 
 exports.login = async (req, res) => {
-  const {
-    email,
-    password
-  } = req.body;
+  const { email, password } = req.body;
   try {
-    const user = await User.findOne({
-      email
-    });
-    if (!user) return res.status(400).json({
-      msg: 'Credenciales incorrectas'
-    });
+    const user = await User.findOne({ email });
+    if (!user) return res.status(400).json({ msg: 'Credenciales incorrectas' });
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({
-      msg: 'Credenciales incorrectas'
-    });
+    if (!isMatch) return res.status(400).json({ msg: 'Credenciales incorrectas' });
 
     // Actualizar último acceso
     user.ultimoAcceso = new Date();
     await user.save();
 
-    // Aquí, incluimos sólo el id del usuario.
-    const payload = {
-      id: user.id
-    };
-    // En authController.js
-    const token = jwt.sign({
-      id: user.id
-    }, process.env.JWT_SECRET, {
-      expiresIn: '1d'
-    });
-
+    // Generar JWT con solo el id
+    const payload = { id: user.id };
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1d' });
 
     // Enviar token en una cookie HttpOnly
     res.cookie('token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', // En desarrollo, secure debe ser false
-      sameSite: 'Lax', // Cambiado de 'Strict' a 'Lax' para permitir solicitudes entre orígenes (puertos)
-      maxAge: 24 * 60 * 60 * 1000, // 1 día en milisegundos
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'Lax',
+      maxAge: 24 * 60 * 60 * 1000, // 1 día
     });
 
-    res.json({
-      msg: 'Inicio de sesión exitoso'
-    });
+    return res.json({ msg: 'Inicio de sesión exitoso' });
   } catch (error) {
-    res.status(500).json({
-      error: error.message
-    });
+    console.error(error);
+    return res.status(500).json({ error: error.message });
   }
 };
 
@@ -126,7 +111,5 @@ exports.logout = (req, res) => {
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'Lax'
   });
-  res.json({
-    msg: 'Cierre de sesión exitoso'
-  });
+  return res.json({ msg: 'Cierre de sesión exitoso' });
 };

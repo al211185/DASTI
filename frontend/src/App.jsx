@@ -1,5 +1,9 @@
-import React from 'react';
+// src/App.jsx
+import React, { useEffect, useState, useContext } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 import LoginPage from './components/Auth/LoginPage';
 import RegisterPage from './components/Auth/RegisterPage';
 import DashboardLayout from './components/Dashboard/DashboardLayout';
@@ -35,9 +39,39 @@ import ListadoMaquinas from './components/Dashboard/Registros/ListadoMaquinas';
 
 import SolicitudesAprobacion from './components/Dashboard/SolicitudesAprobacion';
 
-function App() {
+import { SocketProvider, useSocket } from './context/SocketContext';
+import { UserContext, UserProvider } from './context/UserContext';
+import NotificationsDropdown from './components/NotificationsDropdown';
+
+function MainApp() {
+  const socket = useSocket();
+  const { user } = useContext(UserContext);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    socket.on('nueva_notificacion', (payload) => {
+      toast.info(payload.mensaje, { position: 'top-right', autoClose: 5000 });
+      setUnreadCount(prev => prev + 1);
+    });
+
+    return () => {
+      socket.off('nueva_notificacion');
+    };
+  }, [socket]);
+
+  const headerContent = (
+    <NotificationsDropdown
+      unreadCount={unreadCount}
+      onClear={() => setUnreadCount(0)}
+    />
+  );
+
   return (
     <BrowserRouter>
+      <ToastContainer />
+
       <Routes>
         {/* Rutas públicas */}
         <Route path="/" element={<LoginPage />} />
@@ -48,7 +82,7 @@ function App() {
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <DashboardLayout>
+              <DashboardLayout extraHeaderContent={headerContent}>
                 <DashboardHome />
               </DashboardLayout>
             </ProtectedRoute>
@@ -60,7 +94,7 @@ function App() {
           path="/dashboard/nueva-cotizacion"
           element={
             <ProtectedRoute>
-              <DashboardLayout>
+              <DashboardLayout extraHeaderContent={headerContent}>
                 <NuevaCotizacion />
               </DashboardLayout>
             </ProtectedRoute>
@@ -70,7 +104,7 @@ function App() {
           path="/dashboard/cotizacion/:id/historial"
           element={
             <ProtectedRoute>
-              <DashboardLayout>
+              <DashboardLayout extraHeaderContent={headerContent}>
                 <HistorialCambios />
               </DashboardLayout>
             </ProtectedRoute>
@@ -80,7 +114,7 @@ function App() {
           path="/dashboard/editar-cotizacion/:id"
           element={
             <ProtectedRoute>
-              <DashboardLayout>
+              <DashboardLayout extraHeaderContent={headerContent}>
                 <EditCotizacion />
               </DashboardLayout>
             </ProtectedRoute>
@@ -90,7 +124,7 @@ function App() {
           path="/dashboard/cotizacion/:id"
           element={
             <ProtectedRoute>
-              <DashboardLayout>
+              <DashboardLayout extraHeaderContent={headerContent}>
                 <VerCotizacion />
               </DashboardLayout>
             </ProtectedRoute>
@@ -102,173 +136,255 @@ function App() {
           path="/dashboard/registro-seleccion"
           element={
             <ProtectedRoute allowedRoles={['administrador', 'director', 'almacen', 'compras']}>
-              <DashboardLayout>
+              <DashboardLayout extraHeaderContent={headerContent}>
                 <RegistroSeleccion />
               </DashboardLayout>
             </ProtectedRoute>
           }
         />
 
-        {/* Plantas, clientes, usuarios */}
-        <Route path="/dashboard/registro/planta" element={
-          <ProtectedRoute allowedRoles={['administrador', 'director']}>
-            <DashboardLayout><RegistroPlanta /></DashboardLayout>
-          </ProtectedRoute>
-        } />
+        {/* Plantas */}
+        <Route
+          path="/dashboard/registro/planta"
+          element={
+            <ProtectedRoute allowedRoles={['administrador', 'director']}>
+              <DashboardLayout extraHeaderContent={headerContent}>
+                <RegistroPlanta />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/registro/plantas"
+          element={
+            <ProtectedRoute allowedRoles={['administrador', 'director']}>
+              <DashboardLayout extraHeaderContent={headerContent}>
+                <ListadoPlantas />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/registro/planta/:id"
+          element={
+            <ProtectedRoute allowedRoles={['administrador', 'director']}>
+              <DashboardLayout extraHeaderContent={headerContent}>
+                <RegistroPlanta />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
 
-        {/* ← Aquí: ruta para LISTAR/GESTIONAR plantas */}
-        <Route path="/dashboard/registro/plantas" element={
-          <ProtectedRoute allowedRoles={['administrador', 'director']}>
-            <DashboardLayout><ListadoPlantas /></DashboardLayout>
-          </ProtectedRoute>
-        } />
+        {/* Clientes */}
+        <Route
+          path="/dashboard/registro/cliente"
+          element={
+            <ProtectedRoute allowedRoles={['administrador', 'director']}>
+              <DashboardLayout extraHeaderContent={headerContent}>
+                <RegistroCliente />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/registro/clientes"
+          element={
+            <ProtectedRoute allowedRoles={['administrador', 'director']}>
+              <DashboardLayout extraHeaderContent={headerContent}>
+                <ListadoClientes />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/registro/cliente/:id"
+          element={
+            <ProtectedRoute allowedRoles={['administrador', 'director']}>
+              <DashboardLayout extraHeaderContent={headerContent}>
+                <RegistroCliente />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
 
-        {/* Edición de una planta concreta */}
-        <Route path="/dashboard/registro/planta/:id" element={
-          <ProtectedRoute allowedRoles={['administrador', 'director']}>
-            <DashboardLayout><RegistroPlanta /></DashboardLayout>
-          </ProtectedRoute>
-        } />
+        {/* Usuarios */}
+        <Route
+          path="/dashboard/registro/usuario"
+          element={
+            <ProtectedRoute allowedRoles={['administrador', 'director']}>
+              <DashboardLayout extraHeaderContent={headerContent}>
+                <RegistroUsuario />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/registro/usuarios"
+          element={
+            <ProtectedRoute allowedRoles={['administrador', 'director']}>
+              <DashboardLayout extraHeaderContent={headerContent}>
+                <ListadoUsuarios />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/registro/usuario/:id"
+          element={
+            <ProtectedRoute allowedRoles={['administrador', 'director']}>
+              <DashboardLayout extraHeaderContent={headerContent}>
+                <RegistroUsuario />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
 
-        <Route path="/dashboard/registro/cliente" element={
-          <ProtectedRoute allowedRoles={['administrador', 'director']}>
-            <DashboardLayout><RegistroCliente /></DashboardLayout>
-          </ProtectedRoute>
-        } />
-        {/* ← Aquí: ruta para LISTAR/GESTIONAR clientes */}
-        <Route path="/dashboard/registro/clientes" element={
-          <ProtectedRoute allowedRoles={['administrador', 'director']}>
-            <DashboardLayout><ListadoClientes /></DashboardLayout>
-          </ProtectedRoute>
-        } />
+        {/* Materiales */}
+        <Route
+          path="/dashboard/registro/material"
+          element={
+            <ProtectedRoute allowedRoles={['administrador', 'director', 'almacen', 'compras']}>
+              <DashboardLayout extraHeaderContent={headerContent}>
+                <RegistroMaterial />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/registro/materiales"
+          element={
+            <ProtectedRoute allowedRoles={['administrador', 'director', 'almacen', 'compras']}>
+              <DashboardLayout extraHeaderContent={headerContent}>
+                <ListadoMateriales />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/registro/material/:id"
+          element={
+            <ProtectedRoute allowedRoles={['administrador', 'director', 'almacen', 'compras']}>
+              <DashboardLayout extraHeaderContent={headerContent}>
+                <RegistroMaterial />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
 
-        {/* Edición de un cliente concreto */}
-        <Route path="/dashboard/registro/cliente/:id" element={
-          <ProtectedRoute allowedRoles={['administrador', 'director']}>
-            <DashboardLayout><RegistroCliente /></DashboardLayout>
-          </ProtectedRoute>
-        } />
+        {/* Categorías */}
+        <Route
+          path="/dashboard/registro/categoria"
+          element={
+            <ProtectedRoute allowedRoles={['administrador', 'director', 'almacen', 'compras']}>
+              <DashboardLayout extraHeaderContent={headerContent}>
+                <RegistroCategoria />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/registro/categorias"
+          element={
+            <ProtectedRoute allowedRoles={['administrador', 'director', 'almacen', 'compras']}>
+              <DashboardLayout extraHeaderContent={headerContent}>
+                <ListadoCategorias />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/registro/categoria/:id"
+          element={
+            <ProtectedRoute allowedRoles={['administrador', 'director', 'almacen', 'compras']}>
+              <DashboardLayout extraHeaderContent={headerContent}>
+                <RegistroCategoria />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
 
-        <Route path="/dashboard/registro/usuario" element={
-          <ProtectedRoute allowedRoles={['administrador', 'director']}>
-            <DashboardLayout><RegistroUsuario /></DashboardLayout>
-          </ProtectedRoute>
-        } />
+        {/* Proveedores */}
+        <Route
+          path="/dashboard/registro/proveedor"
+          element={
+            <ProtectedRoute allowedRoles={['administrador', 'director', 'almacen', 'compras']}>
+              <DashboardLayout extraHeaderContent={headerContent}>
+                <RegistroProveedor />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/registro/proveedores"
+          element={
+            <ProtectedRoute allowedRoles={['administrador', 'director', 'almacen', 'compras']}>
+              <DashboardLayout extraHeaderContent={headerContent}>
+                <ListadoProveedores />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/registro/proveedor/:id"
+          element={
+            <ProtectedRoute allowedRoles={['administrador', 'director', 'almacen', 'compras']}>
+              <DashboardLayout extraHeaderContent={headerContent}>
+                <RegistroProveedor />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
 
-        {/* ← Aquí: ruta para LISTAR/GESTIONAR usuarios */}
-        <Route path="/dashboard/registro/usuarios" element={
-          <ProtectedRoute allowedRoles={['administrador', 'director']}>
-            <DashboardLayout><ListadoUsuarios /></DashboardLayout>
-          </ProtectedRoute>
-        } />
-
-        {/* Edición de un cliente concreto */}
-        <Route path="/dashboard/registro/usuario/:id" element={
-          <ProtectedRoute allowedRoles={['administrador', 'director']}>
-            <DashboardLayout><RegistroUsuario /></DashboardLayout>
-          </ProtectedRoute>
-        } />
-
-        {/* Materiales: crear, listar/gestionar y editar */}
-        <Route path="/dashboard/registro/material" element={
-          <ProtectedRoute allowedRoles={['administrador', 'director', 'almacen', 'compras']}>
-            <DashboardLayout><RegistroMaterial /></DashboardLayout>
-          </ProtectedRoute>
-        } />
-
-        {/* ← Aquí: ruta para LISTAR/GESTIONAR materiales */}
-        <Route path="/dashboard/registro/materiales" element={
-          <ProtectedRoute allowedRoles={['administrador', 'director', 'almacen', 'compras']}>
-            <DashboardLayout><ListadoMateriales /></DashboardLayout>
-          </ProtectedRoute>
-        } />
-
-        {/* Edición de un material concreto */}
-        <Route path="/dashboard/registro/material/:id" element={
-          <ProtectedRoute allowedRoles={['administrador', 'director', 'almacen', 'compras']}>
-            <DashboardLayout><RegistroMaterial /></DashboardLayout>
-          </ProtectedRoute>
-        } />
-
-        {/* Categorías, proveedores, máquinas */}
-        <Route path="/dashboard/registro/categoria" element={
-          <ProtectedRoute allowedRoles={['administrador', 'director', 'almacen', 'compras']}>
-            <DashboardLayout><RegistroCategoria /></DashboardLayout>
-          </ProtectedRoute>
-        } />
-
-        {/* ← Aquí: ruta para LISTAR/GESTIONAR categorias */}
-        <Route path="/dashboard/registro/categorias" element={
-          <ProtectedRoute allowedRoles={['administrador', 'director', 'almacen', 'compras']}>
-            <DashboardLayout><ListadoCategorias /></DashboardLayout>
-          </ProtectedRoute>
-        } />
-
-        {/* Edición de una categoria concreta */}
-        <Route path="/dashboard/registro/categoria/:id" element={
-          <ProtectedRoute allowedRoles={['administrador', 'director', 'almacen', 'compras']}>
-            <DashboardLayout><RegistroCategoria /></DashboardLayout>
-          </ProtectedRoute>
-        } />
-
-        <Route path="/dashboard/registro/proveedor" element={
-          <ProtectedRoute allowedRoles={['administrador', 'director', 'almacen', 'compras']}>
-            <DashboardLayout><RegistroProveedor /></DashboardLayout>
-          </ProtectedRoute>
-        } />
-
-        {/* ← Aquí: ruta para LISTAR/GESTIONAR proveedores */}
-        <Route path="/dashboard/registro/proveedores" element={
-          <ProtectedRoute allowedRoles={['administrador', 'director', 'almacen', 'compras']}>
-            <DashboardLayout><ListadoProveedores /></DashboardLayout>
-          </ProtectedRoute>
-        } />
-
-        {/* Edición de una categoria concreta */}
-        <Route path="/dashboard/registro/proveedor/:id" element={
-          <ProtectedRoute allowedRoles={['administrador', 'director', 'almacen', 'compras']}>
-            <DashboardLayout><RegistroProveedor /></DashboardLayout>
-          </ProtectedRoute>
-        } />
-
-        {/* ← Aquí: ruta para LISTAR/VER contactos de proveedores */}
+        {/* Contactos Proveedor */}
         <Route
           path="/dashboard/registro/contactos"
           element={
             <ProtectedRoute allowedRoles={['administrador', 'director', 'almacen', 'compras']}>
-              <DashboardLayout>
+              <DashboardLayout extraHeaderContent={headerContent}>
                 <ContactosProveedor />
               </DashboardLayout>
             </ProtectedRoute>
           }
         />
 
+        {/* Máquinas */}
+        <Route
+          path="/dashboard/registro/maquina"
+          element={
+            <ProtectedRoute allowedRoles={['administrador', 'director']}>
+              <DashboardLayout extraHeaderContent={headerContent}>
+                <RegistroMaquina />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/registro/maquinas"
+          element={
+            <ProtectedRoute allowedRoles={['administrador', 'director']}>
+              <DashboardLayout extraHeaderContent={headerContent}>
+                <ListadoMaquinas />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/registro/maquina/:id"
+          element={
+            <ProtectedRoute allowedRoles={['administrador', 'director']}>
+              <DashboardLayout extraHeaderContent={headerContent}>
+                <RegistroMaquina />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
 
-        <Route path="/dashboard/registro/maquina" element={
-          <ProtectedRoute allowedRoles={['administrador', 'director']}>
-            <DashboardLayout><RegistroMaquina /></DashboardLayout>
-          </ProtectedRoute>
-        } />
-
-        {/* ← Aquí: ruta para LISTAR/GESTIONAR maquinas */}
-        <Route path="/dashboard/registro/maquinas" element={
-          <ProtectedRoute allowedRoles={['administrador', 'director']}>
-            <DashboardLayout><ListadoMaquinas /></DashboardLayout>
-          </ProtectedRoute>
-        } />
-
-        {/* Edición de una maquina concreta */}
-        <Route path="/dashboard/registro/maquina/:id" element={
-          <ProtectedRoute allowedRoles={['administrador', 'director']}>
-            <DashboardLayout><RegistroMaquina /></DashboardLayout>
-          </ProtectedRoute>
-        } />
-
+        {/* Solicitudes de aprobación */}
         <Route
           path="/dashboard/solicitudes-aprobacion"
           element={
             <ProtectedRoute allowedRoles={['administrador', 'director']}>
-              <DashboardLayout>
+              <DashboardLayout extraHeaderContent={headerContent}>
                 <SolicitudesAprobacion />
               </DashboardLayout>
             </ProtectedRoute>
@@ -276,13 +392,28 @@ function App() {
         />
 
         {/* Búsqueda global */}
-        <Route path="/dashboard/buscar-proyectos" element={
-          <ProtectedRoute>
-            <DashboardLayout><SearchGlobal /></DashboardLayout>
-          </ProtectedRoute>
-        } />
+        <Route
+          path="/dashboard/buscar-proyectos"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout extraHeaderContent={headerContent}>
+                <SearchGlobal />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </BrowserRouter>
+  );
+}
+
+function App() {
+  return (
+    <UserProvider>
+      <SocketProvider>
+        <MainApp />
+      </SocketProvider>
+    </UserProvider>
   );
 }
 
