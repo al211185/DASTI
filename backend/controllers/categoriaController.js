@@ -2,7 +2,7 @@
 
 const Categoria = require('../models/Categoria');
 const Notificacion = require('../models/Notificacion');
-const { io } = require('../index');
+const { getIO } = require('../socket'); // ← importamos getIO
 
 /* ------------------------------------------------------------------------- */
 /* CREAR UNA NUEVA CATEGORÍA                                                 */
@@ -25,6 +25,7 @@ exports.createCategoria = async (req, res) => {
     });
 
     // 2) Emitir a todos los sockets en room "admin"
+    const io = getIO();
     io.to('admin').emit('nueva_notificacion', {
       _id: noti._id,
       tipo: noti.tipo,
@@ -98,6 +99,7 @@ exports.updateCategoria = async (req, res) => {
     });
 
     // 2) Emitir a room "admin"
+    const io = getIO();
     io.to('admin').emit('nueva_notificacion', {
       _id: noti._id,
       tipo: noti.tipo,
@@ -135,6 +137,7 @@ exports.deleteCategoria = async (req, res) => {
     });
 
     // 2) Emitir a room "admin"
+    const io = getIO();
     io.to('admin').emit('nueva_notificacion', {
       _id: noti._id,
       tipo: noti.tipo,

@@ -4,8 +4,8 @@ const User = require('../models/User');
 const Notificacion = require('../models/Notificacion');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-// Importamos io para emitir eventos de WebSocket
-const { io } = require('../index');
+// Importamos getIO para obtener la instancia de Socket.IO
+const { getIO } = require('../socket');
 
 // Nuevo método para obtener el perfil
 exports.getProfile = async (req, res) => {
@@ -14,10 +14,10 @@ exports.getProfile = async (req, res) => {
       .select('-password')
       .populate('rol', 'nombre');
     if (!usuario) return res.status(404).json({ msg: 'Usuario no encontrado' });
-    res.json(usuario);
+    return res.json(usuario);
   } catch (error) {
     console.error('Error en getProfile:', error);
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 };
 
@@ -51,12 +51,13 @@ exports.register = async (req, res) => {
     const noti = await Notificacion.create({
       tipo: 'usuario_registrado',
       mensaje: mensajeNoti,
-      esGlobal: true,           // para que todos los admins la vean
-      creadoPor: guardado._id,  // quien registró (puede ser él mismo)
-      refId: guardado._id       // guardamos el userId como referencia
+      esGlobal: true,
+      creadoPor: guardado._id,
+      refId: guardado._id
     });
 
-    // 2) Emitir la notificación a todos los sockets en room "admin"
+    // 2) Obtener la instancia de Socket.IO y emitir a 'admin'
+    const io = getIO();
     io.to('admin').emit('nueva_notificacion', {
       _id: noti._id,
       tipo: noti.tipo,

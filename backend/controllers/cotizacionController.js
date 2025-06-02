@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const Cotizacion = require('../models/Cotizacion');
 const CotizacionHistorial = require('../models/CotizacionHistorial');
 const Notificacion = require('../models/Notificacion');
-const { io } = require('../index'); // Ajusta la ruta según tu proyecto
+const { getIO } = require('../socket'); // ← Importamos getIO en lugar de io
 
 const Cliente = require('../models/Cliente');
 const Planta = require('../models/Planta');
@@ -143,6 +143,7 @@ exports.createCotizacion = async (req, res) => {
       creadoPor: req.user._id,
       refId: guardadaPop._id
     });
+    const io = getIO();
     io.to('admin').emit('nueva_notificacion', {
       _id: noti._id,
       tipo: noti.tipo,
@@ -374,6 +375,7 @@ exports.updateCotizacion = async (req, res) => {
         creadoPor: req.user._id,
         refId: id
       });
+      const io = getIO();
       io.to('admin').emit('nueva_notificacion', {
         _id: noti._id,
         tipo: noti.tipo,
@@ -512,7 +514,8 @@ exports.updateCotizacion = async (req, res) => {
       creadoPor: req.user._id,
       refId: updated._id
     });
-    io.to('admin').emit('nueva_notificacion', {
+    const io2 = getIO();
+    io2.to('admin').emit('nueva_notificacion', {
       _id: noti2._id,
       tipo: noti2.tipo,
       mensaje: noti2.mensaje,
@@ -590,7 +593,8 @@ exports.deleteCotizacion = async (req, res) => {
         creadoPor: req.user._id,
         refId: id
       });
-      io.to('admin').emit('nueva_notificacion', {
+      const io3 = getIO();
+      io3.to('admin').emit('nueva_notificacion', {
         _id: noti3._id,
         tipo: noti3.tipo,
         mensaje: noti3.mensaje,
@@ -638,7 +642,8 @@ exports.deleteCotizacion = async (req, res) => {
       creadoPor: req.user._id,
       refId: id
     });
-    io.to('admin').emit('nueva_notificacion', {
+    const io4 = getIO();
+    io4.to('admin').emit('nueva_notificacion', {
       _id: noti4._id,
       tipo: noti4.tipo,
       mensaje: noti4.mensaje,
@@ -715,7 +720,8 @@ exports.solicitarAprobacion = async (req, res) => {
       creadoPor: req.user._id,
       refId: id
     });
-    io.to('admin').emit('nueva_notificacion', {
+    const io5 = getIO();
+    io5.to('admin').emit('nueva_notificacion', {
       _id: noti._id,
       tipo: noti.tipo,
       mensaje: noti.mensaje,
@@ -817,15 +823,17 @@ exports.responderSolicitud = async (req, res) => {
         destinatario: original.vendedor, // notificar al vendedor propietario
         refId: cotId
       });
-      // Emitir a admin y al vendedor
-      io.to('admin').emit('nueva_notificacion', {
+      const io6 = getIO();
+      // Emitir a admin
+      io6.to('admin').emit('nueva_notificacion', {
         _id: notiDel._id,
         tipo: notiDel.tipo,
         mensaje: notiDel.mensaje,
         fecha: notiDel.fecha,
         refId: notiDel.refId
       });
-      io.to(`user_${original.vendedor}`).emit('nueva_notificacion', {
+      // Emitir al vendedor propietario
+      io6.to(`user_${original.vendedor}`).emit('nueva_notificacion', {
         _id: notiDel._id,
         tipo: notiDel.tipo,
         mensaje: notiDel.mensaje,
@@ -853,7 +861,8 @@ exports.responderSolicitud = async (req, res) => {
     creadoPor: req.user._id,
     destinatario: solicitud.usuario // usuario que solicitó
   });
-  io.to(`user_${solicitud.usuario}`).emit('nueva_notificacion', {
+  const io7 = getIO();
+  io7.to(`user_${solicitud.usuario}`).emit('nueva_notificacion', {
     _id: notiResp._id,
     tipo: notiResp.tipo,
     mensaje: notiResp.mensaje,
@@ -910,6 +919,7 @@ exports.addComentario = async (req, res) => {
     const cot = await Cotizacion.findById(req.params.id).lean();
     if (cot) {
       const mensajeNotiCom = `Nuevo comentario en cotización ${cot.serial} por ${usuario}`;
+      // Notificación al vendedor
       const notiCom = await Notificacion.create({
         tipo: 'comentario_cotizacion',
         mensaje: mensajeNotiCom,
@@ -917,8 +927,9 @@ exports.addComentario = async (req, res) => {
         creadoPor: req.user._id,
         destinatario: cot.vendedor // notificar al vendedor
       });
+      const io8 = getIO();
       // Emitir al vendedor
-      io.to(`user_${cot.vendedor}`).emit('nueva_notificacion', {
+      io8.to(`user_${cot.vendedor}`).emit('nueva_notificacion', {
         _id: notiCom._id,
         tipo: notiCom.tipo,
         mensaje: notiCom.mensaje,
@@ -933,7 +944,7 @@ exports.addComentario = async (req, res) => {
         creadoPor: req.user._id,
         refId: cot._id
       });
-      io.to('admin').emit('nueva_notificacion', {
+      io8.to('admin').emit('nueva_notificacion', {
         _id: notiComAdmin._id,
         tipo: notiComAdmin.tipo,
         mensaje: notiComAdmin.mensaje,

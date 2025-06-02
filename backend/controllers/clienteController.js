@@ -2,7 +2,7 @@
 
 const Cliente = require('../models/Cliente');
 const Notificacion = require('../models/Notificacion');
-const { io } = require('../index'); // Asegúrate de la ruta correcta
+const { getIO } = require('../socket'); // ← obtenemos getIO en lugar de io
 
 /* ---------------------------- LISTAR ---------------------------- */
 /* GET /api/clientes                                              */
@@ -49,6 +49,7 @@ exports.createCliente = async (req, res) => {
     });
 
     // 2) Emitir a room "admin"
+    const io = getIO();
     io.to('admin').emit('nueva_notificacion', {
       _id: noti._id,
       tipo: noti.tipo,
@@ -88,6 +89,7 @@ exports.updateCliente = async (req, res) => {
     });
 
     // 2) Emitir a room "admin"
+    const io = getIO();
     io.to('admin').emit('nueva_notificacion', {
       _id: noti._id,
       tipo: noti.tipo,
@@ -123,6 +125,7 @@ exports.deleteCliente = async (req, res) => {
     });
 
     // 2) Emitir a room "admin"
+    const io = getIO();
     io.to('admin').emit('nueva_notificacion', {
       _id: noti._id,
       tipo: noti.tipo,
@@ -162,6 +165,7 @@ exports.addContacto = async (req, res) => {
     });
 
     // 2) Emitir a room "admin"
+    const io = getIO();
     io.to('admin').emit('nueva_notificacion', {
       _id: noti._id,
       tipo: noti.tipo,
@@ -202,6 +206,7 @@ exports.removeContacto = async (req, res) => {
     });
 
     // 2) Emitir a room "admin"
+    const io = getIO();
     io.to('admin').emit('nueva_notificacion', {
       _id: noti._id,
       tipo: noti.tipo,

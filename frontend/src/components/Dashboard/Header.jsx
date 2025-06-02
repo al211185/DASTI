@@ -3,6 +3,7 @@ import React, { useContext } from 'react';
 import { UserContext } from '../../context/UserContext';
 import LogoLetters from '../../Images/Dasti_logo_Letras.png';
 import { MagnifyingGlassIcon, UserCircleIcon } from '@heroicons/react/24/outline';
+import NotificationsDropdown from '../NotificationsDropdown';
 
 const Header = () => {
   const { user, loading } = useContext(UserContext);
@@ -13,14 +14,10 @@ const Header = () => {
     <header className="flex items-center bg-white px-6 py-4">
       {/* Logo */}
       <div className="flex-shrink-0">
-        <img
-          src={LogoLetters}
-          alt="DASTI‑CORP"
-          className="h-6"
-        />
+        <img src={LogoLetters} alt="DASTI-CORP" className="h-6" />
       </div>
 
-      {/* Buscador estilizado */}
+      {/* Buscador */}
       <div className="w-72 ml-auto mr-6">
         <div className="relative">
           <MagnifyingGlassIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -31,6 +28,12 @@ const Header = () => {
           />
         </div>
       </div>
+
+      {/* Aquí va el dropdown de notificaciones */}
+      <NotificationsDropdown />
+
+      {/* Espacio entre campana y perfil */}
+      <div className="mx-4" />
 
       {/* Perfil con nombre y rol */}
       <button

@@ -2,7 +2,7 @@
 
 const Material = require('../models/Material');
 const Notificacion = require('../models/Notificacion');
-const { io } = require('../index'); // Ajusta la ruta según tu proyecto
+const { getIO } = require('../socket'); // Usamos getIO en lugar de io directamente
 
 /**
  * Obtener todos los materiales (con populate de categoría para obtener el nombre)
@@ -62,6 +62,7 @@ exports.createMaterial = async (req, res) => {
     });
 
     // 2) Emitir a todos los sockets en room "admin"
+    const io = getIO();
     io.to('admin').emit('nueva_notificacion', {
       _id: noti._id,
       tipo: noti.tipo,
@@ -110,6 +111,7 @@ exports.updateMaterial = async (req, res) => {
     });
 
     // 2) Emitir a todos los sockets en room "admin"
+    const io = getIO();
     io.to('admin').emit('nueva_notificacion', {
       _id: noti._id,
       tipo: noti.tipo,
@@ -148,6 +150,7 @@ exports.deleteMaterial = async (req, res) => {
     });
 
     // 2) Emitir a todos los sockets en room "admin"
+    const io = getIO();
     io.to('admin').emit('nueva_notificacion', {
       _id: noti._id,
       tipo: noti.tipo,

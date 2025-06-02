@@ -2,7 +2,7 @@
 
 const Maquina = require('../models/Maquina');
 const Notificacion = require('../models/Notificacion');
-const { io } = require('../index');
+const { getIO } = require('../socket');
 
 /* ------------------------------------------------------------------------- */
 /* CREAR MÁQUINA                                                             */
@@ -26,6 +26,7 @@ exports.createMaquina = async (req, res) => {
     });
 
     // 2) Emitir a todos los sockets en room "admin"
+    const io = getIO();
     io.to('admin').emit('nueva_notificacion', {
       _id: noti._id,
       tipo: noti.tipo,
@@ -100,6 +101,7 @@ exports.updateMaquina = async (req, res) => {
     });
 
     // 2) Emitir a todos los sockets en room "admin"
+    const io = getIO();
     io.to('admin').emit('nueva_notificacion', {
       _id: noti._id,
       tipo: noti.tipo,
@@ -138,6 +140,7 @@ exports.deleteMaquina = async (req, res) => {
     });
 
     // 2) Emitir a todos los sockets en room "admin"
+    const io = getIO();
     io.to('admin').emit('nueva_notificacion', {
       _id: noti._id,
       tipo: noti.tipo,

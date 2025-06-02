@@ -2,7 +2,7 @@
 
 const Planta = require('../models/Planta');
 const Notificacion = require('../models/Notificacion');
-const { io } = require('../index'); // Ajusta la ruta si es necesario
+const { getIO } = require('../socket'); // Usamos getIO en lugar de io directamente
 
 /* ------------------------------------------------------------------------- */
 /* LISTAR TODAS                                                              */
@@ -56,6 +56,7 @@ exports.createPlanta = async (req, res) => {
     });
 
     // 2) Emitir a todos los sockets en room "admin"
+    const io = getIO();
     io.to('admin').emit('nueva_notificacion', {
       _id: noti._id,
       tipo: noti.tipo,
@@ -97,6 +98,7 @@ exports.updatePlanta = async (req, res) => {
     });
 
     // 2) Emitir a todos los sockets en room "admin"
+    const io = getIO();
     io.to('admin').emit('nueva_notificacion', {
       _id: noti._id,
       tipo: noti.tipo,
@@ -135,6 +137,7 @@ exports.deletePlanta = async (req, res) => {
     });
 
     // 2) Emitir a todos los sockets en room "admin"
+    const io = getIO();
     io.to('admin').emit('nueva_notificacion', {
       _id: noti._id,
       tipo: noti.tipo,

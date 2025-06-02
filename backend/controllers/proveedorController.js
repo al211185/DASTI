@@ -2,7 +2,7 @@
 
 const Proveedor = require('../models/Proveedor');
 const Notificacion = require('../models/Notificacion');
-const { io } = require('../index'); // Ajusta la ruta según tu proyecto
+const { getIO } = require('../socket'); // Usamos getIO en lugar de io directamente
 
 /* ------------------------- CREAR PROVEEDOR -------------------------- */
 /* POST /api/proveedores                                               */
@@ -23,6 +23,7 @@ exports.createProveedor = async (req, res) => {
     });
 
     // 2) Emitir a todos los sockets en room "admin"
+    const io = getIO();
     io.to('admin').emit('nueva_notificacion', {
       _id: noti._id,
       tipo: noti.tipo,
@@ -80,9 +81,9 @@ exports.updateProveedor = async (req, res) => {
   try {
     const actualizado = await Proveedor.findByIdAndUpdate(
       req.params.id,
-      { 
+      {
         ...req.body,
-        fechaActualizacion: new Date() 
+        fechaActualizacion: new Date()
       },
       { new: true, runValidators: true }
     ).populate('materiales.material');
@@ -103,6 +104,7 @@ exports.updateProveedor = async (req, res) => {
     });
 
     // 2) Emitir a todos los sockets en room "admin"
+    const io = getIO();
     io.to('admin').emit('nueva_notificacion', {
       _id: noti._id,
       tipo: noti.tipo,
@@ -142,6 +144,7 @@ exports.deleteProveedor = async (req, res) => {
     });
 
     // 2) Emitir a todos los sockets en room "admin"
+    const io = getIO();
     io.to('admin').emit('nueva_notificacion', {
       _id: noti._id,
       tipo: noti.tipo,
