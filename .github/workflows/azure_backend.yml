@@ -1,6 +1,4 @@
-# ================================================================
-# Despliega la carpeta backend/ a Azure App Service (Linux)
-# ================================================================
+
 name: Build & Deploy – backend to Azure App Service
 
 on:
