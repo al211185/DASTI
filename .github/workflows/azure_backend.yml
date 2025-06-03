@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 env:
-  NODE_VERSION: '22.x'            # LTS compatible con App Service
+  NODE_VERSION: '20.x'            # LTS compatible con App Service
 
 jobs:
 # ----------------------------------------------------------------
