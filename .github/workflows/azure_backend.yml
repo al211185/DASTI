@@ -5,16 +5,16 @@ name: Build & Deploy – backend to Azure App Service
 
 on:
   push:
-    branches: [ azure ]           # se ejecuta cuando hagas push a la rama azure
+    branches: [ azure ]         # se ejecuta al hacer push a la rama azure
   workflow_dispatch:
 
 env:
-  NODE_VERSION: '18.x'            # cambia aquí si algún día saltas a otra LTS
+  NODE_VERSION: '18.x'          # LTS utilizada por App Service Linux
 
+# ----------------------------------------------------------------
+# 1. BUILD – genera release.zip con todo el backend (sin node_modules)
+# ----------------------------------------------------------------
 jobs:
-# ----------------------------------------------------------------
-# 1. BUILD: instala deps del backend y genera release.zip
-# ----------------------------------------------------------------
   build:
     runs-on: ubuntu-latest
     permissions:
@@ -29,18 +29,15 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      # Instala solo dependencias de producción en backend/
       - name: npm ci (backend)
         run: npm ci --omit=dev
         working-directory: backend
 
-      # Build opcional (si no tienes script build no pasa nada)
       - name: npm run build --if-present
         run: npm run build --if-present
         working-directory: backend
 
-      # Empaquetar backend/ excluyendo node_modules
-      - name: Zip artifact
+      - name: Zip artifact (backend)
         run: |
           cd backend
           zip -r ../release.zip . -x "node_modules/**"
@@ -52,7 +49,7 @@ jobs:
           path: release.zip
 
 # ----------------------------------------------------------------
-# 2. DEPLOY: publica release.zip en tu App Service
+# 2. DEPLOY – publica release.zip en el App Service
 # ----------------------------------------------------------------
   deploy:
     runs-on: ubuntu-latest
@@ -70,10 +67,7 @@ jobs:
         with:
           name: backend-release
 
-      - name: Unzip artifact
-        run: unzip release.zip
-
-      # --- LOGIN -------------------------------------------------
+      # ---------- LOGIN A AZURE ----------
       - name: Azure login
         uses: azure/login@v2
         with:
@@ -81,11 +75,11 @@ jobs:
           tenant-id:      ${{ secrets.AZUREAPPSERVICE_TENANTID_E60A0A20082140A483462EA2595C2C7E }}
           subscription-id:${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_1BAE8BF160C0455782CDA2BD7931FF9A }}
 
-      # --- DEPLOY ------------------------------------------------
+      # ---------- DEPLOY ----------
       - name: Deploy to Azure Web App
         id: deploy
         uses: azure/webapps-deploy@v3
         with:
           app-name: DastiApp          # nombre EXACTO del recurso en Azure
           slot-name: Production
-          package: .
+          package: release.zip        # ¡Publicar el ZIP directamente!
