@@ -91,10 +91,15 @@ exports.login = async (req, res) => {
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1d' });
 
     // Enviar token en una cookie HttpOnly con SameSite=None y Secure
+    const secureCookie =
+      process.env.NODE_ENV === 'production' ||
+      req.secure ||
+      req.headers['x-forwarded-proto'] === 'https';
+
     res.cookie('token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', // true en producción
-      sameSite: 'None',                               // cambiar de 'Lax' a 'None'
+      secure: secureCookie,                          // requiere HTTPS en prod
+      sameSite: 'None',                              // permitir cross-site
       maxAge: 24 * 60 * 60 * 1000,                   // 1 día
     });
 
@@ -107,9 +112,14 @@ exports.login = async (req, res) => {
 
 exports.logout = (req, res) => {
   // Limpiar la cookie 'token' con SameSite=None y Secure
+  const secureCookie =
+    process.env.NODE_ENV === 'production' ||
+    req.secure ||
+    req.headers['x-forwarded-proto'] === 'https';
+
   res.clearCookie('token', {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: secureCookie,
     sameSite: 'None'  // cambiar de 'Lax' a 'None'
   });
   return res.json({ msg: 'Cierre de sesión exitoso' });
