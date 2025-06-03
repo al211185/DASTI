@@ -21,23 +21,17 @@ const allowedOrigins = [
   'https://happy-wave-0e4981b10.6.azurestaticapps.net'
 ];
 
-app.use(cors({
-  origin: function(origin, callback) {
-    // Permitir peticiones sin origin (Postman, servidor a servidor, etc.)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      return callback(null, true);
-    }
-    callback(new Error('CORS policy: Acceso no permitido desde este origen'));
-  },
-  credentials: true,
-  optionsSuccessStatus: 200,
-}));
+// 1) Middleware CORS: aplica origin=allowedOrigins y credentials=true
+app.use(
+  cors({
+    origin: allowedOrigins,
+    credentials: true,
+    optionsSuccessStatus: 200
+  })
+);
 
-app.options('*', cors({
-  origin: allowedOrigins,
-  credentials: true,
-}));
+// 2) Asegura que el preflight (OPTIONS) responda con los mismos parámetros
+app.options('*', cors({ origin: allowedOrigins, credentials: true }));
 
 // Middleware para manejar cookies y JSON en el body
 app.use(cookieParser());
