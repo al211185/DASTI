@@ -6,7 +6,7 @@ const Role = require('../models/Role');
 (async () => {
   try {
     // Conéctate usando la variable que Azure inyecta: MONGODB_URI
-    await mongoose.connect(process.env.MONGODB_URI, {
+    await mongoose.connect(process.env.MONGO_URI, {
       tlsAllowInvalidHostnames: true,   // clave para Cosmos vCore +srv, si aplica
       serverSelectionTimeoutMS: 30000   // evita timeouts muy cortos
     });
