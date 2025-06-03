@@ -1,71 +1,67 @@
 // seeds/seedUsers.js
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
-const User = require('../models/User');
-const Role = require('../models/Role');
 require('dotenv').config();
- 
-const seedUsers = async () => {
+const mongoose = require('mongoose');
+const bcrypt   = require('bcryptjs');
+const User     = require('../models/User');
+const Role     = require('../models/Role');
+
+(async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true
-    });
- 
-    // Buscar los roles correspondientes en la colección de Roles
+    // 1️⃣ Conectar – bandera tlsInsecure evita el hostname-mismatch en vCore +srv
+    await mongoose.connect(process.env.MONGO_URI, { tlsInsecure: true });
+    console.log('🔌 Conectado a la base de datos');
+
+    // 2️⃣ Obtener roles necesarios
     const directorRole = await Role.findOne({ nombre: 'director' });
-    const adminRole = await Role.findOne({ nombre: 'administrador' });    
- 
+    const adminRole    = await Role.findOne({ nombre: 'administrador' });
+
     if (!directorRole || !adminRole) {
-      throw new Error('Roles necesarios no fueron encontrados en la base de datos');
+      throw new Error('Roles “director” y/o “administrador” no encontrados');
     }
- 
-    // Verificar si ya existen usuarios con estos roles
-    const existingDirector = await User.findOne({ email: 'director@empresa.com' });
-    const existingAdmin = await User.findOne({ email: 'admin@empresa.com' });
- 
-    if (!existingDirector) {
-      const director = new User({
-        nombre: 'Director Inicial',
-        email: 'director@empresa.com',
-        password: 'claveSeguraDirector', // recuerda cambiarla y hashearla
-        telefono: '123456789',
-        departamento: 'administración',
-        rol: directorRole._id,
-      });
- 
-      // Hashear la contraseña
-      const salt = await bcrypt.genSalt(10);
-      director.password = await bcrypt.hash(director.password, salt);
- 
-      await director.save();
-      console.log('Usuario Director creado exitosamente');
-    }
- 
-    if (!existingAdmin) {
-      const admin = new User({
-        nombre: 'Administrador Inicial',
-        email: 'admin@empresa.com',
-        password: 'claveSeguraAdmin', // recuerda cambiarla y hashearla
-        telefono: '987654321',
-        departamento: 'administración',
-        rol: adminRole._id,
-      });
- 
-      const salt = await bcrypt.genSalt(10);
-      admin.password = await bcrypt.hash(admin.password, salt);
- 
-      await admin.save();
-      console.log('Usuario Administrador creado exitosamente');
-    }
- 
+
+    // 3️⃣ Upsert Director ----------------------------------------------------
+    await User.updateOne(
+      { email: 'vmoreno@dasti.com.mx' },        // filtro por email
+      {
+        $set: {                                 // campos a actualizar siempre
+          nombre:       'Victor Moreno',
+          empleadoID:   1,
+          telefono:     '6563603586',
+          departamento: 'administración',
+          rol:          directorRole._id
+        },
+        $setOnInsert: {                         // sólo la primera vez
+          password: await bcrypt.hash('VmDasti2025@', 10)
+        }
+      },
+      { upsert: true }
+    );
+    console.log('✅ Usuario Director preparado');
+
+    // 4️⃣ Upsert Administrador ----------------------------------------------
+    await User.updateOne(
+      { email: 'servidordasti2025@dasti.com.mx' },
+      {
+        $set: {
+          nombre:       'Administrador DASTI',
+          empleadoID:   2,
+          telefono:     '6567828767',
+          departamento: 'administración',
+          rol:          adminRole._id
+        },
+        $setOnInsert: {
+          password: await bcrypt.hash('Dasti2025@', 10)
+        }
+      },
+      { upsert: true }
+    );
+    console.log('✅ Usuario Administrador preparado');
+
+  } catch (err) {
+    console.error('❌ Error al sembrar usuarios:', err.message);
+  } finally {
+    // 5️⃣ Cerrar conexión y salir
+    await mongoose.disconnect();
     process.exit(0);
-  } catch (error) {
-    console.error(error);
-    process.exit(1);
   }
-};
- 
-seedUsers();
- 
- 
+})();

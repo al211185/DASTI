@@ -3,13 +3,12 @@ const mongoose = require('mongoose');
 const connectDB = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
+      tlsInsecure: true           // ← clave p/ Cosmos vCore +srv desde local
     });
     console.log('✅ MongoDB conectado');
-  } catch (error) {
-    console.error('❌ Error al conectar a MongoDB:', error.message);
-    process.exit(1); // Salir en caso de error crítico
+  } catch (err) {
+    console.error('❌ Error al conectar a MongoDB:', err.message);
+    process.exit(1);
   }
 };
 
