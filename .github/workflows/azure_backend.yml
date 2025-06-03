@@ -1,49 +1,59 @@
+# ================================================================
 # Despliega la carpeta backend/ a Azure App Service (Linux)
+# ================================================================
 name: Build & Deploy – backend to Azure App Service
 
 on:
   push:
-    branches: [ azure ]        # se ejecuta cuando hagas push a la rama azure
+    branches: [ azure ]           # se ejecuta cuando hagas push a la rama azure
   workflow_dispatch:
 
 env:
-  NODE_VERSION: '18.x'         # cambia aquí si un día saltas a otra LTS
+  NODE_VERSION: '18.x'            # cambia aquí si algún día saltas a otra LTS
 
 jobs:
+# ----------------------------------------------------------------
+# 1. BUILD: instala deps del backend y genera release.zip
+# ----------------------------------------------------------------
   build:
     runs-on: ubuntu-latest
     permissions:
       contents: read
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      # 1) Instalar Node
-      - uses: actions/setup-node@v3
+      - name: Use Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      # 2) Instalar dependencias del backend (prod-only)
+      # Instala solo dependencias de producción en backend/
       - name: npm ci (backend)
         run: npm ci --omit=dev
         working-directory: backend
 
-      # 3) Build opcional (por si tienes scripts); no falla si no existe
+      # Build opcional (si no tienes script build no pasa nada)
       - name: npm run build --if-present
         run: npm run build --if-present
         working-directory: backend
 
-      # 4) Empaquetar solo la carpeta backend/ (sin node_modules)
+      # Empaquetar backend/ excluyendo node_modules
       - name: Zip artifact
         run: |
           cd backend
           zip -r ../release.zip . -x "node_modules/**"
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
         with:
           name: backend-release
           path: release.zip
 
+# ----------------------------------------------------------------
+# 2. DEPLOY: publica release.zip en tu App Service
+# ----------------------------------------------------------------
   deploy:
     runs-on: ubuntu-latest
     needs: build
@@ -55,21 +65,23 @@ jobs:
       contents: read
 
     steps:
-      - uses: actions/download-artifact@v4
+      - name: Download artifact
+        uses: actions/download-artifact@v4
         with:
           name: backend-release
 
-      - run: unzip release.zip
+      - name: Unzip artifact
+        run: unzip release.zip
 
-      # Autenticarse en Azure con los secrets que creaste en el repo
+      # --- LOGIN -------------------------------------------------
       - name: Azure login
         uses: azure/login@v2
         with:
-          client-id:      ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id:      ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id:${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          client-id:      ${{ secrets.AZUREAPPSERVICE_CLIENTID_3BFB266ECF534E6AB798F9A0FBOE3B23 }}
+          tenant-id:      ${{ secrets.AZUREAPPSERVICE_TENANTID_E60A0A20082140A483462EA2595C2C7E }}
+          subscription-id:${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_1BAE8BF160C0455782CDA2BD7931FF9A }}
 
-      # Despliegue al App Service Linux
+      # --- DEPLOY ------------------------------------------------
       - name: Deploy to Azure Web App
         id: deploy
         uses: azure/webapps-deploy@v3
