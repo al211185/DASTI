@@ -1,4 +1,4 @@
-// index.js
+// backend/index.js
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
@@ -7,28 +7,39 @@ const cookieParser = require('cookie-parser');
 const path = require('path');
 const http = require('http');
 
-// Ya no importas Server de socket.io ni jwt/User aquí
-// const { Server } = require('socket.io');
-// const jwt = require('jsonwebtoken');
-// const User = require('./models/User');
-
+// Carga variables de entorno (.env)
 dotenv.config();
+
+// Conecta a la base de datos MongoDB
 connectDB();
 
 const app = express();
 
-// CORS
+// Lista de orígenes permitidos (dev + prod)
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://happy-wave-0e4981b10.6.azurestaticapps.net'
+];
+
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: function(origin, callback) {
+    // Permitir peticiones sin origin (Postman, servidor a servidor, etc.)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      return callback(null, true);
+    }
+    callback(new Error('CORS policy: Acceso no permitido desde este origen'));
+  },
   credentials: true,
   optionsSuccessStatus: 200,
 }));
+
 app.options('*', cors({
-  origin: 'http://localhost:5173',
+  origin: allowedOrigins,
   credentials: true,
 }));
 
-// Cookies + JSON
+// Middleware para manejar cookies y JSON en el body
 app.use(cookieParser());
 app.use(express.json());
 
@@ -48,22 +59,22 @@ app.use('/api/proveedores', require('./routes/proveedorRoutes'));
 app.use('/api/categorias', require('./routes/categoriasRoutes'));
 app.use('/api/notificaciones', require('./routes/notificaciones'));
 
-// Carpeta de uploads
+// Carpeta pública de uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// Ruta de prueba en la raíz
 app.get('/', (_req, res) => {
   res.send('Bienvenido a la API de DASTY');
 });
 
-// Creamos servidor HTTP con Express
+// Creamos el servidor HTTP a partir de Express
 const server = http.createServer(app);
 
-// En lugar de new Server(...) aquí, invocamos a socket.js:
+// Inicializa Socket.IO (si usas sockets)
 const { init } = require('./socket');
 init(server);
 
-// Ya no exportamos `io` desde index.js. Los controladores usarán getIO() desde socket.js.
-
+// Puerto que asignará Azure (process.env.PORT) o 8080 por defecto local
 const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
