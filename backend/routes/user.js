@@ -23,6 +23,6 @@ router.get('/',        verifyToken, userController.getAllUsers);
 router.get('/:id',     verifyToken, userController.getUserById);
 router.put('/:id',     verifyToken, userController.updateUser);
 router.delete('/:id',  verifyToken, userController.deleteUser);
-+router.post('/',      verifyToken, userController.registerUser); // <── AÑADE ESTO
+router.post('/',       verifyToken, userController.registerUser);
 
 module.exports = router;
