@@ -1,18 +1,20 @@
-
+# ================================================================
+# Build & Deploy – backend to Azure App Service
+# ================================================================
 name: Build & Deploy – backend to Azure App Service
 
 on:
   push:
-    branches: [ azure ]          # se ejecuta al hacer push a la rama azure
+    branches: [ azure ]           # se ejecuta al hacer push a la rama azure
   workflow_dispatch:
 
 env:
-  NODE_VERSION: '22.x'           # versión Node en App Service
+  NODE_VERSION: '18.x'            # LTS compatible con App Service
 
-# ----------------------------------------------------------------
-# 1. BUILD – genera backend.zip con el contenido de backend/
-# ----------------------------------------------------------------
 jobs:
+# ----------------------------------------------------------------
+# 1. BUILD – genera backend.zip desde la carpeta backend/
+# ----------------------------------------------------------------
   build:
     runs-on: ubuntu-latest
     permissions:
@@ -25,15 +27,14 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: npm ci (backend)
+      - name: Install deps (prod)
         run: npm ci --omit=dev
         working-directory: backend
 
-      - name: npm run build --if-present
+      - name: Build (optional)
         run: npm run build --if-present
         working-directory: backend
 
-      # Empaquetar *dentro* de backend/ (raíz del ZIP)
       - name: Zip backend
         run: |
           cd backend
@@ -42,10 +43,10 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: backend-release
-          path: backend.zip            # ← artefacto que subiremos
+          path: backend.zip
 
 # ----------------------------------------------------------------
-# 2. DEPLOY – publica backend.zip directamente en el Web App
+# 2. DEPLOY – publica backend.zip en el Web App
 # ----------------------------------------------------------------
   deploy:
     runs-on: ubuntu-latest
@@ -66,15 +67,15 @@ jobs:
       - name: Azure login
         uses: azure/login@v2
         with:
-          client-id:      ${{ secrets.AZUREAPPSERVICE_CLIENTID_3BFB266ECF534E6AB798F9A0FBOE3B23 }}
-          tenant-id:      ${{ secrets.AZUREAPPSERVICE_TENANTID_E60A0A20082140A483462EA2595C2C7E }}
-          subscription-id:${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_1BAE8BF160C0455782CDA2BD7931FF9A }}
+          client-id:      ${{ secrets.AZUREAPPSERVICE_CLIENTID_03C08C3DA56D4B8F836A2E67EAECA9FC }}
+          tenant-id:      ${{ secrets.AZUREAPPSERVICE_TENANTID_E1844CEDD61248459CD8A3D4CFC374AFC }}
+          subscription-id:${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_3F863223836C0489DA61B89368562366E }}
 
       # ---------- DEPLOY ----------
       - name: Deploy to Azure Web App
         id: deploy
         uses: azure/webapps-deploy@v3
         with:
-          app-name: DastiApp          # nombre EXACTO del recurso en Azure
+          app-name: DastiApp          # nombre EXACTO del App Service
           slot-name: Production
-          package: backend.zip        # ← publica el ZIP tal cual
+          package: backend.zip        # se publica tal cual
