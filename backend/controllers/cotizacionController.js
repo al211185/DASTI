@@ -140,7 +140,7 @@ exports.createCotizacion = async (req, res) => {
       tipo: 'cotizacion_creada',
       mensaje: mensajeNoti,
       esGlobal: true,
-      creadoPor: req.user._id,
+      creadoPor: req.user?._id,
       refId: guardadaPop._id
     });
     const io = getIO();
@@ -372,7 +372,7 @@ exports.updateCotizacion = async (req, res) => {
         tipo: 'solicitud_edit',
         mensaje: mensajeNoti,
         esGlobal: true,
-        creadoPor: req.user._id,
+        creadoPor: req.user?._id,
         refId: id
       });
       const io = getIO();
@@ -511,7 +511,7 @@ exports.updateCotizacion = async (req, res) => {
       tipo: 'cotizacion_actualizada',
       mensaje: mensajeNoti2,
       esGlobal: true,
-      creadoPor: req.user._id,
+      creadoPor: req.user?._id,
       refId: updated._id
     });
     const io2 = getIO();
@@ -590,7 +590,7 @@ exports.deleteCotizacion = async (req, res) => {
         tipo: 'solicitud_delete',
         mensaje: mensajeNoti3,
         esGlobal: true,
-        creadoPor: req.user._id,
+        creadoPor: req.user?._id,
         refId: id
       });
       const io3 = getIO();
@@ -639,7 +639,7 @@ exports.deleteCotizacion = async (req, res) => {
       tipo: 'cotizacion_eliminada',
       mensaje: mensajeNoti4,
       esGlobal: true,
-      creadoPor: req.user._id,
+      creadoPor: req.user?._id,
       refId: id
     });
     const io4 = getIO();
@@ -717,7 +717,7 @@ exports.solicitarAprobacion = async (req, res) => {
       tipo: tipoNoti,
       mensaje: mensajeNoti,
       esGlobal: true,
-      creadoPor: req.user._id,
+      creadoPor: req.user?._id,
       refId: id
     });
     const io5 = getIO();
@@ -819,7 +819,7 @@ exports.responderSolicitud = async (req, res) => {
         tipo: 'cotizacion_eliminada',
         mensaje: mensajeNotiDel,
         esGlobal: false,
-        creadoPor: req.user._id,
+        creadoPor: req.user?._id,
         destinatario: original.vendedor, // notificar al vendedor propietario
         refId: cotId
       });
@@ -858,7 +858,7 @@ exports.responderSolicitud = async (req, res) => {
     tipo: aprovado ? 'solicitud_aprobada' : 'solicitud_rechazada',
     mensaje: mensajeNotiResp,
     esGlobal: false,
-    creadoPor: req.user._id,
+    creadoPor: req.user?._id,
     destinatario: solicitud.usuario // usuario que solicitó
   });
   const io7 = getIO();
@@ -924,7 +924,7 @@ exports.addComentario = async (req, res) => {
         tipo: 'comentario_cotizacion',
         mensaje: mensajeNotiCom,
         esGlobal: false,
-        creadoPor: req.user._id,
+        creadoPor: req.user?._id,
         destinatario: cot.vendedor // notificar al vendedor
       });
       const io8 = getIO();
@@ -941,7 +941,7 @@ exports.addComentario = async (req, res) => {
         tipo: 'comentario_cotizacion',
         mensaje: mensajeNotiCom,
         esGlobal: true,
-        creadoPor: req.user._id,
+        creadoPor: req.user?._id,
         refId: cot._id
       });
       io8.to('admin').emit('nueva_notificacion', {

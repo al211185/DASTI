@@ -44,7 +44,7 @@ exports.createCliente = async (req, res) => {
       tipo: 'cliente_creado',
       mensaje: mensajeNoti,
       esGlobal: true,
-      creadoPor: req.user._id,
+      creadoPor: req.user?._id,
       refId: guardado._id
     });
 
@@ -84,7 +84,7 @@ exports.updateCliente = async (req, res) => {
       tipo: 'cliente_actualizado',
       mensaje: mensajeNoti,
       esGlobal: true,
-      creadoPor: req.user._id,
+      creadoPor: req.user?._id,
       refId: actualizado._id
     });
 
@@ -120,7 +120,7 @@ exports.deleteCliente = async (req, res) => {
       tipo: 'cliente_eliminado',
       mensaje: mensajeNoti,
       esGlobal: true,
-      creadoPor: req.user._id,
+      creadoPor: req.user?._id,
       refId: eliminado._id
     });
 
@@ -160,7 +160,7 @@ exports.addContacto = async (req, res) => {
       tipo: 'contacto_agregado',
       mensaje: mensajeNoti,
       esGlobal: true,
-      creadoPor: req.user._id,
+      creadoPor: req.user?._id,
       refId: actualizado._id
     });
 
@@ -201,7 +201,7 @@ exports.removeContacto = async (req, res) => {
       tipo: 'contacto_eliminado',
       mensaje: mensajeNoti,
       esGlobal: true,
-      creadoPor: req.user._id,
+      creadoPor: req.user?._id,
       refId: actualizado._id
     });
 

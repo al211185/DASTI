@@ -51,7 +51,7 @@ exports.createPlanta = async (req, res) => {
       tipo: 'planta_creada',
       mensaje: mensajeNoti,
       esGlobal: true,
-      creadoPor: req.user._id,
+      creadoPor: req.user?._id,
       refId: guardada._id
     });
 
@@ -93,7 +93,7 @@ exports.updatePlanta = async (req, res) => {
       tipo: 'planta_actualizada',
       mensaje: mensajeNoti,
       esGlobal: true,
-      creadoPor: req.user._id,
+      creadoPor: req.user?._id,
       refId: actualizada._id
     });
 
@@ -132,7 +132,7 @@ exports.deletePlanta = async (req, res) => {
       tipo: 'planta_eliminada',
       mensaje: mensajeNoti,
       esGlobal: true,
-      creadoPor: req.user._id,
+      creadoPor: req.user?._id,
       refId: eliminada._id
     });
 

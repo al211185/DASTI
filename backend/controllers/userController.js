@@ -73,7 +73,7 @@ exports.registerUser = async (req, res) => {
       tipo: 'usuario_creado',
       mensaje: mensajeNoti,
       esGlobal: true,
-      creadoPor: req.user._id,
+      creadoPor: req.user?._id,
       refId: guardado._id
     });
 
@@ -126,7 +126,7 @@ exports.updateUser = async (req, res) => {
       tipo: 'usuario_actualizado',
       mensaje: mensajeNoti,
       esGlobal: true,
-      creadoPor: req.user._id,
+      creadoPor: req.user?._id,
       refId: usuarioActualizado._id
     });
 
@@ -165,7 +165,7 @@ exports.deleteUser = async (req, res) => {
       tipo: 'usuario_eliminado',
       mensaje: mensajeNoti,
       esGlobal: true,
-      creadoPor: req.user._id,
+      creadoPor: req.user?._id,
       refId: eliminado._id
     });
 

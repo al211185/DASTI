@@ -18,7 +18,7 @@ exports.createProveedor = async (req, res) => {
       tipo: 'proveedor_creado',
       mensaje: mensajeNoti,
       esGlobal: true,
-      creadoPor: req.user._id,
+      creadoPor: req.user?._id,
       refId: proveedorGuardado._id
     });
 
@@ -99,7 +99,7 @@ exports.updateProveedor = async (req, res) => {
       tipo: 'proveedor_actualizado',
       mensaje: mensajeNoti,
       esGlobal: true,
-      creadoPor: req.user._id,
+      creadoPor: req.user?._id,
       refId: actualizado._id
     });
 
@@ -139,7 +139,7 @@ exports.deleteProveedor = async (req, res) => {
       tipo: 'proveedor_eliminado',
       mensaje: mensajeNoti,
       esGlobal: true,
-      creadoPor: req.user._id,
+      creadoPor: req.user?._id,
       refId: eliminado._id
     });
 
