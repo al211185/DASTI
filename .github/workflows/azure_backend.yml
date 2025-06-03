@@ -1,0 +1,79 @@
+# Despliega la carpeta backend/ a Azure App Service (Linux)
+name: Build & Deploy – backend to Azure App Service
+
+on:
+  push:
+    branches: [ azure ]        # se ejecuta cuando hagas push a la rama azure
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '18.x'         # cambia aquí si un día saltas a otra LTS
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # 1) Instalar Node
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      # 2) Instalar dependencias del backend (prod-only)
+      - name: npm ci (backend)
+        run: npm ci --omit=dev
+        working-directory: backend
+
+      # 3) Build opcional (por si tienes scripts); no falla si no existe
+      - name: npm run build --if-present
+        run: npm run build --if-present
+        working-directory: backend
+
+      # 4) Empaquetar solo la carpeta backend/ (sin node_modules)
+      - name: Zip artifact
+        run: |
+          cd backend
+          zip -r ../release.zip . -x "node_modules/**"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: backend-release
+          path: release.zip
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: Production
+      url: ${{ steps.deploy.outputs.webapp-url }}
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: backend-release
+
+      - run: unzip release.zip
+
+      # Autenticarse en Azure con los secrets que creaste en el repo
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          client-id:      ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id:      ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id:${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # Despliegue al App Service Linux
+      - name: Deploy to Azure Web App
+        id: deploy
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: DastiApp          # nombre EXACTO del recurso en Azure
+          slot-name: Production
+          package: .
