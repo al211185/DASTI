@@ -64,7 +64,7 @@ init(server);
 
 // Ya no exportamos `io` desde index.js. Los controladores usarán getIO() desde socket.js.
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8000;
 server.listen(PORT, () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });
