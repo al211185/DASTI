@@ -90,12 +90,12 @@ exports.login = async (req, res) => {
     const payload = { id: user.id };
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1d' });
 
-    // Enviar token en una cookie HttpOnly
+    // Enviar token en una cookie HttpOnly con SameSite=None y Secure
     res.cookie('token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'Lax',
-      maxAge: 24 * 60 * 60 * 1000, // 1 día
+      secure: process.env.NODE_ENV === 'production', // true en producción
+      sameSite: 'None',                               // cambiar de 'Lax' a 'None'
+      maxAge: 24 * 60 * 60 * 1000,                   // 1 día
     });
 
     return res.json({ msg: 'Inicio de sesión exitoso' });
@@ -106,11 +106,11 @@ exports.login = async (req, res) => {
 };
 
 exports.logout = (req, res) => {
-  // Limpia la cookie 'token'
+  // Limpiar la cookie 'token' con SameSite=None y Secure
   res.clearCookie('token', {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'Lax'
+    sameSite: 'None'  // cambiar de 'Lax' a 'None'
   });
   return res.json({ msg: 'Cierre de sesión exitoso' });
 };
