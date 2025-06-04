@@ -269,7 +269,7 @@ const TablaRenglones = ({
                               ))}
                           </section>
 
-                           {/* Trabajo Externo: sólo lectura */}
+                          {/* Trabajo Externo: sólo lectura */}
                           <section className="border border-purple-300 bg-purple-50 p-2 rounded">
                             <h4 className="font-semibold text-purple-700 mb-2">Trabajo Externo</h4>
                             {r.tiempos
@@ -382,7 +382,7 @@ const TablaRenglones = ({
                                 + Trabajo Externo
                               </button>
                             </section>
-                            
+
                           </div>
                         )
                       )}
