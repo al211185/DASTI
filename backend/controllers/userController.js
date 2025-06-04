@@ -1,5 +1,6 @@
 // controllers/usuariosController.js
 
+const mongoose = require('mongoose');    // ← agrégalo aquí
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const Notificacion = require('../models/Notificacion');
