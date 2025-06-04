@@ -124,7 +124,7 @@ const RegisterPage = () => {
                     className="text-red-500 text-sm mt-1"
                   />
                 </div>
-                {/* Opcionales: teléfono y empleadoID */}
+                {/* Opcionales: teléfono y otros campos */}
                 <div className="mb-4">
                   <Field
                     type="text"
@@ -134,19 +134,6 @@ const RegisterPage = () => {
                   />
                   <ErrorMessage
                     name="telefono"
-                    component="div"
-                    className="text-red-500 text-sm mt-1"
-                  />
-                </div>
-                <div className="mb-4">
-                  <Field
-                    type="text"
-                    name="empleadoID"
-                    placeholder="ID de empleado"
-                    className="w-full p-2 border rounded"
-                  />
-                  <ErrorMessage
-                    name="empleadoID"
                     component="div"
                     className="text-red-500 text-sm mt-1"
                   />

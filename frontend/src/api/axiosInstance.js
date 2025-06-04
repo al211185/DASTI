@@ -8,4 +8,14 @@ const axiosInstance = axios.create({
   withCredentials: true,   // envía siempre la cookie
 });
 
+axiosInstance.interceptors.request.use((config) => {
+  const token = localStorage.getItem('authToken');
+  if (token) {
+    config.headers['x-auth-token'] = token;
+  }
+  return config;
+});
+
+
 export default axiosInstance;
+

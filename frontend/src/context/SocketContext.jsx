@@ -10,10 +10,12 @@ export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
 
   useEffect(() => {
+    const lsToken = localStorage.getItem('authToken');
     const rawCookie = document.cookie
       .split('; ')
       .find((row) => row.startsWith('token='));
-    const token = rawCookie ? rawCookie.split('=')[1] : null;
+    const cookieToken = rawCookie ? rawCookie.split('=')[1] : null;
+    const token = lsToken || cookieToken;
     if (!token) return;
 
     const s = io(SOCKET_URL, {
