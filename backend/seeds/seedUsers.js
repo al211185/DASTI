@@ -24,14 +24,25 @@ const Role     = require('../models/Role');
     //    por compatibilidad, detectamos si existe el esquema antiguo
     //    con _id="users_empleadoID".
     const counters = mongoose.connection.collection('counters');
+    const newFilter = { id: 'empleadoID', reference_value: null };
     const legacyFilter = { _id: 'users_empleadoID' };
-    const legacyDoc    = await counters.findOne(legacyFilter);
 
-    const filter = legacyDoc
-      ? legacyFilter
-      : { id: 'empleadoID', reference_value: null };
+    const legacyDoc = await counters.findOne(legacyFilter);
 
-    await counters.updateOne(filter, { $set: { seq: maxID } }, { upsert: true });
+    // Siempre actualizamos el contador en el formato usado por la versión
+    // actual del plugin
+    const ops = [
+      counters.updateOne(newFilter, { $set: { seq: maxID } }, { upsert: true })
+    ];
+
+    // Si existe el formato antiguo, también lo actualizamos para evitar que el
+    // contador se reinicie por error en ambientes que aún lo usen.
+    if (legacyDoc) {
+      ops.push(counters.updateOne(legacyFilter, { $set: { seq: maxID } }));
+      console.log('ℹ️ Contador en formato antiguo detectado');
+    }
+
+    await Promise.all(ops);
     console.log(`🔧 Contador sincronizado a ${maxID} (próximo será ${maxID + 1})`);
 
     if (legacyDoc) {
