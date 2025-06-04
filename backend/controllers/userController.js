@@ -46,27 +46,42 @@ exports.getUserById = async (req, res) => {
 /* CREAR                                                                     */
 /* POST /api/user                                                             */
 /* ------------------------------------------------------------------------- */
+// controllers/usuariosController.js
+
 exports.registerUser = async (req, res) => {
   try {
+    // ─────────────── SINCRONIZAR CONTADOR ANTES DE CREAR ───────────────
+    const counters = mongoose.connection.collection('counters');
+    // Obtener el mayor empleadoID existente
+    const maxDoc = await User.findOne().sort({ empleadoID: -1 }).lean();
+    const maxID = maxDoc ? maxDoc.empleadoID : 0;
+    // Forzar que el contador interno quede en maxID:
+    await counters.updateOne(
+      { id: "empleadoID", reference_value: null },
+      { $set: { seq: maxID } },
+      { upsert: true }
+    );
+    // Ahora el plugin asignará maxID + 1 sin duplicar
+
+    // ────────────── Validar campos del formulario ──────────────
     const { nombre, email, password, telefono, departamento, rol } = req.body;
-    // validar campos obligatorios
     if (!nombre || !email || !password || !rol) {
       return res.status(400).json({ msg: 'Faltan campos obligatorios' });
     }
-    // verificar duplicados
     if (await User.findOne({ email })) {
       return res.status(400).json({ msg: 'Email ya registrado' });
     }
-    // hashear contraseña
+
+    // ──────────── Crear usuario (mongoose-sequence asignará empleadoID) ────────────
     const salt = await bcrypt.genSalt(10);
     const pwd = await bcrypt.hash(password, salt);
-
     const nuevo = new User({ nombre, email, password: pwd, telefono, departamento, rol });
     const guardado = await nuevo.save();
+
     const resp = guardado.toObject();
     delete resp.password;
 
-    // 1) Crear notificación para administradores
+    // ───────── Crear notificación ─────────
     const usuarioActivo = req.user?.nombre || req.user?.email || 'Desconocido';
     const mensajeNoti = `Nuevo usuario registrado: ${guardado.nombre} (${guardado.email}) por ${usuarioActivo}`;
     const noti = await Notificacion.create({
@@ -76,10 +91,7 @@ exports.registerUser = async (req, res) => {
       creadoPor: req.user?._id,
       refId: guardado._id
     });
-
-    // 2) Emitir a todos los sockets en room "admin"
-    const io = getIO();
-    io.to('admin').emit('nueva_notificacion', {
+    getIO().to('admin').emit('nueva_notificacion', {
       _id: noti._id,
       tipo: noti.tipo,
       mensaje: noti.mensaje,
@@ -93,6 +105,7 @@ exports.registerUser = async (req, res) => {
     return res.status(500).json({ msg: 'Error al crear usuario', error: err.message });
   }
 };
+
 
 /* ------------------------------------------------------------------------- */
 /* ACTUALIZAR                                                                 */
