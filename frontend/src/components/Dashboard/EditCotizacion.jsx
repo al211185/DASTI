@@ -298,6 +298,8 @@ const EditCotizacion = ({ fullName }) => {
                       ...proveedor,
                       precioUnitario: oferta?.precioUnitario || 0
                     },
+                    unidadPresentacion: oferta?.unidadPresentacion,
+                    cantidadPresentacion: oferta?.cantidadPresentacion,
                     cantidad: 1    // <— valor inicial
                   };
 

@@ -40,6 +40,7 @@ const TablaRenglones = ({
                       _id: '',
                       nombre: '',
                       unidadMedida: '',
+                      unidadPresentacion: '',
                       proveedorSeleccionado: null,
                       cantidad: 1,
                       precio: 0
@@ -178,6 +179,11 @@ const TablaRenglones = ({
                                     {mat.proveedorSeleccionado && (
                                       <p className="text-xs text-gray-600">
                                         Proveedor: {mat.proveedorSeleccionado.nombre}
+                                      </p>
+                                    )}
+                                    {mat.unidadPresentacion && (
+                                      <p className="text-xs text-gray-600">
+                                        Presentación: {mat.unidadPresentacion.toLowerCase()}
                                       </p>
                                     )}
                                   </div>
