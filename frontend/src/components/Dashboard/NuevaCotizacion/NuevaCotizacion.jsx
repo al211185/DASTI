@@ -273,6 +273,8 @@ const NuevaCotizacion = () => {
                                             ...proveedor,
                                             precioUnitario: oferta ? oferta.precioUnitario : 0,
                                         },
+                                        unidadPresentacion: oferta?.unidadPresentacion,
+                                        cantidadPresentacion: oferta?.cantidadPresentacion,
                                         cantidad: 1        // <= aquí le das valor inicial
                                     };
                                     nuevosRenglones[modalProveedores.renglonIndex].material = [...materialesActuales, nuevoMaterial];
