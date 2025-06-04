@@ -20,16 +20,23 @@ const Role     = require('../models/Role');
     const maxDoc = await User.findOne().sort({ empleadoID: -1 }).lean();
     const maxID  = maxDoc ? maxDoc.empleadoID : 0;
 
-    //    (colección "counters", campos "id" y "reference_value")
-    //    Aquí corresponde a { id: 'empleadoID', reference_value: null }
-    await mongoose.connection.collection('counters').updateOne(
-      { id: 'empleadoID', reference_value: null },
-      { $set: { seq: maxID } },
-      { upsert: true }
-    );
+    //    Usamos el formato más reciente ({ id, reference_value }) pero,
+    //    por compatibilidad, detectamos si existe el esquema antiguo
+    //    con _id="users_empleadoID".
+    const counters = mongoose.connection.collection('counters');
+    const legacyFilter = { _id: 'users_empleadoID' };
+    const legacyDoc    = await counters.findOne(legacyFilter);
+
+    const filter = legacyDoc
+      ? legacyFilter
+      : { id: 'empleadoID', reference_value: null };
+
+    await counters.updateOne(filter, { $set: { seq: maxID } }, { upsert: true });
     console.log(`🔧 Contador sincronizado a ${maxID} (próximo será ${maxID + 1})`);
-    if (useOld) console.log('ℹ️ Contador en formato antiguo detectado');
-    // ──────────────────────────────────────────────────────────────────────────
+
+    if (legacyDoc) {
+      console.log('ℹ️ Contador en formato antiguo detectado');
+    }
 
     // 4️⃣ Obtener los roles “director” y “administrador” (deben existir previamente)
     const directorRole = await Role.findOne({ nombre: 'director' });
