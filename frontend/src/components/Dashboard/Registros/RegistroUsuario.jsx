@@ -12,7 +12,6 @@ export default function RegistroUsuario() {
     email: '',
     password: '',
     telefono: '',
-    empleadoID: '',
     departamento: '',
     rol: '',
   });
@@ -109,12 +108,6 @@ export default function RegistroUsuario() {
             label="Teléfono"
             name="telefono"
             value={userData.telefono}
-            onChange={handleChange}
-          />
-          <Input
-            label="Empleado ID"
-            name="empleadoID"
-            value={userData.empleadoID}
             onChange={handleChange}
           />
 

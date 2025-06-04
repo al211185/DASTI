@@ -34,7 +34,6 @@ exports.register = async (req, res) => {
       email,
       password,
       telefono,
-      empleadoID,
       departamento,
       rol,
     });
