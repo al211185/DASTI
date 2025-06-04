@@ -22,7 +22,7 @@ exports.getProfile = async (req, res) => {
 };
 
 exports.register = async (req, res) => {
-  const { nombre, email, password, telefono, empleadoID, departamento, rol } = req.body;
+  const { nombre, email, password, telefono, departamento, rol } = req.body;
   try {
     let user = await User.findOne({ email });
     if (user) {

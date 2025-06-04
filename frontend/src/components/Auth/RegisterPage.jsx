@@ -13,7 +13,6 @@ const RegisterPage = () => {
     email: '',
     password: '',
     telefono: '',      // Si es opcional, puedes dejarlo vacío o validarlo como opcional
-    empleadoID: '',    // Igual que teléfono
     departamento: 'ventas', // Valor predeterminado válido; puedes cambiarlo según tu lógica
     rol: 'vendedor',        // Valor predeterminado según el modelo
   };
@@ -25,7 +24,6 @@ const RegisterPage = () => {
       .min(6, 'La contraseña debe tener al menos 6 caracteres')
       .required('Requerido'),
     telefono: Yup.string(),       // Opcional si así lo deseas
-    empleadoID: Yup.string(),     // Opcional si así lo deseas
     departamento: Yup.string()
       .oneOf(
         ['administración', 'ventas', 'requisiciones', 'diseño', 'producción'],

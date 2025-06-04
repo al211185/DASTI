@@ -25,7 +25,6 @@ const Role     = require('../models/Role');
       {
         $set: {                                 // campos a actualizar siempre
           nombre:       'Victor Moreno',
-          empleadoID:   1,
           telefono:     '6563603586',
           departamento: 'administración',
           rol:          directorRole._id
@@ -44,7 +43,6 @@ const Role     = require('../models/Role');
       {
         $set: {
           nombre:       'Administrador DASTI',
-          empleadoID:   2,
           telefono:     '6567828767',
           departamento: 'administración',
           rol:          adminRole._id

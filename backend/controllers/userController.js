@@ -1,6 +1,5 @@
 // controllers/usuariosController.js
 
-const mongoose = require('mongoose');    // ← agrégalo aquí
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const Notificacion = require('../models/Notificacion');
@@ -47,23 +46,8 @@ exports.getUserById = async (req, res) => {
 /* CREAR                                                                     */
 /* POST /api/user                                                             */
 /* ------------------------------------------------------------------------- */
-// controllers/usuariosController.js
-
 exports.registerUser = async (req, res) => {
   try {
-    // ─────────────── SINCRONIZAR CONTADOR ANTES DE CREAR ───────────────
-    const counters = mongoose.connection.collection('counters');
-    // Obtener el mayor empleadoID existente
-    const maxDoc = await User.findOne().sort({ empleadoID: -1 }).lean();
-    const maxID = maxDoc ? maxDoc.empleadoID : 0;
-    // Forzar que el contador interno quede en maxID:
-    await counters.updateOne(
-      { id: "empleadoID", reference_value: null },
-      { $set: { seq: maxID } },
-      { upsert: true }
-    );
-    // Ahora el plugin asignará maxID + 1 sin duplicar
-
     // ────────────── Validar campos del formulario ──────────────
     const { nombre, email, password, telefono, departamento, rol } = req.body;
     if (!nombre || !email || !password || !rol) {
@@ -73,10 +57,17 @@ exports.registerUser = async (req, res) => {
       return res.status(400).json({ msg: 'Email ya registrado' });
     }
 
-    // ──────────── Crear usuario (mongoose-sequence asignará empleadoID) ────────────
+    // ──────────── Crear usuario ────────────
     const salt = await bcrypt.genSalt(10);
     const pwd = await bcrypt.hash(password, salt);
-    const nuevo = new User({ nombre, email, password: pwd, telefono, departamento, rol });
+    const nuevo = new User({
+      nombre,
+      email,
+      password: pwd,
+      telefono,
+      departamento,
+      rol
+    });
     const guardado = await nuevo.save();
 
     const resp = guardado.toObject();
@@ -107,20 +98,21 @@ exports.registerUser = async (req, res) => {
   }
 };
 
-
 /* ------------------------------------------------------------------------- */
 /* ACTUALIZAR                                                                 */
 /* PUT /api/user/:id                                                          */
 /* ------------------------------------------------------------------------- */
 exports.updateUser = async (req, res) => {
   try {
-    // extraer y descartar empleadoID (si existe)
+    // Extraer y descartar empleadoID si viene en body (campo ya no existe)
     const { empleadoID, ...updates } = req.body;
-    // si se actualiza contraseña, hashearla
+
+    // Si actualiza contraseña, hashearla
     if (updates.password) {
       const salt = await bcrypt.genSalt(10);
       updates.password = await bcrypt.hash(updates.password, salt);
     }
+
     const usuarioActualizado = await User.findByIdAndUpdate(
       req.params.id,
       updates,
@@ -133,7 +125,7 @@ exports.updateUser = async (req, res) => {
       return res.status(404).json({ msg: 'Usuario no encontrado' });
     }
 
-    // 1) Crear notificación para administradores
+    // Crear notificación para administradores
     const usuarioActivo = req.user?.nombre || req.user?.email || 'Desconocido';
     const mensajeNoti = `Usuario actualizado: ${usuarioActualizado.nombre} (${usuarioActualizado.email}) por ${usuarioActivo}`;
     const noti = await Notificacion.create({
@@ -144,9 +136,8 @@ exports.updateUser = async (req, res) => {
       refId: usuarioActualizado._id
     });
 
-    // 2) Emitir a todos los sockets en room "admin"
-    const io = getIO();
-    io.to('admin').emit('nueva_notificacion', {
+    // Emitir a todos los sockets en room "admin"
+    getIO().to('admin').emit('nueva_notificacion', {
       _id: noti._id,
       tipo: noti.tipo,
       mensaje: noti.mensaje,
@@ -172,7 +163,7 @@ exports.deleteUser = async (req, res) => {
       return res.status(404).json({ msg: 'Usuario no encontrado' });
     }
 
-    // 1) Crear notificación para administradores
+    // Crear notificación para administradores
     const usuarioActivo = req.user?.nombre || req.user?.email || 'Desconocido';
     const mensajeNoti = `Usuario eliminado: ${eliminado.nombre} (${eliminado.email}) por ${usuarioActivo}`;
     const noti = await Notificacion.create({
@@ -183,9 +174,8 @@ exports.deleteUser = async (req, res) => {
       refId: eliminado._id
     });
 
-    // 2) Emitir a todos los sockets en room "admin"
-    const io = getIO();
-    io.to('admin').emit('nueva_notificacion', {
+    // Emitir a todos los sockets en room "admin"
+    getIO().to('admin').emit('nueva_notificacion', {
       _id: noti._id,
       tipo: noti.tipo,
       mensaje: noti.mensaje,
