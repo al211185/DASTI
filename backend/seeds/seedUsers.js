@@ -21,9 +21,10 @@ const Role     = require('../models/Role');
     const maxID  = maxDoc ? maxDoc.empleadoID : 0;
 
     // 3️⃣ Asociar ese “maxID” al contador interno de mongoose-sequence
-    //    (colección “counters”, _id = "<colección>_<campo>", aquí “users_empleadoID”)
+    //    (colección "counters", campos "id" y "reference_value")
+    //    Aquí corresponde a { id: 'empleadoID', reference_value: null }
     await mongoose.connection.collection('counters').updateOne(
-      { _id: 'users_empleadoID' },
+      { id: 'empleadoID', reference_value: null },
       { $set: { seq: maxID } },
       { upsert: true }
     );
