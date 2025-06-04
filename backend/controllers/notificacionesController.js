@@ -18,10 +18,7 @@ exports.getNotificaciones = async (req, res) => {
 
     // Si no es admin/director, filtramos por destinatario o global
     if (!(rol === 'administrador' || rol === 'director')) {
-      filtro.$or = [
-        { destinatario: req.user._id },
-        { esGlobal: true }
-      ];
+      filtro.destinatario = req.user._id;
     }
     // Si piden solo no-leídas, añadimos filtro.leida = false
     if (req.query.soloNoLeidas === 'true') {
@@ -40,7 +37,9 @@ exports.getNotificaciones = async (req, res) => {
     // Selección de campos: devolvemos solo lo esencial
     const notis = await Notificacion.find(filtro)
       .select('tipo mensaje fecha leida refId esGlobal destinatario')
-      .sort({ fecha: -1 })
+      .sort({
+        fecha: -1
+      })
       .skip(skip)
       .limit(limit)
       .lean();
@@ -70,30 +69,41 @@ exports.getNotificaciones = async (req, res) => {
  */
 exports.marcarLeida = async (req, res) => {
   try {
-    const { id } = req.params;
+    const {
+      id
+    } = req.params;
     const noti = await Notificacion.findById(id).lean();
     if (!noti) {
-      return res.status(404).json({ msg: 'Notificación no encontrada' });
+      return res.status(404).json({
+        msg: 'Notificación no encontrada'
+      });
     }
 
     // Si hay un destinatario definido, verificamos que coincida con el usuario actual
     if (noti.destinatario && String(noti.destinatario) !== String(req.user._id)) {
       const rol = req.user.rol.nombre.toLowerCase();
       if (!(rol === 'administrador' || rol === 'director')) {
-        return res.status(403).json({ msg: 'No autorizado para marcar esta notificación' });
+        return res.status(403).json({
+          msg: 'No autorizado para marcar esta notificación'
+        });
       }
     }
 
     // Si ya estaba leída, devolvemos un mensaje específico
     if (noti.leida) {
-      return res.status(400).json({ msg: 'La notificación ya estaba marcada como leída' });
+      return res.status(400).json({
+        msg: 'La notificación ya estaba marcada como leída'
+      });
     }
 
     // Actualizamos y devolvemos la notificación completa
     const notiActualizada = await Notificacion.findByIdAndUpdate(
-      id,
-      { leida: true },
-      { new: true, select: 'tipo mensaje fecha leida refId esGlobal destinatario' }
+      id, {
+        leida: true
+      }, {
+        new: true,
+        select: 'tipo mensaje fecha leida refId esGlobal destinatario'
+      }
     ).lean();
 
     return res.json({
