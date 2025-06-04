@@ -20,7 +20,6 @@ const Role     = require('../models/Role');
     const maxDoc = await User.findOne().sort({ empleadoID: -1 }).lean();
     const maxID  = maxDoc ? maxDoc.empleadoID : 0;
 
-    // 3️⃣ Asociar ese “maxID” al contador interno de mongoose-sequence
     //    (colección "counters", campos "id" y "reference_value")
     //    Aquí corresponde a { id: 'empleadoID', reference_value: null }
     await mongoose.connection.collection('counters').updateOne(
@@ -29,6 +28,7 @@ const Role     = require('../models/Role');
       { upsert: true }
     );
     console.log(`🔧 Contador sincronizado a ${maxID} (próximo será ${maxID + 1})`);
+    if (useOld) console.log('ℹ️ Contador en formato antiguo detectado');
     // ──────────────────────────────────────────────────────────────────────────
 
     // 4️⃣ Obtener los roles “director” y “administrador” (deben existir previamente)
