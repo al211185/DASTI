@@ -1,18 +1,18 @@
 // seeds/seedRoles.js
-require('dotenv').config();
+
 const mongoose = require('mongoose');
 const Role = require('../models/Role');
 
 (async () => {
   try {
-    // ① Conexión – aquí sí pasamos la bandera
+    // Conéctate usando la variable que Azure inyecta: MONGODB_URI
     await mongoose.connect(process.env.MONGO_URI, {
-      tlsAllowInvalidHostnames: true,        // ★ clave para Cosmos vCore +srv
-      serverSelectionTimeoutMS: 30000        // (opcional) evita timeouts cortos
+      tlsAllowInvalidHostnames: true,   // clave para Cosmos vCore +srv, si aplica
+      serverSelectionTimeoutMS: 30000   // evita timeouts muy cortos
     });
     console.log('🔌 Conectado a la base de datos');
 
-    // ② Datos a sembrar
+    // Datos a sembrar
     const roles = [
       { nombre: 'director',      descripcion: 'Acceso a todas las operaciones', permisos: ['todo'] },
       { nombre: 'administrador', descripcion: 'Acceso completo al sistema',     permisos: ['todo'] },
@@ -47,7 +47,7 @@ const Role = require('../models/Role');
       }
     ];
 
-    // ③ Sembrar
+    // Elimina roles existentes y los inserta de nuevo
     await Role.deleteMany({});
     await Role.insertMany(roles);
 

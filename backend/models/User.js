@@ -1,18 +1,15 @@
 const mongoose = require('mongoose');
-// ① Importa e inicializa el plugin con tu instancia de mongoose
-const AutoIncrement = require('mongoose-sequence')(mongoose);
- 
+
 const userSchema = new mongoose.Schema({
   nombre: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   telefono: { type: String },
-  empleadoID:   { type: Number, unique: true },
   departamento: { type: String, enum: ['administración', 'ventas', 'diseño', 'producción'] },
   rol: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Role',
-    required: true  // Ahora es obligatorio asignar un rol válido
+    required: true
   },
   activo: { type: Boolean, default: true },
   ultimoAcceso: { type: Date },
@@ -29,8 +26,7 @@ const userSchema = new mongoose.Schema({
     }
   ]
 });
- 
-// ③ Aplica el plugin para que cada nuevo documento incremente empleadoID
-userSchema.plugin(AutoIncrement, { inc_field: 'empleadoID' });
- 
+
+// -- Ya no hay plugin de AutoIncrement ni campo empleadoID
+
 module.exports = mongoose.model('User', userSchema);

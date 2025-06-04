@@ -54,7 +54,13 @@ const ModalTiempos = ({ tipo, onClose, onTiemposSelect }) => {
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 p-4 z-50">
       <div className="bg-white p-6 w-full max-w-md rounded shadow relative">
         <h2 className="text-xl font-semibold mb-4">
-          Agregar Máquina ({tipo === 'producción' ? 'Producción' : 'Diseño'})
+          Agregar Máquina ({
+            tipo === 'producción'
+              ? 'Producción'
+              : tipo === 'diseño'
+                ? 'Diseño'
+                : 'Trabajo Externo'
+          })
         </h2>
         <button onClick={onClose} className="absolute top-2 right-2 text-gray-500 hover:text-black">✕</button>
 

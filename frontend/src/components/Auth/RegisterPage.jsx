@@ -13,7 +13,6 @@ const RegisterPage = () => {
     email: '',
     password: '',
     telefono: '',      // Si es opcional, puedes dejarlo vacío o validarlo como opcional
-    empleadoID: '',    // Igual que teléfono
     departamento: 'ventas', // Valor predeterminado válido; puedes cambiarlo según tu lógica
     rol: 'vendedor',        // Valor predeterminado según el modelo
   };
@@ -25,7 +24,6 @@ const RegisterPage = () => {
       .min(6, 'La contraseña debe tener al menos 6 caracteres')
       .required('Requerido'),
     telefono: Yup.string(),       // Opcional si así lo deseas
-    empleadoID: Yup.string(),     // Opcional si así lo deseas
     departamento: Yup.string()
       .oneOf(
         ['administración', 'ventas', 'requisiciones', 'diseño', 'producción'],
@@ -126,7 +124,7 @@ const RegisterPage = () => {
                     className="text-red-500 text-sm mt-1"
                   />
                 </div>
-                {/* Opcionales: teléfono y empleadoID */}
+                {/* Opcionales: teléfono y otros campos */}
                 <div className="mb-4">
                   <Field
                     type="text"
@@ -136,19 +134,6 @@ const RegisterPage = () => {
                   />
                   <ErrorMessage
                     name="telefono"
-                    component="div"
-                    className="text-red-500 text-sm mt-1"
-                  />
-                </div>
-                <div className="mb-4">
-                  <Field
-                    type="text"
-                    name="empleadoID"
-                    placeholder="ID de empleado"
-                    className="w-full p-2 border rounded"
-                  />
-                  <ErrorMessage
-                    name="empleadoID"
                     component="div"
                     className="text-red-500 text-sm mt-1"
                   />

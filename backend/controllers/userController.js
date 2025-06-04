@@ -48,38 +48,42 @@ exports.getUserById = async (req, res) => {
 /* ------------------------------------------------------------------------- */
 exports.registerUser = async (req, res) => {
   try {
+    // ────────────── Validar campos del formulario ──────────────
     const { nombre, email, password, telefono, departamento, rol } = req.body;
-    // validar campos obligatorios
     if (!nombre || !email || !password || !rol) {
       return res.status(400).json({ msg: 'Faltan campos obligatorios' });
     }
-    // verificar duplicados
     if (await User.findOne({ email })) {
       return res.status(400).json({ msg: 'Email ya registrado' });
     }
-    // hashear contraseña
+
+    // ──────────── Crear usuario ────────────
     const salt = await bcrypt.genSalt(10);
     const pwd = await bcrypt.hash(password, salt);
-
-    const nuevo = new User({ nombre, email, password: pwd, telefono, departamento, rol });
+    const nuevo = new User({
+      nombre,
+      email,
+      password: pwd,
+      telefono,
+      departamento,
+      rol
+    });
     const guardado = await nuevo.save();
+
     const resp = guardado.toObject();
     delete resp.password;
 
-    // 1) Crear notificación para administradores
+    // ───────── Crear notificación ─────────
     const usuarioActivo = req.user?.nombre || req.user?.email || 'Desconocido';
     const mensajeNoti = `Nuevo usuario registrado: ${guardado.nombre} (${guardado.email}) por ${usuarioActivo}`;
     const noti = await Notificacion.create({
       tipo: 'usuario_creado',
       mensaje: mensajeNoti,
       esGlobal: true,
-      creadoPor: req.user._id,
+      creadoPor: req.user?._id,
       refId: guardado._id
     });
-
-    // 2) Emitir a todos los sockets en room "admin"
-    const io = getIO();
-    io.to('admin').emit('nueva_notificacion', {
+    getIO().to('admin').emit('nueva_notificacion', {
       _id: noti._id,
       tipo: noti.tipo,
       mensaje: noti.mensaje,
@@ -100,13 +104,15 @@ exports.registerUser = async (req, res) => {
 /* ------------------------------------------------------------------------- */
 exports.updateUser = async (req, res) => {
   try {
-    // extraer y descartar empleadoID (si existe)
+    // Extraer y descartar empleadoID si viene en body (campo ya no existe)
     const { empleadoID, ...updates } = req.body;
-    // si se actualiza contraseña, hashearla
+
+    // Si actualiza contraseña, hashearla
     if (updates.password) {
       const salt = await bcrypt.genSalt(10);
       updates.password = await bcrypt.hash(updates.password, salt);
     }
+
     const usuarioActualizado = await User.findByIdAndUpdate(
       req.params.id,
       updates,
@@ -119,20 +125,19 @@ exports.updateUser = async (req, res) => {
       return res.status(404).json({ msg: 'Usuario no encontrado' });
     }
 
-    // 1) Crear notificación para administradores
+    // Crear notificación para administradores
     const usuarioActivo = req.user?.nombre || req.user?.email || 'Desconocido';
     const mensajeNoti = `Usuario actualizado: ${usuarioActualizado.nombre} (${usuarioActualizado.email}) por ${usuarioActivo}`;
     const noti = await Notificacion.create({
       tipo: 'usuario_actualizado',
       mensaje: mensajeNoti,
       esGlobal: true,
-      creadoPor: req.user._id,
+      creadoPor: req.user?._id,
       refId: usuarioActualizado._id
     });
 
-    // 2) Emitir a todos los sockets en room "admin"
-    const io = getIO();
-    io.to('admin').emit('nueva_notificacion', {
+    // Emitir a todos los sockets en room "admin"
+    getIO().to('admin').emit('nueva_notificacion', {
       _id: noti._id,
       tipo: noti.tipo,
       mensaje: noti.mensaje,
@@ -158,20 +163,19 @@ exports.deleteUser = async (req, res) => {
       return res.status(404).json({ msg: 'Usuario no encontrado' });
     }
 
-    // 1) Crear notificación para administradores
+    // Crear notificación para administradores
     const usuarioActivo = req.user?.nombre || req.user?.email || 'Desconocido';
     const mensajeNoti = `Usuario eliminado: ${eliminado.nombre} (${eliminado.email}) por ${usuarioActivo}`;
     const noti = await Notificacion.create({
       tipo: 'usuario_eliminado',
       mensaje: mensajeNoti,
       esGlobal: true,
-      creadoPor: req.user._id,
+      creadoPor: req.user?._id,
       refId: eliminado._id
     });
 
-    // 2) Emitir a todos los sockets en room "admin"
-    const io = getIO();
-    io.to('admin').emit('nueva_notificacion', {
+    // Emitir a todos los sockets en room "admin"
+    getIO().to('admin').emit('nueva_notificacion', {
       _id: noti._id,
       tipo: noti.tipo,
       mensaje: noti.mensaje,

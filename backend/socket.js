@@ -4,9 +4,15 @@ let ioInstance = null;
 module.exports = {
   init: (httpServer) => {
     const { Server } = require('socket.io');
-    ioInstance = new Server(httpServer, {
+    const allowedOrigins = [
+      'http://localhost:5173',
+      'https://happy-wave-0e4981b10.6.azurestaticapps.net',
+      'https://dastiapp-czcsfba8dra4b3c4.azurewebsites.net',
+      'https://dastiapp-czcsfba8dra4b3c4.centralus-01.azurewebsites.net'
+    ];
+        ioInstance = new Server(httpServer, {
       cors: {
-        origin: 'http://localhost:5173',
+        origin: allowedOrigins,
         credentials: true
       }
     });

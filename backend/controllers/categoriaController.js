@@ -20,7 +20,7 @@ exports.createCategoria = async (req, res) => {
       tipo: 'categoria_creada',
       mensaje: mensajeNoti,
       esGlobal: true,
-      creadoPor: req.user._id,
+      creadoPor: req.user?._id,
       refId: categoriaGuardada._id
     });
 
@@ -94,7 +94,7 @@ exports.updateCategoria = async (req, res) => {
       tipo: 'categoria_actualizada',
       mensaje: mensajeNoti,
       esGlobal: true,
-      creadoPor: req.user._id,
+      creadoPor: req.user?._id,
       refId: categoriaActualizada._id
     });
 
@@ -132,7 +132,7 @@ exports.deleteCategoria = async (req, res) => {
       tipo: 'categoria_eliminada',
       mensaje: mensajeNoti,
       esGlobal: true,
-      creadoPor: req.user._id,
+      creadoPor: req.user?._id,
       refId: categoriaEliminada._id
     });
 

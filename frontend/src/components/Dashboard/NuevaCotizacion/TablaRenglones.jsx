@@ -268,6 +268,19 @@ const TablaRenglones = ({
                                 </div>
                               ))}
                           </section>
+
+                          {/* Trabajo Externo: sólo lectura */}
+                          <section className="border border-purple-300 bg-purple-50 p-2 rounded">
+                            <h4 className="font-semibold text-purple-700 mb-2">Trabajo Externo</h4>
+                            {r.tiempos
+                              .filter(t => t.tipo === 'externo')
+                              .map((t, iT) => (
+                                <div key={iT} className="text-sm mb-1">
+                                  {t.maquina}: {t.horas}h
+                                </div>
+                              ))}
+                          </section>
+
                         </div>
                       ) : (
                         /* 2) Si es Vendedor (y no Diseñador), solo lectura de todos los tiempos */
@@ -339,6 +352,37 @@ const TablaRenglones = ({
                                 + Máquina de Diseño
                               </button>
                             </section>
+
+                            {/* Trabajo Externo editable */}
+                            <section className="border border-purple-300 bg-purple-50 p-2 rounded">
+                              <h4 className="font-semibold text-purple-700 mb-2">Trabajo Externo</h4>
+                              {r.tiempos
+                                .filter(t => t.tipo === 'externo')
+                                .map((t, iT) => (
+                                  <div key={iT} className="flex justify-between items-center mb-1">
+                                    <span className="text-sm">{t.maquina}: {t.horas}h</span>
+                                    <button
+                                      type="button"
+                                      className="text-red-500 text-xs"
+                                      onClick={() => {
+                                        const n = [...values.renglones];
+                                        n[idx].tiempos = n[idx].tiempos.filter((_, k) => k !== iT);
+                                        setFieldValue('renglones', n);
+                                      }}
+                                    >
+                                      X
+                                    </button>
+                                  </div>
+                                ))}
+                              <button
+                                type="button"
+                                className="mt-2 bg-purple-300 px-2 py-1 rounded text-purple-800 text-sm"
+                                onClick={() => setModalTiemposIndex({ index: idx, tipo: 'externo' })}
+                              >
+                                + Trabajo Externo
+                              </button>
+                            </section>
+
                           </div>
                         )
                       )}

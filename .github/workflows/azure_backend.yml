@@ -1,0 +1,81 @@
+# ================================================================
+# Build & Deploy – backend to Azure App Service
+# ================================================================
+name: Build & Deploy – backend to Azure App Service
+
+on:
+  push:
+    branches: [ azure ]           # se ejecuta al hacer push a la rama azure
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '20.x'            # LTS compatible con App Service
+
+jobs:
+# ----------------------------------------------------------------
+# 1. BUILD – genera backend.zip desde la carpeta backend/
+# ----------------------------------------------------------------
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install deps (prod)
+        run: npm ci --omit=dev
+        working-directory: backend
+
+      - name: Build (optional)
+        run: npm run build --if-present
+        working-directory: backend
+
+      - name: Zip backend
+        run: |
+          cd backend
+          zip -r ../backend.zip . -x "node_modules/**"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: backend-release
+          path: backend.zip
+
+# ----------------------------------------------------------------
+# 2. DEPLOY – publica backend.zip en el Web App
+# ----------------------------------------------------------------
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: Production
+      url: ${{ steps.deploy.outputs.webapp-url }}
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: backend-release
+
+      # ---------- LOGIN A AZURE ----------
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          client-id:      ${{ secrets.AZ_CLIENT_ID }}
+          tenant-id:      ${{ secrets.AZ_TENANT_ID }}
+          subscription-id: ${{ secrets.AZ_SUBSCRIPTION_ID }}
+
+      # ---------- DEPLOY ----------
+      - name: Deploy to Azure Web App
+        id: deploy
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: DastiApp          # nombre EXACTO del App Service
+          slot-name: Production
+          package: backend.zip        # se publica tal cual

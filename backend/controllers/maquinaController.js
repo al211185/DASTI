@@ -21,7 +21,7 @@ exports.createMaquina = async (req, res) => {
       tipo: 'maquina_creada',
       mensaje: mensajeNoti,
       esGlobal: true,
-      creadoPor: req.user._id,
+      creadoPor: req.user?._id,
       refId: guardada._id
     });
 
@@ -96,7 +96,7 @@ exports.updateMaquina = async (req, res) => {
       tipo: 'maquina_actualizada',
       mensaje: mensajeNoti,
       esGlobal: true,
-      creadoPor: req.user._id,
+      creadoPor: req.user?._id,
       refId: actualizado._id
     });
 
@@ -135,7 +135,7 @@ exports.deleteMaquina = async (req, res) => {
       tipo: 'maquina_eliminada',
       mensaje: mensajeNoti,
       esGlobal: true,
-      creadoPor: req.user._id,
+      creadoPor: req.user?._id,
       refId: eliminado._id
     });
 

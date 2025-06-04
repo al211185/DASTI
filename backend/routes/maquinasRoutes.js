@@ -2,11 +2,12 @@
 const express = require('express');
 const router  = express.Router();
 const ctrl    = require('../controllers/maquinaController');
+const verifyToken = require('../middleware/auth');
 
-router.get('/',        ctrl.getMaquinas);
-router.post('/',       ctrl.createMaquina);
-router.get('/:id',     ctrl.getMaquinaById);
-router.put('/:id',     ctrl.updateMaquina);
-router.delete('/:id',  ctrl.deleteMaquina);
+router.get('/',        verifyToken, ctrl.getMaquinas);
+router.post('/',       verifyToken, ctrl.createMaquina);
+router.get('/:id',     verifyToken, ctrl.getMaquinaById);
+router.put('/:id',     verifyToken, ctrl.updateMaquina);
+router.delete('/:id',  verifyToken, ctrl.deleteMaquina);
 
 module.exports = router;

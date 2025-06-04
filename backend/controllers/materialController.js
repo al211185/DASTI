@@ -57,7 +57,7 @@ exports.createMaterial = async (req, res) => {
       tipo: 'material_creado',
       mensaje: mensajeNoti,
       esGlobal: true,
-      creadoPor: req.user._id,
+      creadoPor: req.user?._id,
       refId: savedMaterial._id
     });
 
@@ -106,7 +106,7 @@ exports.updateMaterial = async (req, res) => {
       tipo: 'material_actualizado',
       mensaje: mensajeNoti,
       esGlobal: true,
-      creadoPor: req.user._id,
+      creadoPor: req.user?._id,
       refId: updatedMaterial._id
     });
 
@@ -145,7 +145,7 @@ exports.deleteMaterial = async (req, res) => {
       tipo: 'material_eliminado',
       mensaje: mensajeNoti,
       esGlobal: true,
-      creadoPor: req.user._id,
+      creadoPor: req.user?._id,
       refId: deletedMaterial._id
     });
 
