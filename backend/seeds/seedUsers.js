@@ -10,6 +10,8 @@ const Role     = require('../models/Role');
     // 1️⃣ Conectar usando MONGO_URI que Azure inyecta (apunta a la BD “test”)
     await mongoose.connect(process.env.MONGO_URI, {
       tlsInsecure: true,
+      // Las siguientes opciones ya no son necesarias en las versiones actuales del driver,
+      // pero no causan problemas si las dejas:
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
@@ -20,34 +22,17 @@ const Role     = require('../models/Role');
     const maxDoc = await User.findOne().sort({ empleadoID: -1 }).lean();
     const maxID  = maxDoc ? maxDoc.empleadoID : 0;
 
-    //    Usamos el formato más reciente ({ id, reference_value }) pero,
-    //    por compatibilidad, detectamos si existe el esquema antiguo
-    //    con _id="users_empleadoID".
-    const counters = mongoose.connection.collection('counters');
-    const newFilter = { id: 'empleadoID', reference_value: null };
-    const legacyFilter = { _id: 'users_empleadoID' };
+    //    Actualizamos únicamente el contador en formato nuevo (id: "empleadoID")
+    const counters    = mongoose.connection.collection('counters');
+    const newFilter   = { id: 'empleadoID', reference_value: null };
 
-    const legacyDoc = await counters.findOne(legacyFilter);
-
-    // Siempre actualizamos el contador en el formato usado por la versión
-    // actual del plugin
-    const ops = [
-      counters.updateOne(newFilter, { $set: { seq: maxID } }, { upsert: true })
-    ];
-
-    // Si existe el formato antiguo, también lo actualizamos para evitar que el
-    // contador se reinicie por error en ambientes que aún lo usen.
-    if (legacyDoc) {
-      ops.push(counters.updateOne(legacyFilter, { $set: { seq: maxID } }));
-      console.log('ℹ️ Contador en formato antiguo detectado');
-    }
-
-    await Promise.all(ops);
+    //    Si no existe, lo creamos; si existe, ponemos seq = maxID
+    await counters.updateOne(
+      newFilter,
+      { $set: { seq: maxID } },
+      { upsert: true }
+    );
     console.log(`🔧 Contador sincronizado a ${maxID} (próximo será ${maxID + 1})`);
-
-    if (legacyDoc) {
-      console.log('ℹ️ Contador en formato antiguo detectado');
-    }
 
     // 4️⃣ Obtener los roles “director” y “administrador” (deben existir previamente)
     const directorRole = await Role.findOne({ nombre: 'director' });
@@ -56,7 +41,7 @@ const Role     = require('../models/Role');
       throw new Error('Roles “director” y/o “administrador” no encontrados');
     }
 
-    // 5️⃣ Crear o actualizar “Victor Moreno”
+    // 5️⃣ Crear o actualizar “Victor Moreno” (Director)
     let director = await User.findOne({ email: 'vmoreno@dasti.com.mx' });
     if (!director) {
       director = await User.create({
@@ -66,7 +51,7 @@ const Role     = require('../models/Role');
         telefono:    '6563603586',
         departamento:'administración',
         rol:         directorRole._id
-        // NO enviamos empleadoID: mongoose-sequence lo genera
+        // NO enviamos empleadoID: mongoose-sequence lo genera automáticamente
       });
       console.log('✅ Usuario Director creado (empleadoID: ' + director.empleadoID + ')');
     } else {
@@ -92,7 +77,7 @@ const Role     = require('../models/Role');
         telefono:    '6567828767',
         departamento:'administración',
         rol:         adminRole._id
-        // Tampoco enviamos empleadoID: lo genera el plugin
+        // Tampoco enviamos empleadoID: lo genera el plugin automáticamente
       });
       console.log('✅ Usuario Administrador creado (empleadoID: ' + admin.empleadoID + ')');
     } else {
