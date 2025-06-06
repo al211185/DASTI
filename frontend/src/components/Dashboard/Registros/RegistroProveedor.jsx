@@ -284,7 +284,7 @@ export default function RegistroProveedor() {
                 <button
                   type="submit"
                   disabled={isSubmitting || guardando}
-                  className="w-full bg-orange-600 text-white py-3 rounded-full hover:bg-orange-700 disabled:opacity-50 transition"
+                  className="w-full bg-secondary hover:bg-secondary-dark text-white py-3 rounded-full disabled:opacity-50 transition"
                 >
                   {guardando
                     ? 'Guardando…'

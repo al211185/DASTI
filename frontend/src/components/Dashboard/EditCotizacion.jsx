@@ -190,7 +190,7 @@ const EditCotizacion = ({ fullName }) => {
 
   // -------------- Renderizado principal --------------
   return (
-    <div className="p-4 space-y-6">
+    <div className="p-4 space-y-6 p-6">
       <h1 className="text-2xl font-bold">Editar Cotización</h1>
       <Formik
         initialValues={initialValues}
@@ -329,8 +329,6 @@ const EditCotizacion = ({ fullName }) => {
                 usuario={user.nombre || user.email || 'Desconocido'}
               />
             )}
-
-
 
             {modalDocumentosIndex !== null && (
               <ModalDocumentos

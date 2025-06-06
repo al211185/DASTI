@@ -230,7 +230,7 @@ const NuevaCotizacion = () => {
                             <span className="text-xl font-bold">${calcularTotalCotizacion(values.renglones).toFixed(2)}</span>
                         </div>
                         <div className="flex justify-end">
-                            <button type="submit" disabled={isSubmitting} className="bg-green-500 text-white font-medium px-4 py-2 rounded-lg shadow transition">
+                            <button type="submit" disabled={isSubmitting} className="bg-secondary hover:bg-secondary-dark text-white font-medium px-4 py-2 rounded-lg shadow transition">
                                 Guardar Cotización
                             </button>
                         </div>

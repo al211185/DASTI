@@ -193,7 +193,7 @@ const SearchGlobal = () => {
                         e.stopPropagation();
                         navigate(`/dashboard/cotizacion/${cot._id}`);
                       }}
-                      className="mt-4 sm:mt-0 bg-[#f7941e] hover:bg-[#e68310] text-white px-4 py-1 leading-tight rounded-lg"
+                      className="mt-4 sm:mt-0 bg-secondary hover:bg-secondary-dark text-white px-4 py-1 leading-tight rounded-lg"
                     >
                       Ver Cotización
                     </button>

@@ -55,7 +55,7 @@ export default function ListadoCategorias() {
           </h2>
           <button
             onClick={() => navigate('/dashboard/registro/categoria')}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg shadow transition"
+            className="bg-primary hover:bg-primary-dark text-white px-5 py-2 rounded-lg shadow transition"
           >
             Nueva Categoría
           </button>

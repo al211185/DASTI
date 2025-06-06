@@ -45,7 +45,7 @@ export default function ListadoMateriales() {
           </h2>
           <button
             onClick={() => navigate('/dashboard/registro/material')}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg shadow transition"
+            className="bg-primary hover:bg-primary-dark text-white px-5 py-2 rounded-lg shadow transition"
           >
             Nuevo Material
           </button>

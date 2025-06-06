@@ -15,6 +15,8 @@ import NuevaCotizacion from './components/Dashboard/NuevaCotizacion/NuevaCotizac
 import VerCotizacion from './components/Dashboard/VerCotizacion';
 import SearchGlobal from './components/GlobalSearch/SearchGlobal';
 
+import MostrarCotizacion from './components/Dashboard/MostrarCotizacion';
+
 import ListadoMateriales from './components/Dashboard/Registros/ListadoMateriales';
 
 import RegistroSeleccion from './components/Dashboard/Registros/RegistroSeleccion';
@@ -93,6 +95,16 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+  path="/dashboard/mostrar-cotizacion/:id"
+  element={
+    <ProtectedRoute>
+      <DashboardLayout>
+        <MostrarCotizacion />
+      </DashboardLayout>
+    </ProtectedRoute>
+  }
+/>
             <Route
               path="/dashboard/cotizacion/:id"
               element={

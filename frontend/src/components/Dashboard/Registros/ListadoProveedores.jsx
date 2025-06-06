@@ -53,7 +53,7 @@ export default function ListadoProveedores() {
           </h2>
           <button
             onClick={() => navigate('/dashboard/registro/proveedor')}
-            className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg shadow transition"
+            className="bg-primary hover:bg-primary-dark text-white px-5 py-2 rounded-lg shadow transition"
           >
             Nuevo Proveedor
           </button>

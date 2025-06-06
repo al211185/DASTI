@@ -5,101 +5,97 @@ import axiosInstance from '../../api/axiosInstance';
 import { UserContext } from '../../context/UserContext';
 import ModalAprobacionRechazo from './ModalAprobacionRechazo';
 import CotizacionesTable from './CotizacionesTable';
-import ModalComentarios from './NuevaCotizacion/modals/ModalComentarios';  // ← 1) importar
-
+import ModalComentarios from './NuevaCotizacion/modals/ModalComentarios';
 
 const DashboardHome = () => {
   const navigate = useNavigate();
   const { user } = useContext(UserContext);
-  
 
   const [cotizaciones, setCotizaciones] = useState([]);
+  const [plantas, setPlantas] = useState([]);    // Lista dinámica de plantas
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const [estadoFilter, setEstadoFilter]     = useState('');   // cadena vacía = “todos”
+  const [estadoFilter, setEstadoFilter]     = useState('');   // '' = todos
   const [fechaDesde, setFechaDesde]         = useState('');
   const [fechaHasta, setFechaHasta]         = useState('');
-  const [plantaFilter, setPlantaFilter]     = useState('');   // cadena vacía = “todas”
-  const [serialFilter, setSerialFilter]     = useState('');   // búsqueda de texto libre
-  const [sortClienteAZ, setSortClienteAZ]   = useState(false); // si true, orden alfabético A→Z
+  const [plantaFilter, setPlantaFilter]     = useState('');   // '' = todas
+  const [serialFilter, setSerialFilter]     = useState('');   // búsqueda libre
+  const [sortClienteAZ, setSortClienteAZ]   = useState(false);
 
   const [modalData, setModalData] = useState({
     open: false,
     cotizacionId: null,
     currentState: '',
-    action: '',   // 'approve' | 'edit' | 'delete'
+    action: '',
   });
 
-  // ** NUEVO: estado para los comentarios **
   const [commentModalOpen, setCommentModalOpen] = useState(false);
   const [currentComments, setCurrentComments] = useState([]);
   const [currentCotizacionId, setCurrentCotizacionId] = useState(null);
 
+  // 1) Obtener cotizaciones al cargar
   useEffect(() => {
     axiosInstance.get('/cotizaciones')
-      .then(res => setCotizaciones(res.data.cotizaciones))
+      .then(res => {
+        setCotizaciones(res.data.cotizaciones);
+      })
       .catch(err => setError(err.response?.data?.msg || 'Error'))
       .finally(() => setLoading(false));
   }, []);
 
+  // 2) Cada vez que cambian las cotizaciones, armamos la lista de plantas únicas
+  useEffect(() => {
+    const nombresSet = new Set(
+      cotizaciones
+        .map(c => c.planta?.nombre)
+        .filter(nombre => nombre)
+    );
+    setPlantas(Array.from(nombresSet));
+  }, [cotizaciones]);
+
   if (!user) {
     return <div className="p-4">Cargando usuario…</div>;
   }
-  
-  
-  const userRole = user.rol.nombre.toLowerCase(); // 'vendedores' | 'administrador' | 'director'
 
+  const userRole = user.rol.nombre.toLowerCase();
   const isVendor    = userRole === 'vendedores';
   const isAdmin     = userRole === 'administrador';
   const isDirector  = userRole === 'director';
 
-  // Solo estos tres ven las cards:
   const showSummary = isVendor || isAdmin || isDirector;
-
-  // Si es vendedor, limitar a sus propias cotizaciones:
   const summaryCotizaciones = isVendor
     ? cotizaciones.filter(c => c.vendedor?._id === user._id)
     : cotizaciones;
 
-    const pendingCount   = summaryCotizaciones.filter(c => c.estado === 'Pendiente de aprobación').length;
+  const pendingCount   = summaryCotizaciones.filter(c => c.estado === 'Pendiente de aprobación').length;
   const approvedCount  = summaryCotizaciones.filter(c => c.estado === 'Aprobado').length;
   const rejectedCount  = summaryCotizaciones.filter(c => c.estado === 'Rechazado').length;
   const totalCount     = summaryCotizaciones.length;
 
   const filteredCotizaciones = cotizaciones
     .filter(c => {
-      // → FILTRO POR ESTADO (si hubo selección)
       if (estadoFilter && c.estado !== estadoFilter) return false;
 
-      // → FILTRO POR RANGO DE FECHA
-      const fechaC = new Date(c.fechaInicio); // objeto Date de la cotización
+      const fechaC = new Date(c.fechaInicio);
       if (fechaDesde) {
-        const desde = new Date(fechaDesde + 'T00:00:00'); 
+        const desde = new Date(fechaDesde + 'T00:00:00');
         if (fechaC < desde) return false;
       }
       if (fechaHasta) {
-        // ajustar fechaHasta para incluir todo el día (hasta 23:59:59)
         const hasta = new Date(fechaHasta + 'T23:59:59');
         if (fechaC > hasta) return false;
       }
-
-      // → FILTRO POR PLANTA (suponiendo que “c.planta.nombre” existe)
       if (plantaFilter && c.planta?.nombre !== plantaFilter) return false;
-
-      // → FILTRO POR SERIAL (búsqueda “incluye”)
       if (serialFilter) {
         if (!c.serial.toLowerCase().includes(serialFilter.toLowerCase())) {
           return false;
         }
       }
-
-      // Si llega hasta aquí, pasa los filtros:
       return true;
     })
-    // 2) Orden alfabético de cliente si el switch sortClienteAZ es true:
     .sort((a, b) => {
-      if (!sortClienteAZ) return 0; // sin ordenar
+      if (!sortClienteAZ) return 0;
       const nameA = a.cliente.nombre.toLowerCase();
       const nameB = b.cliente.nombre.toLowerCase();
       if (nameA < nameB) return -1;
@@ -107,26 +103,16 @@ const DashboardHome = () => {
       return 0;
     });
 
-  // --------------------------------------------------
-  // Función para duplicar una cotización
-  // --------------------------------------------------
   const handleDuplicar = async (cotizacionId) => {
     try {
-      // 1. Obtener la cotización original
       const res = await axiosInstance.get(`/cotizaciones/${cotizacionId}`);
       const cotizacionOriginal = res.data.cotizacion;
-
-      // 2. Hacer un clon profundo (para evitar mutaciones de objetos anidados)
       const clon = JSON.parse(JSON.stringify(cotizacionOriginal));
-
-      // 3. Eliminar campos que no quieras duplicar
       delete clon._id;
       delete clon.serial;
       delete clon.historialCambios;
       delete clon.fechaCreacion;
-      // Elimina aquí cualquier otro campo que no desees copiar
 
-      // 4. Armar la estructura esperada por "Nueva Cotización"
       const nuevaCotizacion = {
         header: {
           cliente: clon.cliente?._id || '',
@@ -134,20 +120,18 @@ const DashboardHome = () => {
           vendedor: clon.vendedor?._id || '',
           fechaInicio: clon.fechaInicio || '',
           planta: clon.planta?._id || '',
-          serial: '', // en blanco para que se genere uno nuevo
+          serial: '',
           tiempoEntregaMin: clon.tiempoEntregaMin || '',
           tiempoEntregaMax: clon.tiempoEntregaMax || '',
         },
         renglones: clon.renglones || [],
       };
 
-      // 5. Navegar a la pantalla de "Nueva Cotización" con el estado duplicado
       navigate('/dashboard/nueva-cotizacion', { state: nuevaCotizacion });
     } catch (error) {
       console.error('Error al duplicar cotización:', error);
     }
   };
-
 
   const requestApproval = async ({ cotizacionId, action }) => {
     try {
@@ -161,14 +145,11 @@ const DashboardHome = () => {
 
   const handleVendorAction = async ({ cotizacionId, action }) => {
     try {
-      // 1. Traer TODO el historial de la cotización
       const { data } = await axiosInstance.get(`/cotizaciones/${cotizacionId}/historial`);
-      // 2. Filtrar sólo las entradas de solicitud_edit / solicitud_delete
       const myReqs = data.historial
         .filter(h => h.action === `solicitud_${action}`)
         .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-      // 3. Sin ninguna → pido aprobación
       if (myReqs.length === 0) {
         return requestApproval({ cotizacionId, action });
       }
@@ -178,13 +159,11 @@ const DashboardHome = () => {
         case 'pendiente':
           return alert('Tu solicitud está pendiente de aprobación.');
         case 'rechazada':
-          // Pregunto si quiere reenviar o lo hago automáticamente:
           if (window.confirm('Tu solicitud fue rechazada. ¿Deseas enviarla de nuevo?')) {
             return requestApproval({ cotizacionId, action });
           }
           return;
         case 'aprobada':
-          // DESBLOQUEO la acción
           if (action === 'edit') {
             navigate(`/dashboard/editar-cotizacion/${cotizacionId}`);
           } else if (action === 'delete') {
@@ -201,43 +180,28 @@ const DashboardHome = () => {
     }
   };
 
-
   const handleOpenModalAprobacion = ({ cotizacionId, currentState, action }) => {
-    // Si es vendedor y quiere editar o eliminar, pasamos por el flujo de solicitud/aprobación:
     if (userRole === 'vendedores' && (action === 'edit' || action === 'delete')) {
       return handleVendorAction({ cotizacionId, action });
     }
 
-    // Si es admin o director y la acción es "edit" o "delete", la hacen directamente:
     if ((userRole === 'administrador' || userRole === 'director') && action === 'edit') {
       return navigate(`/dashboard/editar-cotizacion/${cotizacionId}`);
     }
     if ((userRole === 'administrador' || userRole === 'director') && action === 'delete') {
-      // borra y actualiza lista
       axiosInstance.delete(`/cotizaciones/${cotizacionId}`)
         .then(() => setCotizaciones(cs => cs.filter(c => c._id !== cotizacionId)))
         .catch(console.error);
       return;
     }
 
-
-    // Jefe de producción → **solo** edit directo
-    if (userRole === 'jefe de produccion' && action === 'edit') {
+    if ((userRole === 'jefe de produccion' || userRole === 'disenador') && action === 'edit') {
       return navigate(`/dashboard/editar-cotizacion/${cotizacionId}`);
     }
 
-    // Jefe de producción → **solo** edit directo
-    if (userRole === 'disenador' && action === 'edit') {
-      return navigate(`/dashboard/editar-cotizacion/${cotizacionId}`);
-    }
-
-
-    // Si es admin/director y quiere "approve" (cambiar estado), abrimos modal
     if ((userRole === 'administrador' || userRole === 'director') && action === 'approve') {
       return setModalData({ open: true, cotizacionId, currentState, action });
     }
-
-    // Cualquier otro caso (p.ej. duplicar, ver) no pasa por aquí
   };
 
   const handleAprobarRechazar = async ({ estado, comentario }) => {
@@ -248,11 +212,9 @@ const DashboardHome = () => {
         setCotizaciones(cs =>
           cs.map(c => c._id === cotizacionId ? res.data.cotizacion : c)
         );
-      }
-      else if (action === 'edit') {
+      } else if (action === 'edit') {
         navigate(`/dashboard/editar-cotizacion/${cotizacionId}`);
-      }
-      else if (action === 'delete') {
+      } else if (action === 'delete') {
         await axiosInstance.delete(`/cotizaciones/${cotizacionId}`);
         setCotizaciones(cs => cs.filter(c => c._id !== cotizacionId));
       }
@@ -263,7 +225,6 @@ const DashboardHome = () => {
     }
   };
 
-  // ** NUEVO: carga comentarios y abre modal **
   const handleComments = async (cotizacionId) => {
     try {
       const res = await axiosInstance.get(`/cotizaciones/${cotizacionId}/comentarios`);
@@ -275,14 +236,12 @@ const DashboardHome = () => {
     }
   };
 
-  // ** NUEVO: añade un comentario y recarga la lista **
   const handleAddComment = async (texto) => {
     try {
       await axiosInstance.post(
         `/cotizaciones/${currentCotizacionId}/comentarios`,
         { texto }
       );
-      // recarga
       const res = await axiosInstance.get(`/cotizaciones/${currentCotizacionId}/comentarios`);
       setCurrentComments(res.data.comentarios);
     } catch (err) {
@@ -294,89 +253,109 @@ const DashboardHome = () => {
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">
       <p className="text-gray-500">Cargando cotizaciones…</p>
     </div>
-  )
+  );
   if (error) return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">
       <p className="text-red-500">{error}</p>
     </div>
-  )
+  );
 
   return (
     <div className="min-h-screen py-8 px-4 md:px-8">
       <div className="max-w-screen-xl mx-auto bg-white border rounded-2xl shadow-lg p-6">
 
-      {/* Cards de resumen */}
-      {showSummary && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {/* Pendientes */}
-          <div className="flex items-center p-4 bg-yellow-50 rounded-lg shadow">
-            <div className="flex-1">
-              <p className="text-sm font-medium text-yellow-700">Pendientes de aprobación</p>
-              <p className="mt-1 text-2xl font-semibold text-gray-900">{pendingCount}</p>
+        {/* ──────────── Cards de resumen ──────────── */}
+        {showSummary && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {/* Pendientes */}
+            <div
+              className={`flex items-center p-4 bg-yellow-50 rounded-lg shadow cursor-pointer ${
+                estadoFilter === 'Pendiente de aprobación' ? 'ring-2 ring-yellow-400' : ''
+              }`}
+              onClick={() => setEstadoFilter('Pendiente de aprobación')}
+            >
+              <div className="flex-1">
+                <p className="text-sm font-medium text-yellow-700">Pendientes de aprobación</p>
+                <p className="mt-1 text-2xl font-semibold text-gray-900">{pendingCount}</p>
+              </div>
+              <div className="p-2 bg-yellow-100 rounded-full">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-yellow-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l2 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
             </div>
-            <div className="p-2 bg-yellow-100 rounded-full">
-              {/* Icono opcional */}
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-yellow-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l2 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-          </div>
 
-          {/* Aprobadas */}
-          <div className="flex items-center p-4 bg-green-50 rounded-lg shadow">
-            <div className="flex-1">
-              <p className="text-sm font-medium text-green-700">Aprobadas</p>
-              <p className="mt-1 text-2xl font-semibold text-gray-900">{approvedCount}</p>
+            {/* Aprobadas */}
+            <div
+              className={`flex items-center p-4 bg-green-50 rounded-lg shadow cursor-pointer ${
+                estadoFilter === 'Aprobado' ? 'ring-2 ring-green-400' : ''
+              }`}
+              onClick={() => setEstadoFilter('Aprobado')}
+            >
+              <div className="flex-1">
+                <p className="text-sm font-medium text-green-700">Aprobadas</p>
+                <p className="mt-1 text-2xl font-semibold text-gray-900">{approvedCount}</p>
+              </div>
+              <div className="p-2 bg-green-100 rounded-full">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
             </div>
-            <div className="p-2 bg-green-100 rounded-full">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-          </div>
 
-          {/* Rechazadas */}
-          <div className="flex items-center p-4 bg-red-50 rounded-lg shadow">
-            <div className="flex-1">
-              <p className="text-sm font-medium text-red-700">Rechazadas</p>
-              <p className="mt-1 text-2xl font-semibold text-gray-900">{rejectedCount}</p>
+            {/* Rechazadas */}
+            <div
+              className={`flex items-center p-4 bg-red-50 rounded-lg shadow cursor-pointer ${
+                estadoFilter === 'Rechazado' ? 'ring-2 ring-red-400' : ''
+              }`}
+              onClick={() => setEstadoFilter('Rechazado')}
+            >
+              <div className="flex-1">
+                <p className="text-sm font-medium text-red-700">Rechazadas</p>
+                <p className="mt-1 text-2xl font-semibold text-gray-900">{rejectedCount}</p>
+              </div>
+              <div className="p-2 bg-red-100 rounded-full">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </div>
             </div>
-            <div className="p-2 bg-red-100 rounded-full">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </div>
-          </div>
 
-          {/* Total */}
-          <div className="flex items-center p-4 bg-gray-50 rounded-lg shadow">
-            <div className="flex-1">
-              <p className="text-sm font-medium text-gray-600">Total de cotizaciones</p>
-              <p className="mt-1 text-2xl font-semibold text-gray-900">{totalCount}</p>
-            </div>
-            <div className="p-2 bg-gray-100 rounded-full">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7h18M3 12h18M3 17h18" />
-              </svg>
+            {/* Total de cotizaciones */}
+            <div
+              className={`flex items-center p-4 bg-gray-50 rounded-lg shadow cursor-pointer ${
+                estadoFilter === '' ? 'ring-2 ring-gray-400' : ''
+              }`}
+              onClick={() => setEstadoFilter('')}
+            >
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-600">Total de cotizaciones</p>
+                <p className="mt-1 text-2xl font-semibold text-gray-900">{totalCount}</p>
+              </div>
+              <div className="p-2 bg-gray-100 rounded-full">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7h18M3 12h18M3 17h18" />
+                </svg>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-        {/* Header */}
+        )}
+
+        {/* ──────────── Header y botón nueva cotización ──────────── */}
         <div className="flex flex-col md:flex-row items-center justify-between mb-6">
           <h2 className="text-3xl font-semibold text-gray-800">
             Listado de Cotizaciones
           </h2>
           <button
             onClick={() => navigate('/dashboard/nueva-cotizacion')}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg shadow transition mt-4 md:mt-0"
+            className="bg-primary hover:bg-primary-dark text-white px-5 py-2 rounded-lg shadow transition mt-4 md:mt-0"
           >
             Nueva Cotización
           </button>
         </div>
 
-        {/* ─── COMIENZO CONTROLES DE FILTRO ─── */}
-       <div className="mb-6 bg-white border border-gray-200 rounded-2xl shadow p-6">
+        {/* ─── CONTROLES DE FILTRO ─── */}
+        <div className="mb-6 bg-white border border-gray-200 rounded-2xl shadow p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
             {/* FILTRO ESTADO */}
             <div className="flex flex-col">
@@ -415,7 +394,7 @@ const DashboardHome = () => {
               />
             </div>
 
-            {/* FILTRO PLANTA */}
+            {/* FILTRO PLANTA (DINÁMICO) */}
             <div className="flex flex-col">
               <label className="text-sm font-medium text-gray-700 mb-1">Planta</label>
               <select
@@ -424,9 +403,9 @@ const DashboardHome = () => {
                 className="h-10 px-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Todas</option>
-                <option value="Planta Norte">Planta Norte</option>
-                <option value="Planta Sur">Planta Sur</option>
-                <option value="Planta Central">Planta Central</option>
+                {plantas.map(nombre => (
+                  <option key={nombre} value={nombre}>{nombre}</option>
+                ))}
               </select>
             </div>
 
@@ -456,16 +435,39 @@ const DashboardHome = () => {
             </div>
           </div>
         </div>
-       {/* ─── FIN CONTROLES DE FILTRO ─── */}
 
-        {/* Tabla */}
+        {/* ─── BOTONES DE ROLES (EJEMPLO) ─── */}
+        <div className="flex justify-center flex-wrap gap-4 mb-6">
+          <button className="bg-primary hover:bg-primary-dark text-white px-6 py-2 rounded-full shadow">
+            Administrador
+          </button>
+          <button className="bg-secondary hover:bg-secondary-dark text-white px-6 py-2 rounded-full shadow">
+            Ventas
+          </button>
+          <button className="bg-secondary hover:bg-secondary-dark text-white px-6 py-2 rounded-full shadow">
+            Compras
+          </button>
+          <button className="bg-secondary hover:bg-secondary-dark text-white px-6 py-2 rounded-full shadow">
+            Almacén
+          </button>
+          <button className="bg-secondary hover:bg-secondary-dark text-white px-6 py-2 rounded-full shadow">
+            Diseño
+          </button>
+          <button className="bg-secondary hover:bg-secondary-dark text-white px-6 py-2 rounded-full shadow">
+            Producción
+          </button>
+          <button className="bg-secondary hover:bg-secondary-dark text-white px-6 py-2 rounded-full shadow">
+            Calidad
+          </button>
+        </div>
+
+        {/* ─── Tabla de cotizaciones ─── */}
         <div className="overflow-x-auto">
           <CotizacionesTable
             cotizaciones={filteredCotizaciones}
             userRole={userRole}
             onOpenModalAprobacion={handleOpenModalAprobacion}
             onDuplicar={handleDuplicar}
-            onVerCotizacion={id => navigate(`/dashboard/cotizacion/${id}`)}
             onEliminarCotizacion={id =>
               handleOpenModalAprobacion({ cotizacionId: id, action: 'delete' })
             }
@@ -473,7 +475,7 @@ const DashboardHome = () => {
           />
         </div>
 
-        {/* Modales */}
+        {/* ─── Modales ─── */}
         {modalData.open && (
           <ModalAprobacionRechazo
             action={modalData.action}
@@ -492,9 +494,10 @@ const DashboardHome = () => {
             onAgregarComentario={handleAddComment}
           />
         )}
+
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default DashboardHome
+export default DashboardHome;

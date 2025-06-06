@@ -107,9 +107,9 @@ export default function RegistroMaquina() {
           <button
             type="submit"
             disabled={guardando}
-            className="w-1/2 h-10 mx-auto block bg-secondary hover:bg-secondary-dark text-white rounded-full text-base font-medium disabled:opacity-50 transition"
+            className="w-full h-12 mx-auto block bg-secondary hover:bg-secondary-dark text-white rounded-full text-base font-medium disabled:opacity-50 transition"
           >
-            {guardando ? 'Guardando…' : id ? 'Actualizar' : 'Registrar'}
+            {guardando ? 'Guardando…' : id ? 'Actualizar' : 'Registrar Maquina'}
           </button>
         </form>
       </div>

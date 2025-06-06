@@ -142,7 +142,7 @@ export default function RegistroUsuario() {
             <button
               type="submit"
               disabled={guardando}
-              className="w-full h-12 bg-secondary text-white rounded-full text-base font-medium hover:bg-secondary-dark disabled:opacity-50 transition"
+              className="w-full h-12 bg-secondary hover:bg-secondary-dark text-white rounded-full text-base font-medium disabled:opacity-50 transition"
             >
               {guardando
                 ? 'Guardando…'

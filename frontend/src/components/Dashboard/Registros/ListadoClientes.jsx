@@ -50,7 +50,7 @@ export default function ListadoClientes() {
           </h2>
           <button
             onClick={() => navigate('/dashboard/registro/cliente')}
-            className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg shadow transition"
+            className="bg-primary hover:bg-primary-dark text-white px-5 py-2 rounded-lg shadow transition"
           >
             Nuevo cliente
           </button>

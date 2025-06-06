@@ -96,7 +96,7 @@ export default function RegistroPlanta() {
           <button
             type="submit"
             disabled={guardando}
-            className="w-1/2 h-10 mx-auto block px-6 bg-secondary text-white rounded-full text-base font-medium hover:bg-secondary-dark disabled:opacity-50 transition"
+            className="w-full h-12 mx-auto block px-6 bg-secondary hover:bg-secondary-dark text-white rounded-full text-base font-medium hover:bg-secondary-dark disabled:opacity-50 transition"
           >
             {guardando ? 'Guardando…' : id ? 'Actualizar Planta' : 'Registrar Planta'}
           </button>

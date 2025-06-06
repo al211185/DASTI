@@ -1,12 +1,18 @@
 // src/components/Dashboard/NuevaCotizacion/modals/ModalComentarios.jsx
 import React, { useState } from 'react';
 
-const ModalComentarios = ({ onClose, onAgregarComentario, comentarios, usuario }) => {
+const ModalComentarios = ({
+  onClose,
+  onAgregarComentario,
+  comentarios = [],
+  usuario = '',
+  readOnly = false, // Nuevo prop para modo solo‐lectura
+}) => {
   const [comentario, setComentario] = useState('');
 
   const handleAgregar = () => {
     if (comentario.trim() !== '') {
-      onAgregarComentario(comentario, usuario); // Se usa el nombre completo recibido
+      onAgregarComentario(comentario, usuario);
       setComentario('');
     }
   };
@@ -21,6 +27,7 @@ const ModalComentarios = ({ onClose, onAgregarComentario, comentarios, usuario }
         >
           X
         </button>
+
         <div className="mb-4 max-h-40 overflow-auto border p-2">
           {comentarios && comentarios.length > 0 ? (
             comentarios.map((c, i) => (
@@ -35,21 +42,45 @@ const ModalComentarios = ({ onClose, onAgregarComentario, comentarios, usuario }
             <p className="text-sm text-gray-500">No hay comentarios.</p>
           )}
         </div>
-        <textarea
-          rows="3"
-          className="border rounded p-2 w-full mb-4"
-          placeholder="Escribe un comentario..."
-          value={comentario}
-          onChange={(e) => setComentario(e.target.value)}
-        />
-        <div className="flex justify-end space-x-2">
-          <button className="bg-blue-500 text-white px-4 py-2 rounded" onClick={handleAgregar}>
-            Agregar
-          </button>
-          <button className="bg-gray-300 px-4 py-2 rounded" onClick={onClose}>
-            Cerrar
-          </button>
-        </div>
+
+        {/* Si no estamos en readOnly, mostramos textarea y botón “Agregar” */}
+        {!readOnly && (
+          <>
+            <textarea
+              rows="3"
+              className="border rounded p-2 w-full mb-4"
+              placeholder="Escribe un comentario..."
+              value={comentario}
+              onChange={(e) => setComentario(e.target.value)}
+            />
+            <div className="flex justify-end space-x-2">
+              <button
+                className="bg-blue-500 text-white px-4 py-2 rounded"
+                onClick={handleAgregar}
+              >
+                Agregar
+              </button>
+              <button
+                className="bg-gray-300 px-4 py-2 rounded"
+                onClick={onClose}
+              >
+                Cerrar
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* Si estamos en readOnly, solo mostramos el botón “Cerrar” */}
+        {readOnly && (
+          <div className="flex justify-end">
+            <button
+              className="bg-gray-300 px-4 py-2 rounded"
+              onClick={onClose}
+            >
+              Cerrar
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

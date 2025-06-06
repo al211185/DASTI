@@ -7,7 +7,6 @@ const CotizacionesTable = ({
   userRole,            // 'vendedores' | 'administrador' | 'director' | 'jefe_de_produccion'
   onOpenModalAprobacion,
   onDuplicar,
-  onVerCotizacion,
   onEliminarCotizacion,
   onComments,          // ← nuevo prop
 }) => {
@@ -230,7 +229,7 @@ const CotizacionesTable = ({
                       e.target.value = '';
                       switch (action) {
                         case 'view':
-                          onVerCotizacion(cot._id);
+                          navigate(`/dashboard/mostrar-cotizacion/${cot._id}`);
                           break;
                         case 'edit':
                           onOpenModalAprobacion({
@@ -273,7 +272,7 @@ const CotizacionesTable = ({
       {/* ─── Modal Lightbox ─── */}
       {lightboxOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-          <div className="relative w-[90vw] max-h-[90vh">
+          <div className="relative w-[90vw] max-h-[90vh]">
             {/* Botón cerrar (X) */}
             <button
               className="absolute top-2 right-2 text-white text-2xl"

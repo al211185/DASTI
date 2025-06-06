@@ -109,7 +109,7 @@ export default function ContactosProveedor() {
             </h2>
             <button
               onClick={() => navigate(-1)}
-              className="text-sm text-blue-500 hover:underline"
+              className="bg-primary hover:bg-primary-dark text-white px-5 py-2 rounded-lg shadow transition"
             >
               ← Volver
             </button>

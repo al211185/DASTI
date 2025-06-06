@@ -3,7 +3,7 @@ import { Field, ErrorMessage } from 'formik';
 import axiosInstance from '../../../api/axiosInstance';
 import { UserContext } from '../../../context/UserContext';
 
-const EncabezadoCotizacion = ({ header, onChange, vendedores, plantas }) => {
+const EncabezadoCotizacion = ({ header, onChange, vendedores, plantas, readOnly = false,  }) => {
   const [clientes, setClientes] = useState([]);
   const [requisitores, setRequisitores] = useState([]);
   const { user } = useContext(UserContext); // Usuario actual
@@ -85,7 +85,7 @@ const EncabezadoCotizacion = ({ header, onChange, vendedores, plantas }) => {
             className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 appearance-none"
             value={header.cliente}
             onChange={(e) => onChange('cliente', e.target.value)}
-            disabled={!canEdit}
+            disabled={readOnly || !canEdit}
           >
             <option value="">Seleccione un cliente</option>
             {clientes.map((c) => (
@@ -102,7 +102,7 @@ const EncabezadoCotizacion = ({ header, onChange, vendedores, plantas }) => {
             className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 appearance-none"
             value={header.requisitor}
             onChange={(e) => onChange('requisitor', e.target.value)}
-            disabled={!canEdit}
+            disabled={readOnly || !canEdit}
           >
             <option value="">Seleccione un requisitor</option>
             {requisitores.map((r, index) => (
@@ -119,7 +119,7 @@ const EncabezadoCotizacion = ({ header, onChange, vendedores, plantas }) => {
             className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 appearance-none"
             value={header.vendedor}
             onChange={(e) => onChange('vendedor', e.target.value)}
-            disabled={!canEdit}
+            disabled={readOnly || !canEdit}
           >
             <option value="">Seleccione un vendedor</option>
             {vendedores.map((v) => (
@@ -138,7 +138,7 @@ const EncabezadoCotizacion = ({ header, onChange, vendedores, plantas }) => {
             className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
             value={header.fechaInicio}
             onChange={(e) => onChange('fechaInicio', e.target.value)}
-            disabled={!canEdit}
+            disabled={readOnly || !canEdit}
           />
         </div>
         {/* Planta */}
@@ -148,7 +148,7 @@ const EncabezadoCotizacion = ({ header, onChange, vendedores, plantas }) => {
             className="w-full border border-gray-300 rounded-lg px-3 py-2 appearance-none"
             value={header.planta}
             onChange={(e) => onChange('planta', e.target.value)}
-            disabled={!canEdit}
+            disabled={readOnly || !canEdit}
           >
             <option value="">Seleccione una planta</option>
             {plantas.map((p) => (
@@ -170,7 +170,7 @@ const EncabezadoCotizacion = ({ header, onChange, vendedores, plantas }) => {
               name="header.tiempoEntregaMin"
               placeholder="Min"
               className="w-full border rounded-lg p-2"
-              disabled={!canEdit}
+              disabled={readOnly || !canEdit}
             />
             <span className="flex items-center">-</span>
             <Field
@@ -178,7 +178,7 @@ const EncabezadoCotizacion = ({ header, onChange, vendedores, plantas }) => {
               name="header.tiempoEntregaMax"
               placeholder="Max"
               className="w-full border rounded-lg p-2"
-              disabled={!canEdit}
+              disabled={readOnly || !canEdit}
             />
           </div>
           <ErrorMessage name="header.tiempoEntregaMin" component="div" className="text-red-500 text-sm" />

@@ -82,11 +82,11 @@ export default function RegistroCategoria() {
           <button
             type="submit"
             disabled={guardando}
-            className="w-1/2 h-10 mx-auto block bg-secondary hover:bg-secondary-dark text-white rounded-full text-base font-medium disabled:opacity-50 transition"
+            className="w-full h-10 mx-auto block bg-secondary hover:bg-secondary-dark text-white rounded-full text-base font-medium disabled:opacity-50 transition"
           >
             {guardando
               ? id ? 'Guardando cambios…' : 'Registrando…'
-              : id ? 'Actualizar' : 'Registrar'}
+              : id ? 'Actualizar' : 'Registrar Categoria'}
           </button>
         </form>
       </div>

@@ -199,7 +199,7 @@ const RegistroCliente = () => {
             <button
               type="submit"
               disabled={guardando}
-              className="w-1/2 bg-orange-600 text-white py-3 rounded-full hover:bg-orange-700 disabled:opacity-50"
+              className="w-full h-12 bg-secondary hover:bg-secondary-dark text-white py-3 rounded-full disabled:opacity-50"
             >
               {guardando ? 'Guardando…' : id ? 'Actualizar Cliente' : 'Registrar Cliente'}
             </button>
