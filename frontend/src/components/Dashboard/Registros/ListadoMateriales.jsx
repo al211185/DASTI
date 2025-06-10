@@ -6,6 +6,8 @@ import axiosInstance from '../../../api/axiosInstance';
 export default function ListadoMateriales() {
   const [lista, setLista] = useState([]);
   const [eliminando, setEliminando] = useState(null); // id del material que se está borrando
+  const [busqueda, setBusqueda] = useState('');
+  const [orden, setOrden] = useState('az');
   const navigate = useNavigate();
 
   /* --------------------------- cargar materiales --------------------------- */
@@ -34,6 +36,18 @@ export default function ListadoMateriales() {
     }
   };
 
+  const listaFiltrada = lista
+    .filter(m => m.nombre.toLowerCase().includes(busqueda.toLowerCase()))
+    .sort((a, b) => {
+      if (orden === 'fecha_desc') {
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      }
+      if (orden === 'fecha_asc') {
+        return new Date(a.createdAt) - new Date(b.createdAt);
+      }
+      return a.nombre.localeCompare(b.nombre);
+    });
+
   /* -------------------------------- render -------------------------------- */
   return (
     <div className="min-h-screen py-8 px-4 md:px-8">
@@ -51,14 +65,36 @@ export default function ListadoMateriales() {
           </button>
         </div>
 
+        {/* Buscador y filtros */}
+        <div className="flex flex-col md:flex-row md:items-center md:space-x-4 mb-6 space-y-4 md:space-y-0">
+          <input
+            type="text"
+            placeholder="Buscar material..."
+            value={busqueda}
+            onChange={e => setBusqueda(e.target.value)}
+            className="w-full md:w-64 border rounded-md px-3 py-2"
+          />
+          <select
+            value={orden}
+            onChange={e => setOrden(e.target.value)}
+            className="w-full md:w-52 border rounded-md px-3 py-2"
+          >
+            <option value="az">Nombre A-Z</option>
+            <option value="fecha_desc">Fecha añadido (reciente)</option>
+            <option value="fecha_asc">Fecha añadido (antiguo)</option>
+          </select>
+        </div>
+
         {/* Listado */}
-        {lista.length === 0 ? (
+        {listaFiltrada.length === 0 ? (
           <p className="text-center text-gray-500 py-10">
-            No hay materiales registrados.
+            {lista.length === 0
+              ? 'No hay materiales registrados.'
+              : 'No se encontraron materiales.'}
           </p>
         ) : (
           <div className="space-y-4">
-            {lista.map(m => (
+            {listaFiltrada.map(m => (
               <div
                 key={m._id}
                 className="bg-white border border-gray-200 rounded-lg shadow-sm p-4 flex justify-between items-center hover:shadow-md transition"
@@ -87,5 +123,5 @@ export default function ListadoMateriales() {
         )}
       </div>
     </div>
-  )
+  );
 }
